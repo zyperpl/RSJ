@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+  <style>
+    *
+    {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: black !important;
+    }
+
+    #canvas
+    {
+      image-rendering: pixelated;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body scroll="no">
+    <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+
+    <script type='text/javascript'>
+        var Module = {
+            canvas: (function() { return document.getElementById('canvas'); })()
+        };
+
+        function check_canvas_size(event)
+        {
+          let w = window.innerWidth
+          let h = window.innerHeight
+
+          const window_w = 1280
+          const window_h = 720
+          const window_scale = Math.min(w / window_w, h / window_h)
+
+          Module.setCanvasSize(window_w * window_scale, window_h * window_scale)
+        }
+
+        function window_load()
+        {
+          window.addEventListener("resize", check_canvas_size)
+        }
+
+        window.addEventListener("load", window_load);
+    </script>
+    
+    <script src="game.js" onload=check_canvas_size></script>
+</body>
+
+</html>
