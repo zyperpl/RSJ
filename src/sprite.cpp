@@ -27,7 +27,7 @@
 #pragma clang diagnostic pop
 #endif
 
-Sprite::Sprite(std::string_view file_path, std::string_view tag_name) noexcept
+Sprite::Sprite(std::string_view file_path, std::string_view tag_name)
   : path{ file_path }
 {
   if (path.ends_with(".aseprite"))
@@ -39,6 +39,8 @@ Sprite::Sprite(std::string_view file_path, std::string_view tag_name) noexcept
   {
     texture = LoadTexture(std::string(path).c_str());
   }
+
+  assert(IsTextureReady(texture));
 }
 
 Sprite::~Sprite()
@@ -54,7 +56,7 @@ void Sprite::load_texture_with_animation()
   ase = cute_aseprite_load_from_file(path.data(), nullptr);
   if (!ase || ase->frame_count <= 0 || ase->w <= 0 || ase->h <= 0)
   {
-    TraceLog(LOG_ERROR, "Cannot load %s\n", path.data());
+    TraceLog(LOG_ERROR, "Cannot load ase file \"%s\"", path.data());
     return;
   }
 
@@ -78,16 +80,23 @@ void Sprite::load_texture_with_animation()
   texture = LoadTextureFromImage(image);
   UnloadImage(image);
 
-  for (int i = 0; i < ase->tag_count; ++i)
+  if (ase->tag_count > 0 && ase->frame_count > 0)
   {
-    const auto &atag = ase->tags[i];
-    TraceLog(LOG_INFO,
-             "AnimationTag \"%s\", from %d to %d (out of %d frames).\n",
-             atag.name,
-             atag.from_frame,
-             atag.to_frame,
-             ase->frame_count);
-    tags.insert(std::make_pair(atag.name, AnimationTag{ atag.from_frame, atag.to_frame }));
+    TraceLog(LOG_INFO, "Sprite(%s, %d frames) has %d tags:", path.data(), ase->frame_count, ase->tag_count);
+
+    for (int i = 0; i < ase->tag_count; ++i)
+    {
+      const auto &atag = ase->tags[i];
+      TraceLog(LOG_INFO, "\t%d. AnimationTag \"%s\", frames: %d - %d", i, atag.name, atag.from_frame, atag.to_frame);
+      tags.insert(std::make_pair(atag.name, AnimationTag{ atag.from_frame, atag.to_frame }));
+    }
+  }
+  else
+  {
+    if (ase->frame_count <= 0)
+      TraceLog(LOG_WARNING, "Sprite(%s) has no frames", path.data());
+    if (ase->tag_count <= 0)
+      TraceLog(LOG_WARNING, "Sprite(%s) has no tags", path.data());
   }
 }
 
@@ -114,17 +123,17 @@ size_t Sprite::get_height() const
 
 void Sprite::draw() const noexcept
 {
-  const float h_flip = scale.x > 0.0f ? 1.0f : -1.0f;
-  const float v_flip = scale.y > 0.0f ? 1.0f : -1.0f;
+  const float h_flip{ scale.x > 0.0f ? 1.0f : -1.0f };
+  const float v_flip{ scale.y > 0.0f ? 1.0f : -1.0f };
 
-  const float sprite_w = static_cast<float>(ase->w);
-  const float sprite_h = static_cast<float>(ase->h);
+  const float sprite_w{ static_cast<float>(get_width()) };
+  const float sprite_h{ static_cast<float>(get_height()) };
 
-  const Rectangle source = { (float)(frame_index)*sprite_w, 0.0f, h_flip * sprite_w, v_flip * sprite_h };
-  const Rectangle dest   = { std::roundf(position.x + offset.x),
-                             std::roundf(position.y + offset.y),
-                             sprite_w * fabsf(scale.x),
-                             sprite_h * fabsf(scale.y) };
+  const Rectangle source{ (float)(frame_index)*sprite_w, 0.0f, h_flip * sprite_w, v_flip * sprite_h };
+  const Rectangle dest{ std::roundf(position.x + offset.x),
+                        std::roundf(position.y + offset.y),
+                        sprite_w * fabsf(scale.x),
+                        sprite_h * fabsf(scale.y) };
 
   const Vector2 origin{ 0.0f, 0.0f };
   DrawTexturePro(texture, source, dest, origin, rotation, tint);
@@ -138,6 +147,11 @@ void Sprite::reset_animation()
 
 void Sprite::set_frame(int frame)
 {
+  if (frame >= get_frame_count())
+    frame = get_frame_count() - 1;
+  if (frame < 0)
+    frame = 0;
+
   frame_index = frame;
   frame_timer = 0;
 }
@@ -154,14 +168,17 @@ int Sprite::get_frame_count() const
   return ase->frame_count;
 }
 
-bool Sprite::should_advance_frame()
+int64_t current_time_ms()
 {
   using namespace std::chrono;
-  const int64_t time_since_epoch_ms =
-    duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count();
+  return duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count();
+}
 
-  const int64_t time_difference_ms = last_time_ms != time_since_epoch_ms ? (time_since_epoch_ms - last_time_ms) : 0;
-  last_time_ms                     = time_since_epoch_ms;
+bool Sprite::should_advance_frame()
+{
+  const int64_t time_since_epoch_ms = current_time_ms();
+  const int64_t time_difference_ms  = last_time_ms != time_since_epoch_ms ? (time_since_epoch_ms - last_time_ms) : 0;
+  last_time_ms                      = time_since_epoch_ms;
 
   if (tag.end_frame == tag.start_frame)
   {

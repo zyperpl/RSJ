@@ -15,15 +15,19 @@ static float accumulator = 0.0f;
 const int game_width  = 320;
 const int game_height = 240;
 
-const int window_width  = game_width * 3;
-const int window_height = game_height * 3;
+const int window_width  = game_width;
+const int window_height = game_height;
 
 const bool integer_scaling = true;
 
 const float delta_time = 1.0f / 60.0f;
 
+#include "sprite.hpp"
+
 void update_draw_frame()
 {
+  static Sprite sprite("resources/test.aseprite", "idle");
+
   const float screen_width_float  = static_cast<float>(GetScreenWidth());
   const float screen_height_float = static_cast<float>(GetScreenHeight());
 
@@ -47,6 +51,13 @@ void update_draw_frame()
   {
     accumulator -= interval;
 
+    sprite.animate();
+
+    if (IsKeyDown(KEY_SPACE))
+      sprite.set_tag("walk");
+    else
+      sprite.set_tag("idle");
+
     steps--;
     if (steps == 0)
     {
@@ -56,7 +67,12 @@ void update_draw_frame()
 
   BeginDrawing();
   {
+    ClearBackground(BLACK);
+
     DrawPoly(Vector2 { game_width / 2.0f, game_height / 2.0f }, 6, 10.0f, 0.0f, PURPLE);
+
+    sprite.position = Vector2 { game_width / 2.0f, game_height / 2.0f };
+    sprite.draw();
   }
   EndDrawing();
   glFinish();

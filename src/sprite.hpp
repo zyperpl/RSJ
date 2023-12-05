@@ -11,7 +11,12 @@ struct ase_t;
 class Sprite
 {
 public:
-  [[nodiscard]] Sprite(std::string_view file_path, std::string_view tag = {}) noexcept;
+  [[nodiscard]] Sprite(std::string_view file_path, std::string_view tag = {});
+  Sprite(const Sprite &) = delete;
+  Sprite(Sprite &&) = delete;
+  Sprite &operator=(const Sprite &) = delete;
+  Sprite &operator=(Sprite &&) = delete;
+
   virtual ~Sprite();
   virtual void draw() const noexcept;
 

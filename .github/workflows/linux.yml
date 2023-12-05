@@ -51,6 +51,7 @@ jobs:
         cp ${{ env.PROJECT_NAME }}/build/src/game ${{ env.PROJECT_RELEASE_PATH }}
         cp ${{ env.PROJECT_NAME }}/README.md ${{ env.PROJECT_RELEASE_PATH }}
         cp ${{ env.PROJECT_NAME }}/LICENSE ${{ env.PROJECT_RELEASE_PATH }}
+        cp -rp ${{ env.PROJECT_NAME }}/resources ${{ env.PROJECT_RELEASE_PATH }}
         zip -r ./${{ env.PROJECT_RELEASE_PATH }}.zip ./${{ env.PROJECT_RELEASE_PATH }}
 
     - name: Upload Artifacts
