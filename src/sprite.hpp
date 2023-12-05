@@ -34,6 +34,7 @@ public:
   void animate(int step = 1);
 
   Vector2 position{ 0.0f, 0.0f };
+  Vector2 origin{ 0.0f, 0.0f };
   Vector2 offset{ 0.0f, 0.0f };
   Vector2 scale{ 1.0f, 1.0f };
 

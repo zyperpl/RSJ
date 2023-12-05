@@ -60,7 +60,7 @@ void Sprite::load_texture_with_animation()
     return;
   }
 
-  Image image{ GenImageColor(ase->w * ase->frame_count, ase->h, BLANK) };
+  Image image = GenImageColor(ase->w * ase->frame_count, ase->h, BLANK);
 
   for (int i = 0; i < ase->frame_count; i++)
   {
@@ -135,7 +135,6 @@ void Sprite::draw() const noexcept
                         sprite_w * fabsf(scale.x),
                         sprite_h * fabsf(scale.y) };
 
-  const Vector2 origin{ 0.0f, 0.0f };
   DrawTexturePro(texture, source, dest, origin, rotation, tint);
 }
 
