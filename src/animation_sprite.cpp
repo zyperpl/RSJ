@@ -50,7 +50,7 @@ bool AnimationSprite::should_advance_frame()
   if (ase->frame_count <= 1) [[unlikely]]
     return false;
 
-  const ssize_t ase_frame_array_index = frame_index;
+  const int64_t ase_frame_array_index = frame_index;
   assert(ase_frame_array_index < ase->frame_count);
   assert(ase_frame_array_index >= 0);
 
