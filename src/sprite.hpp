@@ -11,15 +11,22 @@ struct ase_t;
 class Sprite
 {
 public:
-  Sprite(std::string_view);
+  [[nodiscard]] Sprite(std::string_view file_path, std::string_view tag = {}) noexcept;
   virtual ~Sprite();
-
   virtual void draw() const noexcept;
 
-  Texture2D &get_texture() { return texture; }
+  [[nodiscard]] Texture2D &get_texture();
 
   virtual size_t get_width() const;
   virtual size_t get_height() const;
+
+  void set_frame(int frame);
+  int get_frame() const;
+
+  int get_frame_count() const;
+  void set_tag(std::string_view tag_name);
+  void reset_animation();
+  void animate(int step = 1);
 
   Vector2 position{ 0.0f, 0.0f };
   Vector2 offset{ 0.0f, 0.0f };
@@ -28,27 +35,30 @@ public:
   float rotation{ 0.0f };
   Color tint{ WHITE };
 
-  Texture2D texture;
-
-  std::string path;
-
 protected:
+  [[nodiscard]] bool should_advance_frame();
+
   ase_t *ase{ nullptr };
-};
-
-class SpriteSlice : public Sprite
-{
-public:
-  SpriteSlice(std::string_view, ::Rectangle cut_mask);
-
-  void draw() const noexcept override;
-
-  size_t get_width() const override { return mask.width; }
-  size_t get_height() const override { return mask.height; }
-
-  void set_mask(::Rectangle new_mask) { mask = new_mask; }
-  ::Rectangle get_mask() const { return mask; }
+  Texture2D texture{};
+  std::string path{};
 
 private:
-  ::Rectangle mask{ 0.0f, 0.0f, 0.0f, 0.f };
+  void load_texture_with_animation();
+
+  struct AnimationTag
+  {
+    int start_frame{ 0 };
+    int end_frame{ 1 };
+
+    auto operator<=>(const AnimationTag &) const = default;
+  };
+
+  std::unordered_map<std::string_view, const AnimationTag> tags;
+  AnimationTag default_tag;
+
+  AnimationTag tag{ 0, 1 };
+  int frame_index{ 0 };
+  int64_t frame_timer{ 0 };
+
+  int64_t last_time_ms{ 0 };
 };
