@@ -838,17 +838,18 @@ void EndDrawing(void)
     // Draw record indicator
     if (gifRecording)
     {
-        #define GIF_RECORD_FRAMERATE    10
+        #define GIF_RECORD_FRAMERATE    2
+        #define GIF_BIT_DEPTH 8
         gifFrameCounter++;
 
-        // NOTE: We record one gif frame every 10 game frames
+        // NOTE: We record one gif frame every GIF_RECORD_FRAMERATE game frames
         if ((gifFrameCounter%GIF_RECORD_FRAMERATE) == 0)
         {
             // Get image data for the current frame (from backbuffer)
             // NOTE: This process is quite slow... :(
             Vector2 scale = GetWindowScaleDPI();
             unsigned char *screenData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
-            msf_gif_frame(&gifState, screenData, 10, 16, (int)((float)CORE.Window.render.width*scale.x)*4);
+            msf_gif_frame(&gifState, screenData, 3, GIF_BIT_DEPTH, (int)((float)CORE.Window.render.width*scale.x)*4);
 
             RL_FREE(screenData);    // Free image data
         }

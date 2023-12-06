@@ -6,10 +6,21 @@ INCLUDE_DIRECTORIES(external)
 INCLUDE_DIRECTORIES(external/raylib/src)
 INCLUDE_DIRECTORIES(external/raylib/src/external/glfw/include)
 
+IF (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "ReleaseWithDebInfo")
+  ADD_COMPILE_OPTIONS(-ggdb)
+  ADD_COMPILE_OPTIONS(-O0)
+ENDIF()
+
 ADD_EXECUTABLE(${PROJECT_NAME}
+  asteroid.cpp
+  bullet.cpp
+  game.cpp
   main.cpp 
+  player.cpp
+  render_pass.cpp
   sound_manager.cpp
   sprite.cpp
+  utils.cpp
 )
 
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE raylib)
