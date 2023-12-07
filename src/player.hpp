@@ -15,6 +15,7 @@ public:
   Sprite sprite{ "resources/test.aseprite", "idle" };
   Vector2 position{ Game::width / 2.0f, Game::height / 2.0f };
   Vector2 velocity{ 0.0f, 0.0f };
+  float rotation{ 0.0f };
 
   float rotation_speed{ 3.0f };
   float acceleration_speed{ 0.04f };

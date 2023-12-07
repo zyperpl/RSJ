@@ -4,7 +4,7 @@
 #include "game.hpp"
 #include "utils.hpp"
 
-static constexpr const float ASTEROIDS_MIN_SIZE = 10.0f;
+static constexpr const float ASTEROIDS_MIN_SIZE = 5.0f;
 
 [[nodiscard]] Asteroid Asteroid::create(const Vector2 &position, float rotation, float size)
 {

@@ -31,4 +31,7 @@ public:
   void update();
 
   void draw() noexcept;
+
+private:
+  Camera2D camera { };
 };

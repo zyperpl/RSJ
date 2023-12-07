@@ -29,6 +29,11 @@ void Game::init()
     asteroid.velocity.y = static_cast<float>(GetRandomValue(-1, 1)) * 0.5f;
     asteroids->push(asteroid);
   }
+
+  camera.target   = Vector2{ static_cast<float>(width) / 2.0f, static_cast<float>(height) / 2.0f };
+  camera.offset   = Vector2{ static_cast<float>(width) / 2.0f, static_cast<float>(height) / 2.0f };
+  camera.zoom     = 1.0f;
+  camera.rotation = 0.0f;
 }
 
 void Game::update()
@@ -36,11 +41,18 @@ void Game::update()
   player->update();
   bullets->update();
   asteroids->update();
+
+  camera.target   = player->position;
+  camera.rotation = -player->rotation;
 }
 
 void Game::draw() noexcept
 {
-  player->draw();
-  bullets->draw();
-  asteroids->draw();
+  BeginMode2D(camera);
+  {
+    player->draw();
+    bullets->draw();
+    asteroids->draw();
+  }
+  EndMode2D();
 }
