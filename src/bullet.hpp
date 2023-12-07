@@ -11,7 +11,7 @@ class Bullet
 public:
   Vector2 position{};
   Vector2 velocity{};
-  uint8_t life{ 40 };
+  uint8_t life{ 30 };
 
   ObjectState update();
   void draw() const noexcept;

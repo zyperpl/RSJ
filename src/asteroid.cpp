@@ -4,15 +4,15 @@
 #include "game.hpp"
 #include "utils.hpp"
 
-static constexpr const float ASTEROIDS_MIN_SIZE = 5.0f;
+static constexpr const float ASTEROIDS_MIN_SIZE = 10.0f;
 
 [[nodiscard]] Asteroid Asteroid::create(const Vector2 &position, float rotation, float size)
 {
   const float random_angle = GetRandomValue(0, 360) * DEG2RAD;
   Asteroid asteroid;
   asteroid.position       = position;
-  asteroid.velocity.x     = cos(random_angle + rotation * DEG2RAD + M_PI / 2.0f + M_PI) * 1.0f;
-  asteroid.velocity.y     = sin(random_angle + rotation * DEG2RAD + M_PI / 2.0f + M_PI) * 1.0f;
+  asteroid.velocity.x     = cos(random_angle + rotation * DEG2RAD + M_PI / 2.0f + M_PI) * 1.2f;
+  asteroid.velocity.y     = sin(random_angle + rotation * DEG2RAD + M_PI / 2.0f + M_PI) * 1.2f;
   asteroid.rotation_speed = GetRandomValue(-1, 1) * 0.01f;
   asteroid.size           = size;
   return asteroid;
@@ -23,7 +23,7 @@ ObjectState Asteroid::update()
   position.x += velocity.x;
   position.y += velocity.y;
 
-  //wrap_position(position);
+  wrap_position(position);
 
   rotation += rotation_speed;
 
@@ -57,7 +57,4 @@ void Asteroid::draw() const noexcept
   DrawCircleLines(position.x - Game::width, position.y, size, RED);
   DrawCircleLines(position.x, position.y + Game::height, size, RED);
   DrawCircleLines(position.x, position.y - Game::height, size, RED);
-
-  const float s = 0.1f;
-  DrawSphereEx(Vector3{ position.x * s, 0.0f, position.y * s }, size * 0.2f, 4, 4, WHITE);
 }

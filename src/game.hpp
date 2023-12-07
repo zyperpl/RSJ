@@ -21,17 +21,14 @@ public:
   std::unique_ptr<ObjectCircularBuffer<Bullet>> bullets;
   std::unique_ptr<ObjectCircularBuffer<Asteroid>> asteroids;
 
-  static constexpr int width               = 960;
-  static constexpr int height              = 540;
+  static constexpr int width               = 640;
+  static constexpr int height              = 360;
   static constexpr float delta_time        = 1.0f / 60.0f;
-  static constexpr int NUMBER_OF_ASTEROIDS = 10;
+  static constexpr int NUMBER_OF_ASTEROIDS = 30;
 
   void init();
 
   void update();
 
   void draw() noexcept;
-
-private:
-  Camera3D camera { };
 };
