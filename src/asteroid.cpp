@@ -23,7 +23,7 @@ ObjectState Asteroid::update()
   position.x += velocity.x;
   position.y += velocity.y;
 
-  wrap_position(position);
+  //wrap_position(position);
 
   rotation += rotation_speed;
 
@@ -57,4 +57,7 @@ void Asteroid::draw() const noexcept
   DrawCircleLines(position.x - Game::width, position.y, size, RED);
   DrawCircleLines(position.x, position.y + Game::height, size, RED);
   DrawCircleLines(position.x, position.y - Game::height, size, RED);
+
+  const float s = 0.1f;
+  DrawSphereEx(Vector3{ position.x * s, 0.0f, position.y * s }, size * 0.2f, 4, 4, WHITE);
 }

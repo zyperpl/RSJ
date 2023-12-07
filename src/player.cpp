@@ -35,11 +35,12 @@ void Player::draw() noexcept
   sprite.position.y = position.y;
   sprite.draw();
 
-  DrawCircle(sprite.position.x, sprite.position.y, 2.0f, RED);
+  const float s = 0.1f;
+  DrawModelEx(model, Vector3{ position.x * s, 0.0f, position.y * s }, Vector3{ 0.0f, 1.0f, 0.0f }, -rotation, Vector3{ 1.0f, 1.0f, 1.0f }, WHITE);
 }
 
 void Player::die()
-{
+{return;
   lives--;
   position.x = Game::width / 2.0f;
   position.y = Game::height / 2.0f;
@@ -109,7 +110,7 @@ void Player::update()
     velocity.y *= max_velocity;
   }
 
-  wrap_position(position);
+  //wrap_position(position);
 
   for (size_t i = Game::get().asteroids->tail; i < Game::get().asteroids->head; i++)
   {

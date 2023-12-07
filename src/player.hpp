@@ -13,7 +13,8 @@ class Player
 {
 public:
   Sprite sprite{ "resources/test.aseprite", "idle" };
-  Vector2 position{ Game::width / 2.0f, Game::height / 2.0f };
+  Model model{ LoadModel("resources/ship.glb") };
+  Vector2 position{ 0.0f, 0.0f };
   Vector2 velocity{ 0.0f, 0.0f };
   float rotation{ 0.0f };
 

@@ -25,12 +25,13 @@ static float accumulator = 0.0f;
 const int window_width  = Game::width;
 const int window_height = Game::height;
 
-const bool integer_scaling = true;
+const bool integer_scaling = false;
 
 void update_draw_frame()
 {
   Game &game = Game::get();
-  static RenderPass game_render_pass(Game::width, Game::height);
+  static RenderPass game_render_pass(Game::width * 2, Game::height * 2);
+  SetTextureFilter(game_render_pass.render_texture.texture, TEXTURE_FILTER_BILINEAR);
   if (!game_render_pass.render_func)
     game_render_pass.render_func = [&]()
     {
@@ -59,8 +60,7 @@ void update_draw_frame()
   const float screen_width_float  = static_cast<float>(GetScreenWidth());
   const float screen_height_float = static_cast<float>(GetScreenHeight());
 
-  float scale =
-    std::max(std::min(screen_width_float / (float)(Game::width), screen_height_float / (float)(Game::height)), 1.0f);
+  float scale = std::min(screen_width_float / (float)(Game::width), screen_height_float / (float)(Game::height));
   if (integer_scaling)
     scale = std::floor(scale);
 

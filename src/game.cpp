@@ -30,10 +30,11 @@ void Game::init()
     asteroids->push(asteroid);
   }
 
-  camera.target   = Vector2{ static_cast<float>(width) / 2.0f, static_cast<float>(height) / 2.0f };
-  camera.offset   = Vector2{ static_cast<float>(width) / 2.0f, static_cast<float>(height) / 2.0f };
-  camera.zoom     = 1.0f;
-  camera.rotation = 0.0f;
+  camera.position = Vector3{ static_cast<float>(width) / 2.0f, static_cast<float>(height) / 2.0f, 10.0f };
+  camera.target   = Vector3{ static_cast<float>(width) / 2.0f, static_cast<float>(height) / 2.0f, 0.0f };
+  camera.up       = Vector3{ 0.0f, 0.0f, 1.0f };
+  camera.fovy     = 60.0f;
+  camera.projection = CAMERA_PERSPECTIVE;
 }
 
 void Game::update()
@@ -42,17 +43,23 @@ void Game::update()
   bullets->update();
   asteroids->update();
 
-  camera.target   = player->position;
-  camera.rotation = -player->rotation;
+  camera.position = Vector3 { 0.0f, 20.0f, 0.0f };
+  camera.target = Vector3{ player->position.x * 0.1f, player->position.y * 0.1f, 0.0f };
 }
 
 void Game::draw() noexcept
 {
-  BeginMode2D(camera);
+  BeginMode3D(camera);
   {
+    DrawCube(Vector3{ 0.0f, 0.0f, 0.0f }, 0.2f, 0.2f, 0.2f, BLUE);
+
     player->draw();
     bullets->draw();
     asteroids->draw();
+
+    DrawGrid(100, 10.0f);
+    DrawSphere(Vector3{ 0.0f, 0.0f, 0.0f }, 1.0f, RED);
+
   }
-  EndMode2D();
+  EndMode3D();
 }

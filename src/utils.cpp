@@ -24,14 +24,14 @@ Rectangle texture_rect_flipped(const Texture2D &texture)
 void wrap_position(Vector2 &position)
 {
   if (position.x < 0)
-    position.x = Game::width - 1;
+    position.x = Game::width * 10 - 1;
 
-  if (position.x >= Game::width)
+  if (position.x >= Game::width * 10)
     position.x = 0;
 
   if (position.y < 0)
-    position.y = Game::height - 1;
+    position.y = Game::height * 10 - 1;
 
-  if (position.y >= Game::height)
+  if (position.y >= Game::height * 10)
     position.y = 0;
 }
