@@ -18,9 +18,9 @@ struct ObjectCircularBuffer
   size_t head{ 0 };
   size_t tail{ 0 };
 
-  void push(const T &obj)
+  void push(T &&obj)
   {
-    objects[head] = obj;
+    objects[head] = std::move(obj);
     head          = (head + 1) % OBJECT_BUFFER_SIZE;
   }
 
@@ -53,7 +53,7 @@ struct ObjectCircularBuffer
     }
   }
 
-  void draw() const noexcept
+  void draw() noexcept
   {
     for (size_t i = tail; i < head; i++)
     {

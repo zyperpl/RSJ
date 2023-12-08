@@ -17,5 +17,6 @@ ObjectState Bullet::update()
 
 void Bullet::draw() const noexcept
 {
-  DrawCircle(position.x, position.y, 2.0f, PINK);
+  draw_wrapped(Rectangle{ position.x, position.y, 2.0f, 2.0f },
+               [&](const Vector2 &P) { DrawCircle(P.x, P.y, 2.0f, PINK); });
 }

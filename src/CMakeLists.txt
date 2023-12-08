@@ -16,6 +16,7 @@ ADD_EXECUTABLE(${PROJECT_NAME}
   bullet.cpp
   game.cpp
   main.cpp 
+  mask.cpp
   player.cpp
   render_pass.cpp
   sound_manager.cpp

@@ -1,39 +1,52 @@
 #include "player.hpp"
 
+#include <cmath>
+#include <functional>
+
 #include "asteroid.hpp"
 #include "bullet.hpp"
 #include "game.hpp"
 #include "utils.hpp"
 
-void Player::draw() noexcept
+void Player::draw() const noexcept
 {
   const int invincibility_timer_int = static_cast<int>(invincibility_timer.get_remaining_time() * 10.0f);
   if (!invincibility_timer.is_done() && invincibility_timer_int % 2 == 0)
     return;
 
-  sprite.origin = Vector2{ sprite.get_width() / 2.0f, sprite.get_height() / 2.0f };
+  sprite.set_centered();
 
-  sprite.position.x = position.x + Game::width;
-  sprite.position.y = position.y;
-  sprite.draw();
+  sprite.position = position;
 
-  sprite.position.x = position.x - Game::width;
-  sprite.position.y = position.y;
-  sprite.draw();
+  draw_wrapped(
+    sprite.get_rect(),
+    [&](const Vector2 &P)
+    {
+      sprite.position = P;
+      sprite.draw();
 
-  sprite.position.x = position.x;
-  sprite.position.y = position.y - Game::height;
-  sprite.draw();
+      DrawCircleV(P, 1.0f, GREEN);
 
-  sprite.position.x = position.x;
-  sprite.position.y = position.y + Game::height;
-  sprite.draw();
+      if (Game::CONFIG.show_masks)
+      {
+        Mask mask_copy     = mask;
+        mask_copy.position = P;
+        mask_copy.draw();
+      }
 
-  sprite.position.x = position.x;
-  sprite.position.y = position.y;
-  sprite.draw();
+      if (Game::CONFIG.show_velocity)
+        DrawLineEx(position, Vector2{ position.x + velocity.x * 10.0f, position.y + velocity.y * 10.0f }, 1.0f, RED);
 
-  DrawCircle(sprite.position.x, sprite.position.y, 2.0f, RED);
+      if (Game::CONFIG.show_acceleration)
+      {
+        DrawLineEx(
+          position,
+          Vector2{ static_cast<float>(position.x + cos(sprite.rotation * DEG2RAD + M_PI / 2.0f) * acceleration_speed),
+                   static_cast<float>(position.y + sin(sprite.rotation * DEG2RAD + M_PI / 2.0f) * acceleration_speed) },
+          1.0f,
+          RED);
+      }
+    });
 }
 
 void Player::die()
@@ -81,7 +94,7 @@ void Player::handle_input()
     bullet.position   = position;
     bullet.velocity.x = cos(sprite.rotation * DEG2RAD + M_PI / 2.0f + M_PI) * 5.0f;
     bullet.velocity.y = sin(sprite.rotation * DEG2RAD + M_PI / 2.0f + M_PI) * 5.0f;
-    Game::get().bullets->push(bullet);
+    Game::get().bullets->push(std::move(bullet));
 
     shoot_timer.start();
   }
@@ -114,7 +127,7 @@ void Player::update()
     for (size_t i = Game::get().asteroids->tail; i < Game::get().asteroids->head; i++)
     {
       Asteroid &asteroid = Game::get().asteroids->objects[i];
-      if (CheckCollisionCircles(position, 2.0f, asteroid.position, asteroid.size))
+      if (asteroid.mask.check_collision(mask))
       {
         die();
         break;
@@ -123,4 +136,5 @@ void Player::update()
   }
 
   sprite.animate();
+  mask.position = position;
 }

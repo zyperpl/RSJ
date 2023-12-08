@@ -35,3 +35,25 @@ void wrap_position(Vector2 &position)
   if (position.y >= Game::height)
     position.y = 0;
 }
+
+void draw_wrapped(const Rectangle &rect, const std::function<void(const Vector2 &)> draw_function)
+{
+  const auto &x = rect.x;
+  const auto &y = rect.y;
+  const auto &w = rect.width;
+  const auto &h = rect.height;
+
+  if (x <= w)
+    draw_function(Vector2{ x + Game::width, y });
+
+  if (x + w >= Game::width)
+    draw_function(Vector2{ x - Game::width, y });
+
+  if (y <= h)
+    draw_function(Vector2{ x, y + Game::height });
+
+  if (y + h >= Game::height)
+    draw_function(Vector2{ x, y - Game::height });
+
+  draw_function(Vector2{ x, y });
+}

@@ -114,7 +114,6 @@ int main(void)
 {
   SetConfigFlags(FLAG_WINDOW_RESIZABLE);
   InitWindow(window_width, window_height, "ASTEROIDS");
-  SetWindowState(FLAG_VSYNC_HINT);
   SetExitKey(KEY_NULL);
   InitAudioDevice();
   SetTargetFPS(60);
@@ -134,6 +133,7 @@ int main(void)
   }
 #endif
 
+  if (IsAudioDeviceReady())
   CloseAudioDevice();
 
   if (IsWindowReady())

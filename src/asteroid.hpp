@@ -3,6 +3,7 @@
 #include "raylib.h"
 #include "raymath.h"
 
+#include "mask.hpp"
 #include "object_circular_buffer.hpp"
 #include "utils.hpp"
 
@@ -11,13 +12,14 @@ class Asteroid
 public:
   Vector2 position{};
   Vector2 velocity{};
-  float rotation{ 0.0f };
-  float rotation_speed{ 0.0f };
-  float size{ 20.0f };
+  int size{ 2 };
+  mutable Sprite sprite{ "resources/asteroid.aseprite" };
+  Mask mask{};
 
-  [[nodiscard]] static Asteroid create(const Vector2 &position, float rotation, float size);
+  [[nodiscard]] static Asteroid create(const Vector2 &position, int size);
 
   ObjectState update();
+  void die();
 
   void draw() const noexcept;
 };

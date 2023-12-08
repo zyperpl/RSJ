@@ -27,24 +27,114 @@
 #pragma clang diagnostic pop
 #endif
 
-Sprite::Sprite(std::string_view file_path, std::string_view tag_name)
+static std::unordered_map<std::string, Texture2D> texture_cache{};
+static std::unordered_map<std::string, ase_t *> aseprite_files_cache{};
+static std::unordered_map<std::string, Sprite::AnimationTags> tags_cache{};
+static std::unordered_map<std::string, size_t> file_path_usage_count{};
+
+bool use_cache(Sprite &sprite, const std::string &file_path)
+{
+  if (auto texture_cache_iterator = texture_cache.find(file_path); texture_cache_iterator != texture_cache.end())
+  {
+    sprite.texture = texture_cache_iterator->second;
+
+    if (auto aseprite_files_cache_iterator = aseprite_files_cache.find(file_path);
+        aseprite_files_cache_iterator != aseprite_files_cache.end())
+      sprite.ase = aseprite_files_cache_iterator->second;
+
+    if (auto tags_cache_iterator = tags_cache.find(file_path); tags_cache_iterator != tags_cache.end())
+      sprite.tags = tags_cache_iterator->second;
+
+    file_path_usage_count[file_path] += 1;
+
+    return true;
+  }
+
+  return false;
+}
+
+Sprite::Sprite(const std::string &file_path, std::string tag_name)
   : path{ file_path }
 {
+  if (use_cache(*this, file_path))
+  {
+    TraceLog(
+      LOG_TRACE, "Sprite(%s) loaded from cache (usages: %zu)", file_path.data(), file_path_usage_count[file_path]);
+    return;
+  }
+
   if (path.ends_with(".aseprite"))
   {
     load_texture_with_animation();
     set_tag(tag_name);
+
+    if (ase)
+    {
+      aseprite_files_cache[path] = ase;
+      tags_cache[path]           = tags;
+    }
   }
   else
   {
     texture = LoadTexture(std::string(path).c_str());
   }
+  texture_cache[path] = texture;
+  file_path_usage_count[path] += 1;
 
   assert(IsTextureReady(texture));
 }
 
+Sprite::Sprite(Sprite &&other)
+  : position{ other.position }
+  , origin{ other.origin }
+  , offset{ other.offset }
+  , scale{ other.scale }
+  , rotation{ other.rotation }
+  , tint{ other.tint }
+  , ase{ other.ase }
+  , texture{ std::move(other.texture) }
+  , path{ std::move(other.path) }
+  , tags{ std::move(other.tags) }
+  , default_tag{ other.default_tag }
+  , tag{ other.tag }
+  , frame_index{ other.frame_index }
+  , frame_timer{ other.frame_timer }
+  , last_time_ms{ other.last_time_ms }
+{
+  other.texture = {};
+  other.ase     = nullptr;
+}
+
+Sprite &Sprite::operator=(Sprite &&other)
+{
+  position     = other.position;
+  origin       = other.origin;
+  offset       = other.offset;
+  scale        = other.scale;
+  rotation     = other.rotation;
+  tint         = other.tint;
+  ase          = other.ase;
+  texture      = std::move(other.texture);
+  path         = std::move(other.path);
+  tags         = std::move(other.tags);
+  default_tag  = other.default_tag;
+  tag          = other.tag;
+  frame_index  = other.frame_index;
+  frame_timer  = other.frame_timer;
+  last_time_ms = other.last_time_ms;
+
+  other.texture = {};
+  other.ase     = nullptr;
+
+  return *this;
+}
+
 Sprite::~Sprite()
 {
+  file_path_usage_count[path] -= 1;
+  if (file_path_usage_count[path] > 0)
+    return;
+
   UnloadTexture(texture);
 
   if (ase)
@@ -95,8 +185,6 @@ void Sprite::load_texture_with_animation()
   {
     if (ase->frame_count <= 0)
       TraceLog(LOG_WARNING, "Sprite(%s) has no frames", path.data());
-    if (ase->tag_count <= 0)
-      TraceLog(LOG_WARNING, "Sprite(%s) has no tags", path.data());
   }
 }
 
@@ -119,6 +207,16 @@ size_t Sprite::get_height() const
     return texture.height;
 
   return ase->h;
+}
+
+void Sprite::set_centered()
+{
+  origin = Vector2{ static_cast<float>(get_width()) / 2.0f, static_cast<float>(get_height()) / 2.0f };
+}
+
+Rectangle Sprite::get_rect() const
+{
+  return Rectangle{ position.x, position.y, static_cast<float>(get_width()), static_cast<float>(get_height()) };
 }
 
 void Sprite::draw() const noexcept
@@ -236,7 +334,7 @@ void Sprite::animate(int step)
   }
 }
 
-void Sprite::set_tag(std::string_view tag_name)
+void Sprite::set_tag(std::string tag_name)
 {
   if (!ase) [[unlikely]]
     return;

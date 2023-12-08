@@ -5,6 +5,7 @@
 #include <raylib.h>
 #include <raymath.h>
 
+#include "mask.hpp"
 #include "sprite.hpp"
 #include "timer.hpp"
 #include "utils.hpp"
@@ -12,7 +13,8 @@
 class Player
 {
 public:
-  Sprite sprite{ "resources/ship.aseprite", "idle" };
+  mutable Sprite sprite{ "resources/ship.aseprite", "idle" };
+  Mask mask{ Circle{ Vector2{ 0.0f, 0.0f }, 8.0f } };
   Vector2 position{ Game::width / 2.0f, Game::height / 2.0f };
   Vector2 velocity{ 0.0f, 0.0f };
 
@@ -30,7 +32,7 @@ public:
 
   void update();
 
-  void draw() noexcept;
+  void draw() const noexcept;
   void die();
 
   [[nodiscard]] bool is_invincible() const noexcept { return !invincibility_timer.is_done(); }
