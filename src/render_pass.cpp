@@ -8,6 +8,8 @@
 RenderPass::RenderPass(int width, int height)
 {
   render_texture = LoadRenderTexture(width, height);
+  SetTextureFilter(render_texture.texture, TEXTURE_FILTER_POINT);
+  SetTextureWrap(render_texture.texture, TEXTURE_WRAP_REPEAT);
   assert(IsRenderTextureReady(render_texture));
 }
 

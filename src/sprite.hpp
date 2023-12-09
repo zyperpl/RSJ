@@ -17,7 +17,7 @@ public:
 
     auto operator<=>(const AnimationTag &) const = default;
   };
-  typedef std::unordered_map<std::string, const AnimationTag> AnimationTags;
+  typedef std::unordered_map<std::string, AnimationTag> AnimationTags;
 
   [[nodiscard]] Sprite(const std::string &file_path, std::string tag = {});
   Sprite(const Sprite &) = delete;
