@@ -1,9 +1,9 @@
 #include "bullet.hpp"
 
-ObjectState Bullet::update()
+bool Bullet::update()
 {
   if (life == 0)
-    return ObjectState::DEAD;
+    return false;
 
   position.x += velocity.x;
   position.y += velocity.y;
@@ -12,7 +12,7 @@ ObjectState Bullet::update()
 
   life--;
 
-  return ObjectState::ALIVE;
+  return true;
 }
 
 void Bullet::draw() const noexcept

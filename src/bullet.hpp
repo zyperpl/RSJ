@@ -13,6 +13,6 @@ public:
   Vector2 velocity{};
   uint8_t life{ 30 };
 
-  ObjectState update();
+  bool update();
   void draw() const noexcept;
 };

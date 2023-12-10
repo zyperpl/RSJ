@@ -3,9 +3,13 @@
 #include <cmath>
 #include <functional>
 
+#include <raylib.h>
+#include <raymath.h>
+
 #include "asteroid.hpp"
 #include "bullet.hpp"
 #include "game.hpp"
+#include "particle.hpp"
 #include "utils.hpp"
 
 void Player::draw() const noexcept
@@ -18,39 +22,47 @@ void Player::draw() const noexcept
 
   sprite.position = position;
 
-  draw_wrapped(
-    sprite.get_rect(),
-    [&](const Vector2 &P)
-    {
-      sprite.position = P;
-      sprite.draw();
+  draw_wrapped(sprite.get_destination_rect(),
+               [&](const Vector2 &P)
+               {
+                 sprite.position = P;
+                 sprite.draw();
 
-      DrawCircleV(P, 1.0f, GREEN);
+                 DrawCircleV(P, 1.0f, GREEN);
 
-      if (Game::CONFIG.show_masks)
-      {
-        Mask mask_copy     = mask;
-        mask_copy.position = P;
-        mask_copy.draw();
-      }
+                 if (Game::CONFIG.show_masks)
+                 {
+                   Mask mask_copy     = mask;
+                   mask_copy.position = P;
+                   mask_copy.draw();
+                 }
 
-      if (Game::CONFIG.show_velocity)
-        DrawLineEx(position, Vector2{ position.x + velocity.x * 10.0f, position.y + velocity.y * 10.0f }, 1.0f, RED);
-
-      if (Game::CONFIG.show_acceleration)
-      {
-        DrawLineEx(
-          position,
-          Vector2{ static_cast<float>(position.x + cos(sprite.rotation * DEG2RAD + M_PI / 2.0f) * acceleration_speed),
-                   static_cast<float>(position.y + sin(sprite.rotation * DEG2RAD + M_PI / 2.0f) * acceleration_speed) },
-          1.0f,
-          RED);
-      }
-    });
+                 if (Game::CONFIG.show_velocity)
+                   DrawLineEx(P, Vector2{ P.x + velocity.x * 10.0f, P.y + velocity.y * 10.0f }, 1.0f, RED);
+               });
 }
 
 void Player::die()
 {
+  for (int i = 0; i < 10; ++i)
+  {
+    const Vector2 pos{ position.x + static_cast<float>(GetRandomValue(-20, 20)),
+                       position.y + static_cast<float>(GetRandomValue(-20, 20)) };
+    const Vector2 vel = Vector2Normalize(
+      Vector2{ static_cast<float>(GetRandomValue(-100, 100)), static_cast<float>(GetRandomValue(-100, 100)) });
+    const Color color = ColorBrightness(BLACK, 0.1f);
+    Game::get().particles->push(Particle::create(pos, vel, color));
+  }
+  for (int i = 0; i < 100; ++i)
+  {
+    const Vector2 pos{ position.x + static_cast<float>(GetRandomValue(-10, 10)),
+                       position.y + static_cast<float>(GetRandomValue(-10, 10)) };
+    const Vector2 vel = Vector2Normalize(
+      Vector2{ static_cast<float>(GetRandomValue(-100, 100)), static_cast<float>(GetRandomValue(-100, 100)) });
+    const Color color { 250, 200, 120, 240 };
+    Game::get().particles->push(Particle::create(pos, vel, color));
+  }
+
   lives--;
   position.x = Game::width / 2.0f;
   position.y = Game::height / 2.0f;
@@ -91,9 +103,12 @@ void Player::handle_input()
   if (IsKeyDown(KEY_SPACE) && shoot_timer.is_done() && !is_invincible())
   {
     Bullet bullet;
-    bullet.position   = position;
+    bullet.position.x = position.x - cos(sprite.rotation * DEG2RAD + M_PI / 2.0f) * 5.0f;
+    bullet.position.y = position.y - sin(sprite.rotation * DEG2RAD + M_PI / 2.0f) * 5.0f;
     bullet.velocity.x = cos(sprite.rotation * DEG2RAD + M_PI / 2.0f + M_PI) * 5.0f;
     bullet.velocity.y = sin(sprite.rotation * DEG2RAD + M_PI / 2.0f + M_PI) * 5.0f;
+    bullet.velocity.x += velocity.x * 0.5f;
+    bullet.velocity.y += velocity.y * 0.5f;
     Game::get().bullets->push(std::move(bullet));
 
     shoot_timer.start();
@@ -124,15 +139,15 @@ void Player::update()
 
   if (!is_invincible())
   {
-    for (size_t i = Game::get().asteroids->tail; i < Game::get().asteroids->head; i++)
-    {
-      Asteroid &asteroid = Game::get().asteroids->objects[i];
-      if (asteroid.mask.check_collision(mask))
+    Game::get().asteroids->for_each(
+      [&](Asteroid &asteroid) -> void
       {
-        die();
-        break;
-      }
-    }
+        if (asteroid.mask.check_collision(mask))
+        {
+          die();
+          return;
+        }
+      });
   }
 
   sprite.animate();

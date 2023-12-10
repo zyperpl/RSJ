@@ -2,37 +2,34 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <functional>
+#include <type_traits>
 
-constexpr size_t OBJECT_BUFFER_SIZE = 1024;
-
-enum class ObjectState
-{
-  DEAD,
-  ALIVE
-};
-
-template<typename T>
+template<typename T, size_t BUFFER_SIZE>
 struct ObjectCircularBuffer
 {
-  T objects[OBJECT_BUFFER_SIZE];
+  T objects[BUFFER_SIZE];
   size_t head{ 0 };
   size_t tail{ 0 };
+  const size_t capacity{ BUFFER_SIZE };
 
   void push(T &&obj)
   {
     objects[head] = std::move(obj);
-    head          = (head + 1) % OBJECT_BUFFER_SIZE;
+    head          = (head + 1) % BUFFER_SIZE;
+
+    if (head == tail)
+    {
+      tail = (tail + 1) % BUFFER_SIZE;
+    }
   }
 
-  void pop() { tail = (tail + 1) % OBJECT_BUFFER_SIZE; }
-
-  T &front() { return objects[tail]; }
-
-  T &back() { return objects[head]; }
-
-  size_t size() const { return head - tail; }
+  size_t size() const { return head >= tail ? head - tail : BUFFER_SIZE - tail + head; }
 
   bool empty() const { return head == tail; }
+  bool full() const { return (head + 1) % BUFFER_SIZE == tail; }
 
   void clear()
   {
@@ -40,24 +37,56 @@ struct ObjectCircularBuffer
     tail = 0;
   }
 
-  void update()
+  void for_each(auto func)
   {
-    for (size_t i = tail; i < head; i++)
+    const size_t start = tail;
+    size_t end         = head >= tail ? head : head + BUFFER_SIZE;
+
+    for (size_t i = start; i < end; i++)
     {
-      const ObjectState &state = objects[i].update();
-      if (state == ObjectState::DEAD)
+      const size_t index = i % BUFFER_SIZE;
+      if constexpr (std::is_same_v<decltype(func(objects[index])), bool>)
       {
-        std::swap(objects[i], objects[head - 1]);
-        head--;
+        const bool ret = func(objects[index]);
+        if (!ret)
+        {
+          remove(index);
+
+          end = head >= tail ? head : head + BUFFER_SIZE;
+        }
+      }
+      else
+      {
+        func(objects[index]);
       }
     }
   }
 
-  void draw() noexcept
+  void remove(size_t index)
   {
-    for (size_t i = tail; i < head; i++)
+    if (index >= BUFFER_SIZE)
+      return;
+
+    if (index == tail)
     {
-      objects[i].draw();
+      tail = (tail + 1) % BUFFER_SIZE;
+    }
+    else if (index == head)
+    {
+      head = (head - 1) % BUFFER_SIZE;
+    }
+    else
+    {
+      if (head > 0)
+      {
+        std::swap(objects[index], objects[head - 1]);
+        head = (head - 1) % BUFFER_SIZE;
+      }
+      else
+      {
+        std::swap(objects[index], objects[BUFFER_SIZE - 1]);
+        head = BUFFER_SIZE - 1;
+      }
     }
   }
 };

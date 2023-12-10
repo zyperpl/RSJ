@@ -214,26 +214,28 @@ void Sprite::set_centered()
   origin = Vector2{ static_cast<float>(get_width()) / 2.0f, static_cast<float>(get_height()) / 2.0f };
 }
 
-Rectangle Sprite::get_rect() const
+Rectangle Sprite::get_source_rect() const
 {
-  return Rectangle{ position.x, position.y, static_cast<float>(get_width()), static_cast<float>(get_height()) };
+  const float sprite_w{ static_cast<float>(get_width()) };
+  const float sprite_h{ static_cast<float>(get_height()) };
+  const float h_flip{ scale.x > 0.0f ? 1.0f : -1.0f };
+  const float v_flip{ scale.y > 0.0f ? 1.0f : -1.0f };
+  return Rectangle{ static_cast<float>(frame_index) * sprite_w, 0.0f, h_flip * sprite_w, v_flip * sprite_h };
+}
+
+Rectangle Sprite::get_destination_rect() const
+{
+  const float sprite_w{ static_cast<float>(get_width()) };
+  const float sprite_h{ static_cast<float>(get_height()) };
+  return Rectangle{ std::roundf(position.x + offset.x),
+                    std::roundf(position.y + offset.y),
+                    sprite_w * fabsf(scale.x),
+                    sprite_h * fabsf(scale.y) };
 }
 
 void Sprite::draw() const noexcept
 {
-  const float h_flip{ scale.x > 0.0f ? 1.0f : -1.0f };
-  const float v_flip{ scale.y > 0.0f ? 1.0f : -1.0f };
-
-  const float sprite_w{ static_cast<float>(get_width()) };
-  const float sprite_h{ static_cast<float>(get_height()) };
-
-  const Rectangle source{ (float)(frame_index)*sprite_w, 0.0f, h_flip * sprite_w, v_flip * sprite_h };
-  const Rectangle dest{ std::roundf(position.x + offset.x),
-                        std::roundf(position.y + offset.y),
-                        sprite_w * fabsf(scale.x),
-                        sprite_h * fabsf(scale.y) };
-
-  DrawTexturePro(texture, source, dest, origin, rotation, tint);
+  DrawTexturePro(texture, get_source_rect(), get_destination_rect(), origin, rotation, tint);
 }
 
 void Sprite::reset_animation()

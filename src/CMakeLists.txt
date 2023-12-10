@@ -6,9 +6,18 @@ INCLUDE_DIRECTORIES(external)
 INCLUDE_DIRECTORIES(external/raylib/src)
 INCLUDE_DIRECTORIES(external/raylib/src/external/glfw/include)
 
-IF (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "ReleaseWithDebInfo")
+IF (CMAKE_BUILD_TYPE STREQUAL "Debug")
   ADD_COMPILE_OPTIONS(-ggdb)
   ADD_COMPILE_OPTIONS(-O0)
+  ADD_COMPILE_OPTIONS(-DDEBUG)
+ENDIF()
+
+IF (CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+  ADD_COMPILE_OPTIONS(-ggdb)
+ENDIF()
+
+IF (CMAKE_BUILD_TYPE STREQUAL "Release")
+  ADD_COMPILE_OPTIONS(-O3)
 ENDIF()
 
 ADD_EXECUTABLE(${PROJECT_NAME}
@@ -17,6 +26,7 @@ ADD_EXECUTABLE(${PROJECT_NAME}
   game.cpp
   main.cpp 
   mask.cpp
+  particle.cpp
   player.cpp
   render_pass.cpp
   sound_manager.cpp

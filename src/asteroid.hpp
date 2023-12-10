@@ -13,12 +13,13 @@ public:
   Vector2 position{};
   Vector2 velocity{};
   int size{ 2 };
+  int life{ 1 };
   mutable Sprite sprite{ "resources/asteroid.aseprite" };
   Mask mask{};
 
   [[nodiscard]] static Asteroid create(const Vector2 &position, int size);
 
-  ObjectState update();
+  bool update();
   void die();
 
   void draw() const noexcept;

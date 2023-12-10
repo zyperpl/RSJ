@@ -4,6 +4,7 @@
 
 #include "bullet.hpp"
 #include "game.hpp"
+#include "particle.hpp"
 #include "utils.hpp"
 
 static constexpr const float ASTEROIDS_SIZE[]   = { 8.0f, 16.0f, 32.0f };
@@ -27,32 +28,38 @@ static constexpr const int ASTEROID_SPLIT_COUNT = 2;
   return asteroid;
 }
 
-ObjectState Asteroid::update()
+bool Asteroid::update()
 {
   position.x += velocity.x;
   position.y += velocity.y;
 
   wrap_position(position);
 
-  for (size_t i = Game::get().bullets->tail; i < Game::get().bullets->head; i++)
-  {
-    Bullet &bullet = Game::get().bullets->objects[i];
-    if (bullet.life <= 0)
-      continue;
-
-    const Mask bullet_mask{ bullet.position, { Circle{ Vector2{ 0.0f, 0.0f }, 2.0f } } };
-
-    if (mask.check_collision(bullet_mask))
+  Game::get().bullets->for_each(
+    [&](Bullet &bullet) -> bool
     {
-      die();
-      bullet.life = 0;
-      return ObjectState::DEAD;
-    }
-  }
+      if (bullet.life <= 0)
+        return true;
+
+      const Mask bullet_mask{ bullet.position, { Circle{ Vector2{ 0.0f, 0.0f }, 2.0f } } };
+
+      if (mask.check_collision(bullet_mask))
+      {
+        die();
+        bullet.life = 0;
+        life--;
+        return false;
+      }
+
+      return true;
+    });
 
   mask.position = position;
 
-  return ObjectState::ALIVE;
+  if (life <= 0)
+    return false;
+
+  return true;
 }
 
 void Asteroid::die()
@@ -64,12 +71,25 @@ void Asteroid::die()
       Game::get().asteroids->push(Asteroid::create(position, size - 1));
     }
   }
+
+  for (int i = 0; i < 20 - std::max(1, size * 5); i++)
+  {
+    const Vector2 pos{ position.x + static_cast<float>(GetRandomValue(-10, 10)),
+                       position.y + static_cast<float>(GetRandomValue(-10, 10)) };
+    const Vector2 vel = Vector2Normalize(
+      Vector2{ static_cast<float>(GetRandomValue(-100, 100)), static_cast<float>(GetRandomValue(-100, 100)) });
+    const float hue        = 229.0f - 10.0f + static_cast<float>(GetRandomValue(0, 20));
+    const float saturation = 0.3f + static_cast<float>(GetRandomValue(0, 10)) / 100.0f;
+    const float value      = 0.4f + static_cast<float>(GetRandomValue(0, 50)) / 100.0f;
+    const Color color      = ColorFromHSV(hue, saturation, value);
+    Game::get().particles->push(Particle::create(pos, vel, color));
+  }
 }
 
 void Asteroid::draw() const noexcept
 {
   sprite.position = position;
-  draw_wrapped(sprite.get_rect(),
+  draw_wrapped(sprite.get_destination_rect(),
                [&](const Vector2 &P)
                {
                  sprite.position = P;
@@ -81,11 +101,13 @@ void Asteroid::draw() const noexcept
                    mask_copy.position = P;
                    mask_copy.draw();
                  }
-                 if (Game::CONFIG.show_debug)
-                 {
-                   DrawLineEx(P, Vector2{ P.x + velocity.x * 30.0f, P.y + velocity.y * 30.0f }, 1.0f, RED);
-                   DrawPixelV(P, PINK);
-                   DrawText(TextFormat("%d", size), P.x, P.y, 10, RED);
-                 }
                });
+
+  if (Game::CONFIG.show_debug)
+  {
+    DrawPixelV(position, PINK);
+    DrawText(TextFormat("%d", size), position.x, position.y, 10, RED);
+  }
+  if (Game::CONFIG.show_velocity)
+    DrawLineEx(position, Vector2{ position.x + velocity.x * 20.0f, position.y + velocity.y * 20.0f }, 1.0f, RED);
 }

@@ -33,7 +33,8 @@ public:
   virtual size_t get_width() const;
   virtual size_t get_height() const;
 
-  Rectangle get_rect() const;
+  Rectangle get_source_rect() const;
+  Rectangle get_destination_rect() const;
 
   void set_frame(int frame);
   int get_frame() const;

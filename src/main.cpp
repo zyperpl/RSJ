@@ -16,6 +16,7 @@
 #include "bullet.hpp"
 #include "game.hpp"
 #include "object_circular_buffer.hpp"
+#include "particle.hpp"
 #include "player.hpp"
 #include "render_pass.hpp"
 #include "utils.hpp"
@@ -27,25 +28,36 @@ const int window_height = Game::height;
 
 const bool integer_scaling = false;
 
+static RenderPass *game_render_pass;
+static RenderPass *ui_render_pass;
+
 void update_draw_frame()
 {
   Game &game = Game::get();
-  static RenderPass game_render_pass(Game::width, Game::height);
-  if (!game_render_pass.render_func)
-    game_render_pass.render_func = [&]()
+  if (!game_render_pass->render_func)
+    game_render_pass->render_func = [&]()
     {
       ClearBackground(BLACK);
       game.draw();
     };
 
-  static RenderPass ui_render_pass(Game::width, Game::height);
-  if (!ui_render_pass.render_func)
-    ui_render_pass.render_func = [&]()
+  if (!ui_render_pass->render_func)
+    ui_render_pass->render_func = [&]()
     {
       const float font_size = 10.0f;
       DrawText(TextFormat("FPS: %i", GetFPS()), 10, 10, font_size, WHITE);
-      DrawText(TextFormat("Bullets: %i", game.bullets->size()), 10, 30, font_size, WHITE);
-      DrawText(TextFormat("Asteroids: %i", game.asteroids->size()), 10, 50, font_size, WHITE);
+      DrawText(TextFormat("Bullets: %i (%zu - %zu)", game.bullets->size(), game.bullets->tail, game.bullets->head),
+               10,
+               30,
+               font_size,
+               WHITE);
+      DrawText(
+        TextFormat("Asteroids: %i (%zu - %zu)", game.asteroids->size(), game.asteroids->tail, game.asteroids->head),
+        10,
+        50,
+        font_size,
+        WHITE);
+
       DrawText("Lives: ", 10, 70, font_size, WHITE);
       Vector2 text_size = MeasureTextEx(GetFontDefault(), "Lives: ", font_size, 1.0f);
       const float x     = 15 + text_size.x;
@@ -54,6 +66,13 @@ void update_draw_frame()
       {
         DrawCircle(x + i * 20, y, 5, RED);
       }
+
+      DrawText(
+        TextFormat("Particles: %i (%zu - %zu)", game.particles->size(), game.particles->tail, game.particles->head),
+        10,
+        90,
+        font_size,
+        WHITE);
     };
 
   const float screen_width_float  = static_cast<float>(GetScreenWidth());
@@ -90,21 +109,14 @@ void update_draw_frame()
     }
   }
 
-  static Camera2D camera{};
-  camera.target   = { 0.0f, 0.0f };
-  camera.target   = Vector2{ Game::width / 2.0f, Game::height / 2.0f };
-  camera.offset   = Vector2{ Game::width / 2.0f, Game::height / 2.0f };
-  camera.rotation = 0.0f;
-  camera.zoom     = 1.0f;
-
   BeginDrawing();
   {
-    game_render_pass.render();
-    ui_render_pass.render();
+    game_render_pass->render();
+    ui_render_pass->render();
 
     ClearBackground(RAYWHITE);
-    game_render_pass.draw(render_destination);
-    ui_render_pass.draw(render_destination);
+    game_render_pass->draw(render_destination);
+    ui_render_pass->draw(render_destination);
   }
   EndDrawing();
   glFinish();
@@ -121,6 +133,9 @@ int main(void)
   Game &game = Game::get();
   game.init();
 
+  game_render_pass = new RenderPass(Game::width, Game::height);
+  ui_render_pass   = new RenderPass(Game::width, Game::height);
+
 #if defined(EMSCRIPTEN)
   emscripten_set_main_loop(update_draw_frame, 0, 1);
 #else
@@ -133,8 +148,11 @@ int main(void)
   }
 #endif
 
+  delete game_render_pass;
+  delete ui_render_pass;
+
   if (IsAudioDeviceReady())
-  CloseAudioDevice();
+    CloseAudioDevice();
 
   if (IsWindowReady())
     CloseWindow();
