@@ -14,7 +14,7 @@ static constexpr const int ASTEROID_SPLIT_COUNT = 2;
 {
   assert(size >= 0 && size < 3);
 
-  const float speed_factor = 0.5f + (4.0f - static_cast<float>(size)) * 0.25f * 0.5f;
+  const float speed_factor = 0.5f + (4.0f - static_cast<float>(size)) * 0.3f * 0.5f;
   const float random_angle = (static_cast<float>(GetRandomValue(0, 100)) / 100.0f) * M_PI * 2.0f;
   Asteroid asteroid;
   asteroid.position     = position;

@@ -110,8 +110,8 @@ void Game::draw_background() noexcept
       if ((x * y) % 3 == 0 || (x + y) % 5 == 0 || (x * y) % 7 == 0 || (x + y) % 9 == 0)
         continue;
 
-      float xf                 = static_cast<float>(x) - sin(frame * 0.001f + x * 37) * static_cast<float>(w) * 0.4f;
-      float yf                 = static_cast<float>(y) - cos(frame * 0.002f - y * 13) * static_cast<float>(h) * 0.5f;
+      float xf                 = static_cast<float>(x) - sin(frame * 0.001f + x * 37.542f) * static_cast<float>(w) * 0.5f;
+      float yf                 = static_cast<float>(y) - cos(frame * 0.002f - y * 13.127f) * static_cast<float>(h) * 0.8f;
       asteroid_sprite.position = Vector2{ xf, yf };
       asteroid_sprite.set_frame((x + y - 1) % 3);
       asteroid_sprite.draw();

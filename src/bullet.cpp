@@ -1,9 +1,21 @@
 #include "bullet.hpp"
 
+#include "game.hpp"
+#include "particle.hpp"
+
 bool Bullet::update()
 {
+  const Color color{ 255, 100, 255, 100 }; 
+
   if (life == 0)
+  {
+    for (int i = 0; i < 5; i++)
+    {
+      const Vector2 velocity{ GetRandomValue(-100, 100) / 100.0f, GetRandomValue(-100, 100) / 100.0f };
+      Game::get().particles->push(Particle::create(position, velocity, color));
+    }
     return false;
+  }
 
   position.x += velocity.x;
   position.y += velocity.y;
@@ -11,6 +23,11 @@ bool Bullet::update()
   wrap_position(position);
 
   life--;
+
+  if (life % 3 == 0)
+  {
+    Game::get().particles->push(Particle::create(position, Vector2{ 0.0f, 0.0f }, color));
+  }
 
   return true;
 }

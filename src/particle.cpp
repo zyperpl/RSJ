@@ -65,9 +65,7 @@ bool Particle::update() noexcept
     }
   }
 
-  const float particle_usage =
-    static_cast<float>(Game::get().particles->size()) / static_cast<float>(Game::get().particles->capacity);
-  if ((particle_usage > 0.9f && color.a >= 255 && Vector2Length(velocity) < 0.1f) || color.a < 255)
+  if (color.a < 255)
     color.a -= 1;
 
   if (color.a <= 0)
@@ -78,5 +76,7 @@ bool Particle::update() noexcept
 
 void Particle::draw() const noexcept
 {
-  DrawPixelV(position, color);
+  Color c = color;
+  c.a     = static_cast<unsigned char>(static_cast<float>(c.a) / 255.0f * 12.0f) * 255 / 12;
+  DrawPixelV(position, c);
 }

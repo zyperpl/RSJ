@@ -59,7 +59,7 @@ void Player::die()
                        position.y + static_cast<float>(GetRandomValue(-10, 10)) };
     const Vector2 vel = Vector2Normalize(
       Vector2{ static_cast<float>(GetRandomValue(-100, 100)), static_cast<float>(GetRandomValue(-100, 100)) });
-    const Color color { 250, 200, 120, 240 };
+    const Color color{ 250, 200, 120, 240 };
     Game::get().particles->push(Particle::create(pos, vel, color));
   }
 
@@ -88,6 +88,25 @@ void Player::handle_input()
     velocity.y -= sin(sprite.rotation * DEG2RAD + M_PI / 2.0f) * acceleration_speed;
 
     sprite.set_tag("fly");
+
+    for (int i = 0; i < 1; ++i)
+    {
+      const Vector2 pos{
+        static_cast<float>(position.x + cos(sprite.rotation * DEG2RAD + M_PI / 2.0f) * 10.0f + GetRandomValue(-2, 2)),
+        static_cast<float>(position.y + sin(sprite.rotation * DEG2RAD + M_PI / 2.0f) * 10.0f + GetRandomValue(-2, 2))
+      };
+      Vector2 vel{ static_cast<float>(cos(sprite.rotation * DEG2RAD + M_PI / 2.0f) * 2.0f),
+                   static_cast<float>(sin(sprite.rotation * DEG2RAD + M_PI / 2.0f) * 2.0f) };
+      Color color = WHITE;
+      color.a     = 40;
+      Game::get().particles->push(Particle::create(pos, vel, color));
+
+      vel.x *= 0.5f;
+      vel.y *= 0.5f;
+      color   = BROWN;
+      color.a = 80;
+      Game::get().particles->push(Particle::create(pos, vel, color));
+    }
   }
   else
   {
@@ -110,6 +129,19 @@ void Player::handle_input()
     bullet.velocity.x += velocity.x * 0.5f;
     bullet.velocity.y += velocity.y * 0.5f;
     Game::get().bullets->push(std::move(bullet));
+
+    for (int i = 0; i < 4; ++i)
+    {
+      const Vector2 pos{
+        static_cast<float>(position.x + cos(sprite.rotation * DEG2RAD + M_PI / 2.0f) * 10.0f + GetRandomValue(-2, 2)),
+        static_cast<float>(position.y + sin(sprite.rotation * DEG2RAD + M_PI / 2.0f) * 10.0f + GetRandomValue(-2, 2))
+      };
+      Color color = PINK;
+      color.a     = 120;
+      Game::get().particles->push(Particle::create(pos, Vector2Scale(bullet.velocity, 0.99f), color));
+      color.a     = 20;
+      Game::get().particles->push(Particle::create(pos, Vector2Scale(bullet.velocity, 0.2f), color));
+    }
 
     shoot_timer.start();
   }
