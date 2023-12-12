@@ -7,10 +7,12 @@
 #include "bullet.hpp"
 #include "object_circular_buffer.hpp"
 #include "particle.hpp"
+#include "pickable.hpp"
 #include "player.hpp"
 #include "utils.hpp"
 
 Config Game::CONFIG{};
+uint64_t Game::frame{ 0 };
 
 Game &Game::get() noexcept
 {
@@ -24,6 +26,7 @@ void Game::init()
   bullets   = std::make_unique<ObjectCircularBuffer<Bullet, 64>>();
   asteroids = std::make_unique<ObjectCircularBuffer<Asteroid, 128>>();
   particles = std::make_unique<ObjectCircularBuffer<Particle, 1024>>();
+  pickables = std::make_unique<ObjectCircularBuffer<Pickable, 64>>();
 
   for (size_t i = 0; i < NUMBER_OF_ASTEROIDS; i++)
   {
@@ -46,6 +49,15 @@ void Game::init()
     particles->push(std::move(particle));
   }
 
+  for (size_t i = 0; i < 2; i++)
+  {
+    const Vector2 position = { static_cast<float>(GetRandomValue(0, width)),
+                               static_cast<float>(GetRandomValue(0, height)) };
+    Pickable pickable;
+    pickable.position = position;
+    pickables->push(std::move(pickable));
+  }
+
   for (size_t i = 0; i < stars.size(); i++)
   {
     stars[i] = Vector2{ static_cast<float>(GetRandomValue(0, width)), static_cast<float>(GetRandomValue(0, height)) };
@@ -58,6 +70,7 @@ void Game::update()
   bullets->for_each(std::bind(&Bullet::update, std::placeholders::_1));
   asteroids->for_each(std::bind(&Asteroid::update, std::placeholders::_1));
   particles->for_each(std::bind(&Particle::update, std::placeholders::_1));
+  pickables->for_each(std::bind(&Pickable::update, std::placeholders::_1));
 
   for (size_t i = 0; i < stars.size(); i++)
   {
@@ -71,6 +84,8 @@ void Game::update()
       stars[i].y = static_cast<float>(GetRandomValue(0, height));
     }
   }
+
+  frame++;
 }
 
 void Game::draw() noexcept
@@ -78,16 +93,14 @@ void Game::draw() noexcept
   draw_background();
   particles->for_each(std::bind(&Particle::draw, std::placeholders::_1));
 
-  player->draw();
   bullets->for_each(std::bind(&Bullet::draw, std::placeholders::_1));
+  player->draw();
   asteroids->for_each(std::bind(&Asteroid::draw, std::placeholders::_1));
+  pickables->for_each(std::bind(&Pickable::draw, std::placeholders::_1));
 }
 
 void Game::draw_background() noexcept
 {
-  static int frame = 0;
-  frame++;
-
   for (size_t i = 0; i < stars.size(); i++)
   {
     const Vector2 &star = stars[i];
@@ -110,8 +123,8 @@ void Game::draw_background() noexcept
       if ((x * y) % 3 == 0 || (x + y) % 5 == 0 || (x * y) % 7 == 0 || (x + y) % 9 == 0)
         continue;
 
-      float xf                 = static_cast<float>(x) - sin(frame * 0.001f + x * 37.542f) * static_cast<float>(w) * 0.5f;
-      float yf                 = static_cast<float>(y) - cos(frame * 0.002f - y * 13.127f) * static_cast<float>(h) * 0.8f;
+      float xf = static_cast<float>(x) - sin(frame * 0.001f + x * 37.542f) * static_cast<float>(w) * 0.5f;
+      float yf = static_cast<float>(y) - cos(frame * 0.002f - y * 13.127f) * static_cast<float>(h) * 0.8f;
       asteroid_sprite.position = Vector2{ xf, yf };
       asteroid_sprite.set_frame((x + y - 1) % 3);
       asteroid_sprite.draw();

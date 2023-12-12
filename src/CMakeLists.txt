@@ -27,6 +27,7 @@ ADD_EXECUTABLE(${PROJECT_NAME}
   main.cpp 
   mask.cpp
   particle.cpp
+  pickable.cpp
   player.cpp
   render_pass.cpp
   resource.cpp
