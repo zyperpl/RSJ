@@ -6,12 +6,6 @@
 
 $(Your Game Description)
 
-### Features
-
- - $(Game Feature 01)
- - $(Game Feature 02)
- - $(Game Feature 03)
-
 ### Controls
 
 Keyboard:
@@ -23,22 +17,8 @@ Keyboard:
 
 _TODO: Show your game to the world, animated GIFs recommended!._
 
-### Developers
-
- - $(Developer 01) - $(Role/Tasks Developed)
- - $(Developer 02) - $(Role/Tasks Developed)
- - $(Developer 03) - $(Role/Tasks Developed)
-
-### Links
-
- - YouTube Gameplay: $(YouTube Link)
- - itch.io Release: $(itch.io Game Page)
- - Steam Release: $(Steam Game Page)
-
 ### License
 
-This game sources are licensed under an unmodified zlib/libpng license, which is an OSI-certified, BSD-like license that allows static linking with closed source software. Check [LICENSE](LICENSE) for further details.
-
-$(Additional Licenses)
+This game source code and assets are licensed under GPL-3.0 License. Check [LICENSE](LICENSE) for further details.
 
 *Copyright (c) 2023 Kacper Zybała @zyperpl*
