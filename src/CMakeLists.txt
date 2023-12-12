@@ -29,6 +29,7 @@ ADD_EXECUTABLE(${PROJECT_NAME}
   particle.cpp
   player.cpp
   render_pass.cpp
+  resource.cpp
   sound_manager.cpp
   sprite.cpp
   utils.cpp

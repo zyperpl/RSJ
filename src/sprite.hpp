@@ -2,12 +2,14 @@
 
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include <raylib.h>
+#include <raymath.h>
 
-struct ase_t;
+#include "resource.hpp"
 
-class Sprite
+class Sprite final
 {
 public:
   struct AnimationTag
@@ -19,27 +21,24 @@ public:
   };
   typedef std::unordered_map<std::string, AnimationTag> AnimationTags;
 
+  Sprite() = default;
   [[nodiscard]] Sprite(const std::string &file_path, std::string tag = {});
-  Sprite(const Sprite &) = delete;
-  Sprite(Sprite &&);
-  Sprite &operator=(const Sprite &) = delete;
-  Sprite &operator=(Sprite &&);
 
-  virtual ~Sprite();
-  virtual void draw() const noexcept;
+  ~Sprite();
+  void draw() const noexcept;
 
   [[nodiscard]] Texture2D &get_texture();
 
-  virtual size_t get_width() const;
-  virtual size_t get_height() const;
+  [[nodiscard]] size_t get_width() const;
+  [[nodiscard]] size_t get_height() const;
 
-  Rectangle get_source_rect() const;
-  Rectangle get_destination_rect() const;
+  [[nodiscard]] Rectangle get_source_rect() const;
+  [[nodiscard]] Rectangle get_destination_rect() const;
 
   void set_frame(int frame);
-  int get_frame() const;
+  [[nodiscard]] int get_frame() const;
 
-  int get_frame_count() const;
+  [[nodiscard]] int get_frame_count() const;
   void set_tag(std::string tag_name);
   void reset_animation();
   void animate(int step = 1);
@@ -51,17 +50,14 @@ public:
   Vector2 offset{ 0.0f, 0.0f };
   Vector2 scale{ 1.0f, 1.0f };
 
-  float rotation{ 0.0f };
   Color tint{ WHITE };
+  float rotation{ 0.0f };
 
 protected:
   [[nodiscard]] bool should_advance_frame();
 
-  ase_t *ase{ nullptr };
-  Texture2D texture{};
+  TextureResource texture{};
   std::string path{};
-
-  friend bool use_cache(Sprite &, const std::string &);
 
 private:
   void load_texture_with_animation();
@@ -71,7 +67,13 @@ private:
 
   AnimationTag tag{ 0, 1 };
   int frame_index{ 0 };
+  size_t frame_width{ 0 };
+  size_t frame_height{ 0 };
+  int frame_count{ 0 };
+  std::vector<int> frame_durations; // in milliseconds
   int64_t frame_timer{ 0 };
 
   int64_t last_time_ms{ 0 };
+
+  static bool use_cache(Sprite &, const std::string &);
 };

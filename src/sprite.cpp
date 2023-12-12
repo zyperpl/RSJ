@@ -27,24 +27,14 @@
 #pragma clang diagnostic pop
 #endif
 
-static std::unordered_map<std::string, Texture2D> texture_cache{};
-static std::unordered_map<std::string, ase_t *> aseprite_files_cache{};
-static std::unordered_map<std::string, Sprite::AnimationTags> tags_cache{};
+static std::unordered_map<std::string, Sprite> sprite_cache{};
 static std::unordered_map<std::string, size_t> file_path_usage_count{};
 
-bool use_cache(Sprite &sprite, const std::string &file_path)
+bool Sprite::use_cache(Sprite &sprite, const std::string &file_path)
 {
-  if (auto texture_cache_iterator = texture_cache.find(file_path); texture_cache_iterator != texture_cache.end())
+  if (sprite_cache.contains(file_path))
   {
-    sprite.texture = texture_cache_iterator->second;
-
-    if (auto aseprite_files_cache_iterator = aseprite_files_cache.find(file_path);
-        aseprite_files_cache_iterator != aseprite_files_cache.end())
-      sprite.ase = aseprite_files_cache_iterator->second;
-
-    if (auto tags_cache_iterator = tags_cache.find(file_path); tags_cache_iterator != tags_cache.end())
-      sprite.tags = tags_cache_iterator->second;
-
+    sprite = sprite_cache[file_path];
     file_path_usage_count[file_path] += 1;
 
     return true;
@@ -57,96 +47,37 @@ Sprite::Sprite(const std::string &file_path, std::string tag_name)
   : path{ file_path }
 {
   if (use_cache(*this, file_path))
-  {
-    TraceLog(
-      LOG_TRACE, "Sprite(%s) loaded from cache (usages: %zu)", file_path.data(), file_path_usage_count[file_path]);
     return;
-  }
 
   if (path.ends_with(".aseprite"))
   {
     load_texture_with_animation();
     set_tag(tag_name);
-
-    if (ase)
-    {
-      aseprite_files_cache[path] = ase;
-      tags_cache[path]           = tags;
-    }
   }
   else
   {
-    texture = LoadTexture(std::string(path).c_str());
+    texture = TextureResource(LoadTexture(std::string(path).c_str()));
   }
-  texture_cache[path] = texture;
+
+  TraceLog(LOG_TRACE, "Sprite(%s) loaded", path.data());
+  sprite_cache[path] = *this;
   file_path_usage_count[path] += 1;
 
-  assert(IsTextureReady(texture));
-}
-
-Sprite::Sprite(Sprite &&other)
-  : position{ other.position }
-  , origin{ other.origin }
-  , offset{ other.offset }
-  , scale{ other.scale }
-  , rotation{ other.rotation }
-  , tint{ other.tint }
-  , ase{ other.ase }
-  , texture{ std::move(other.texture) }
-  , path{ std::move(other.path) }
-  , tags{ std::move(other.tags) }
-  , default_tag{ other.default_tag }
-  , tag{ other.tag }
-  , frame_index{ other.frame_index }
-  , frame_timer{ other.frame_timer }
-  , last_time_ms{ other.last_time_ms }
-{
-  other.texture = {};
-  other.ase     = nullptr;
-}
-
-Sprite &Sprite::operator=(Sprite &&other)
-{
-  position     = other.position;
-  origin       = other.origin;
-  offset       = other.offset;
-  scale        = other.scale;
-  rotation     = other.rotation;
-  tint         = other.tint;
-  ase          = other.ase;
-  texture      = std::move(other.texture);
-  path         = std::move(other.path);
-  tags         = std::move(other.tags);
-  default_tag  = other.default_tag;
-  tag          = other.tag;
-  frame_index  = other.frame_index;
-  frame_timer  = other.frame_timer;
-  last_time_ms = other.last_time_ms;
-
-  other.texture = {};
-  other.ase     = nullptr;
-
-  return *this;
+  assert(IsTextureReady(texture.get()));
 }
 
 Sprite::~Sprite()
 {
   file_path_usage_count[path] -= 1;
-  if (file_path_usage_count[path] > 0)
-    return;
-
-  UnloadTexture(texture);
-
-  if (ase)
-    cute_aseprite_free(ase);
+  assert(file_path_usage_count[path] >= 0);
 }
 
 void Sprite::load_texture_with_animation()
 {
-  ase = cute_aseprite_load_from_file(path.data(), nullptr);
-  if (!ase || ase->frame_count <= 0 || ase->w <= 0 || ase->h <= 0)
+  ase_t *const ase = cute_aseprite_load_from_file(path.data(), nullptr);
+  if (!ase || ase->w <= 0 || ase->h <= 0)
   {
-    TraceLog(LOG_ERROR, "Cannot load ase file \"%s\"", path.data());
+    TraceLog(LOG_ERROR, "Cannot load \"ase\" file \"%s\"", path.data());
     return;
   }
 
@@ -167,13 +98,21 @@ void Sprite::load_texture_with_animation()
     ImageDraw(&image, frameImage, src, dest, WHITE);
   }
 
-  texture = LoadTextureFromImage(image);
+  frame_width  = ase->w;
+  frame_height = ase->h;
+  frame_count  = ase->frame_count;
+  for (int i = 0; i < ase->frame_count; ++i)
+  {
+    const ase_frame_t *frame{ ase->frames + i };
+    frame_durations.push_back(frame->duration_milliseconds);
+  }
+
+  texture = TextureResource(LoadTextureFromImage(image));
   UnloadImage(image);
 
   if (ase->tag_count > 0 && ase->frame_count > 0)
   {
-    TraceLog(LOG_INFO, "Sprite(%s, %d frames) has %d tags:", path.data(), ase->frame_count, ase->tag_count);
-
+    TraceLog(LOG_INFO, "Sprite(%s, %d frames) has %d tags:", path.data(), frame_count, tags.size());
     for (int i = 0; i < ase->tag_count; ++i)
     {
       const auto &atag = ase->tags[i];
@@ -181,32 +120,29 @@ void Sprite::load_texture_with_animation()
       tags.insert(std::make_pair(atag.name, AnimationTag{ atag.from_frame, atag.to_frame }));
     }
   }
-  else
-  {
-    if (ase->frame_count <= 0)
-      TraceLog(LOG_WARNING, "Sprite(%s) has no frames", path.data());
-  }
+
+  cute_aseprite_free(ase);
 }
 
 Texture2D &Sprite::get_texture()
 {
-  return texture;
+  return texture.get();
 }
 
 size_t Sprite::get_width() const
 {
-  if (!ase)
-    return texture.width;
+  if (frame_width <= 0)
+    return texture->width;
 
-  return ase->w;
+  return frame_width;
 }
 
 size_t Sprite::get_height() const
 {
-  if (!ase)
-    return texture.height;
+  if (frame_height <= 0)
+    return texture->height;
 
-  return ase->h;
+  return frame_height;
 }
 
 void Sprite::set_centered()
@@ -235,7 +171,7 @@ Rectangle Sprite::get_destination_rect() const
 
 void Sprite::draw() const noexcept
 {
-  DrawTexturePro(texture, get_source_rect(), get_destination_rect(), origin, rotation, tint);
+  DrawTexturePro(texture.get(), get_source_rect(), get_destination_rect(), origin, rotation, tint);
 }
 
 void Sprite::reset_animation()
@@ -262,9 +198,7 @@ int Sprite::get_frame() const
 
 int Sprite::get_frame_count() const
 {
-  if (!ase) [[unlikely]]
-    return 0;
-  return ase->frame_count;
+  return frame_count;
 }
 
 int64_t current_time_ms()
@@ -286,26 +220,24 @@ bool Sprite::should_advance_frame()
     return false;
   }
 
-  if (ase->frame_count <= 1) [[unlikely]]
+  if (frame_count <= 1) [[unlikely]]
     return false;
 
-  const int64_t ase_frame_array_index = frame_index;
-  assert(ase_frame_array_index < ase->frame_count);
-  assert(ase_frame_array_index >= 0);
+  const int64_t frame_array_index = frame_index;
+  assert(frame_array_index < frame_count);
+  assert(frame_array_index >= 0);
 
   if (frame_index < 0)
   {
-    frame_index = ase->frame_count > 0 ? ase->frame_count - 1 : 0;
+    frame_index = frame_count > 0 ? frame_count - 1 : 0;
     return false;
   }
-  if (frame_index >= ase->frame_count)
+  if (frame_index >= frame_count)
   {
     frame_index = 0;
     return false;
   }
-  const auto ase_frame = ase->frames[ase_frame_array_index];
-
-  const int frame_duration = ase_frame.duration_milliseconds;
+  const int frame_duration = frame_durations[frame_array_index];
   frame_timer += time_difference_ms;
 
   if (frame_timer >= frame_duration)
@@ -322,13 +254,13 @@ bool Sprite::should_advance_frame()
 
 void Sprite::animate(int step)
 {
-  if (!ase)
+  if (frame_count <= 1)
     return;
 
   if (should_advance_frame())
   {
     frame_index += step;
-    if (frame_index > tag.end_frame || frame_index >= ase->frame_count)
+    if (frame_index > tag.end_frame || frame_index >= frame_count)
       frame_index = tag.start_frame;
 
     if (frame_index < tag.start_frame || frame_index < 0)
@@ -338,9 +270,6 @@ void Sprite::animate(int step)
 
 void Sprite::set_tag(std::string tag_name)
 {
-  if (!ase) [[unlikely]]
-    return;
-
   if (!tag_name.empty())
   {
     auto tags_iterator = tags.find(tag_name);
