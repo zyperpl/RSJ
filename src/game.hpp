@@ -20,6 +20,7 @@ struct Config
   bool show_debug{ true };
   bool show_masks{ false };
   bool show_velocity{ false };
+  bool debug_bullets { false };
 };
 
 class Game

@@ -37,16 +37,15 @@ void Game::init()
 
   for (size_t i = 0; i < 10; i++)
   {
-    Particle particle;
-    particle.position =
-      Vector2{ static_cast<float>(GetRandomValue(0, width)), static_cast<float>(GetRandomValue(0, height)) };
-    particle.velocity = Vector2{ static_cast<float>(GetRandomValue(-100, 100)) / 100.0f,
-                                 static_cast<float>(GetRandomValue(-100, 100)) / 100.0f };
-    particle.color    = Color{ static_cast<unsigned char>(GetRandomValue(0, 255)),
-                            static_cast<unsigned char>(GetRandomValue(0, 255)),
-                            static_cast<unsigned char>(GetRandomValue(0, 255)),
-                            static_cast<unsigned char>(GetRandomValue(0, 255)) };
-    particles->push(std::move(particle));
+    Vector2 particle_position{ static_cast<float>(GetRandomValue(0, width)),
+                               static_cast<float>(GetRandomValue(0, height)) };
+    Vector2 particle_velocity{ static_cast<float>(GetRandomValue(-100, 100)) / 100.0f,
+                               static_cast<float>(GetRandomValue(-100, 100)) / 100.0f };
+    Color particle_color{ static_cast<unsigned char>(GetRandomValue(0, 255)),
+                          static_cast<unsigned char>(GetRandomValue(0, 255)),
+                          static_cast<unsigned char>(GetRandomValue(0, 255)),
+                          static_cast<unsigned char>(GetRandomValue(0, 255)) };
+    particles->push(Particle::create(particle_position, particle_velocity, particle_color));
   }
 
   for (size_t i = 0; i < 2; i++)

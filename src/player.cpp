@@ -121,26 +121,40 @@ void Player::handle_input()
 
   if (IsKeyDown(KEY_SPACE) && shoot_timer.is_done() && !is_invincible())
   {
-    Bullet bullet;
-    bullet.position.x = position.x - cos(sprite.rotation * DEG2RAD + M_PI / 2.0f) * 5.0f;
-    bullet.position.y = position.y - sin(sprite.rotation * DEG2RAD + M_PI / 2.0f) * 5.0f;
-    bullet.velocity.x = cos(sprite.rotation * DEG2RAD + M_PI / 2.0f + M_PI) * 5.0f;
-    bullet.velocity.y = sin(sprite.rotation * DEG2RAD + M_PI / 2.0f + M_PI) * 5.0f;
-    bullet.velocity.x += velocity.x * 0.5f;
-    bullet.velocity.y += velocity.y * 0.5f;
-    Game::get().bullets->push(std::move(bullet));
+    Vector2 bullet_position;
+    Vector2 bullet_velocity;
+    bullet_position.x = position.x - cos(sprite.rotation * DEG2RAD + M_PI / 2.0f) * 5.0f;
+    bullet_position.y = position.y - sin(sprite.rotation * DEG2RAD + M_PI / 2.0f) * 5.0f;
+    bullet_velocity.x = cos(sprite.rotation * DEG2RAD + M_PI / 2.0f + M_PI) * 5.0f;
+    bullet_velocity.y = sin(sprite.rotation * DEG2RAD + M_PI / 2.0f + M_PI) * 5.0f;
+    bullet_velocity.x += velocity.x * 0.5f;
+    bullet_velocity.y += velocity.y * 0.5f;
 
-    for (int i = 0; i < 4; ++i)
+    BulletType bullet_type = BulletType::Homing;
+
+    if (bullet_type == BulletType::Normal)
     {
-      const Vector2 pos{
-        static_cast<float>(position.x + cos(sprite.rotation * DEG2RAD + M_PI / 2.0f) * 10.0f + GetRandomValue(-2, 2)),
-        static_cast<float>(position.y + sin(sprite.rotation * DEG2RAD + M_PI / 2.0f) * 10.0f + GetRandomValue(-2, 2))
-      };
-      Color color = PINK;
-      color.a     = 120;
-      Game::get().particles->push(Particle::create(pos, Vector2Scale(bullet.velocity, 0.99f), color));
-      color.a     = 20;
-      Game::get().particles->push(Particle::create(pos, Vector2Scale(bullet.velocity, 0.2f), color));
+      Game::get().bullets->push(Bullet::create_normal(bullet_position, bullet_velocity));
+      for (int i = 0; i < 4; ++i)
+      {
+        const Vector2 pos{
+          static_cast<float>(position.x + cos(sprite.rotation * DEG2RAD + M_PI / 2.0f) * 10.0f + GetRandomValue(-2, 2)),
+          static_cast<float>(position.y + sin(sprite.rotation * DEG2RAD + M_PI / 2.0f) * 10.0f + GetRandomValue(-2, 2))
+        };
+        Color color = PINK;
+        color.a     = 120;
+        Game::get().particles->push(Particle::create(pos, Vector2Scale(bullet_velocity, 0.99f), color));
+        color.a = 20;
+        Game::get().particles->push(Particle::create(pos, Vector2Scale(bullet_velocity, 0.2f), color));
+      }
+    }
+    else if (bullet_type == BulletType::Homing)
+    {
+      Game::get().bullets->push(Bullet::create_homing(bullet_position, bullet_velocity));
+    }
+    else if (bullet_type == BulletType::Assisted)
+    {
+      Game::get().bullets->push(Bullet::create_assisted(position, bullet_velocity));
     }
 
     shoot_timer.start();

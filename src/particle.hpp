@@ -20,4 +20,9 @@ public:
   Vector2 position{ 0.0f, 0.0f };
   Vector2 velocity{ 0.0f, 0.0f };
   Color color{ 255, 255, 255, 255 };
+
+private:
+  Particle() = default;
+
+  DECLARE_FRIEND_OBJECT_CIRCULAR_BUFFER()
 };

@@ -23,4 +23,9 @@ public:
   void die();
 
   void draw() const noexcept;
+
+private:
+  Asteroid() = default;
+
+  DECLARE_FRIEND_OBJECT_CIRCULAR_BUFFER()
 };

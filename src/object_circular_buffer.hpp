@@ -7,6 +7,10 @@
 #include <functional>
 #include <type_traits>
 
+#define DECLARE_FRIEND_OBJECT_CIRCULAR_BUFFER() \
+  template<typename T, size_t N>                \
+  friend struct ObjectCircularBuffer;
+
 template<typename T, size_t BUFFER_SIZE>
 struct ObjectCircularBuffer
 {

@@ -80,7 +80,7 @@ void Asteroid::die()
       Vector2{ static_cast<float>(GetRandomValue(-100, 100)), static_cast<float>(GetRandomValue(-100, 100)) });
     const float hue        = 229.0f - 10.0f + static_cast<float>(GetRandomValue(0, 20));
     const float saturation = 0.3f + static_cast<float>(GetRandomValue(0, 10)) / 100.0f;
-    const float value      = 0.4f + static_cast<float>(GetRandomValue(0, 50)) / 100.0f;
+    const float value      = 0.1f + static_cast<float>(GetRandomValue(0, 50)) / 100.0f;
     const Color color      = ColorFromHSV(hue, saturation, value);
     Game::get().particles->push(Particle::create(pos, vel, color));
   }
