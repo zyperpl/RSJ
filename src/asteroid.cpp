@@ -10,6 +10,20 @@
 static constexpr const float ASTEROIDS_SIZE[]   = { 8.0f, 16.0f, 32.0f };
 static constexpr const int ASTEROID_SPLIT_COUNT = 2;
 
+Particle create_asteroid_particle(const Vector2 &position, unsigned char alpha = 255)
+{
+  const Vector2 pos{ position.x + static_cast<float>(GetRandomValue(-10, 10)),
+                     position.y + static_cast<float>(GetRandomValue(-10, 10)) };
+  const Vector2 vel = Vector2Normalize(
+    Vector2{ static_cast<float>(GetRandomValue(-100, 100)), static_cast<float>(GetRandomValue(-100, 100)) });
+  const float hue        = 229.0f - 10.0f + static_cast<float>(GetRandomValue(0, 20));
+  const float saturation = 0.3f + static_cast<float>(GetRandomValue(0, 10)) / 100.0f;
+  const float value      = 0.1f + static_cast<float>(GetRandomValue(0, 50)) / 100.0f;
+  Color color            = ColorFromHSV(hue, saturation, value);
+  color.a                = alpha;
+  return Particle::create(pos, vel, color);
+}
+
 [[nodiscard]] Asteroid Asteroid::create(const Vector2 &position, int size)
 {
   assert(size >= 0 && size < 3);
@@ -45,9 +59,15 @@ bool Asteroid::update()
 
       if (mask.check_collision(bullet_mask))
       {
-        die();
-        bullet.life = 0;
         life--;
+
+        if (life <= 0)
+          die();
+
+        for (int i = 0; i < 20; i++)
+          Game::get().particles->push(create_asteroid_particle(position, 100));
+
+        bullet.life = 0;
         return false;
       }
 
@@ -74,20 +94,14 @@ void Asteroid::die()
 
   for (int i = 0; i < 20 - std::max(1, size * 5); i++)
   {
-    const Vector2 pos{ position.x + static_cast<float>(GetRandomValue(-10, 10)),
-                       position.y + static_cast<float>(GetRandomValue(-10, 10)) };
-    const Vector2 vel = Vector2Normalize(
-      Vector2{ static_cast<float>(GetRandomValue(-100, 100)), static_cast<float>(GetRandomValue(-100, 100)) });
-    const float hue        = 229.0f - 10.0f + static_cast<float>(GetRandomValue(0, 20));
-    const float saturation = 0.3f + static_cast<float>(GetRandomValue(0, 10)) / 100.0f;
-    const float value      = 0.1f + static_cast<float>(GetRandomValue(0, 50)) / 100.0f;
-    const Color color      = ColorFromHSV(hue, saturation, value);
-    Game::get().particles->push(Particle::create(pos, vel, color));
+    Game::get().particles->push(create_asteroid_particle(position));
   }
 }
 
 void Asteroid::draw() const noexcept
 {
+  Color color     = DARKPURPLE;
+  sprite.tint     = ColorBrightness(color, 0.5f + static_cast<float>(life) / static_cast<float>(max_life) * 0.5f);
   sprite.position = position;
   draw_wrapped(sprite.get_destination_rect(),
                [&](const Vector2 &P)

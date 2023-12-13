@@ -24,13 +24,17 @@ const Asteroid &get_nearest_asteroid(const Vector2 &position)
 {
   auto &asteroids                  = Game::get().asteroids;
   const Asteroid *nearest_asteroid = &asteroids->objects[0];
+  float nearest_distance{ std::numeric_limits<float>::max() };
 
   asteroids->for_each(
-    [&](const Asteroid &asteroid) 
+    [&](const Asteroid &asteroid)
     {
       const float distance = Vector2Distance(position, asteroid.position);
-      if (distance < Vector2Distance(position, nearest_asteroid->position))
+      if (distance < nearest_distance)
+      {
         nearest_asteroid = &asteroid;
+        nearest_distance = distance;
+      }
     });
 
   return *nearest_asteroid;
@@ -55,12 +59,13 @@ Bullet Bullet::create_assisted(const Vector2 &position, const Vector2 &velocity)
 Bullet Bullet::create_homing(const Vector2 &position, [[maybe_unused]] const Vector2 &velocity)
 {
   Bullet bullet;
-  bullet.position       = position;
-  bullet.direction      = Vector2Normalize(velocity);
+  bullet.position        = position;
+  bullet.direction       = Vector2Normalize(velocity);
   auto &nearest_asteroid = get_nearest_asteroid(position);
-  bullet.target         = &nearest_asteroid.position;
-  bullet.type           = BulletType::Homing;
-  bullet.life           = 20;
+  if (nearest_asteroid.life > 0)
+    bullet.target = &nearest_asteroid.position;
+  bullet.type = BulletType::Homing;
+  bullet.life = 20;
   return bullet;
 }
 
@@ -88,7 +93,7 @@ bool Bullet::update()
   }
   else if (type == BulletType::Homing && target != nullptr)
   {
-    direction = Vector2Normalize(Vector2Subtract(*target, position));
+    direction = Vector2Normalize(Vector2Subtract(get_target_position(), position));
 
     velocity.x += direction.x * 2.0f;
     velocity.y += direction.y * 2.0f;
@@ -129,6 +134,19 @@ void Bullet::draw() const noexcept
   {
     DrawCircleV(DEBUG_asteroid_position, 2.0f, RED);
     DrawCircleLinesV(DEBUG_asteroid_position, 20.0f, RED);
+
+    if (target)
+    {
+      DrawCircleV(get_target_position(), 2.0f, RED);
+      DrawCircleLinesV(get_target_position(), 20.0f, RED);
+    }
   }
 #endif
+}
+
+Vector2 Bullet::get_target_position() const noexcept
+{
+  if (target)
+    return *target;
+  return position;
 }
