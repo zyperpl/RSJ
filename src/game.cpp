@@ -23,10 +23,17 @@ Game &Game::get() noexcept
 void Game::init()
 {
   player    = std::make_unique<Player>();
-  bullets   = std::make_unique<ObjectCircularBuffer<Bullet, 64>>();
-  asteroids = std::make_unique<ObjectCircularBuffer<Asteroid, 128>>();
-  particles = std::make_unique<ObjectCircularBuffer<Particle, 1024>>();
-  pickables = std::make_unique<ObjectCircularBuffer<Pickable, 64>>();
+  bullets   = std::make_unique<ObjectCircularBuffer<Bullet, 128>>();
+  asteroids = std::make_unique<ObjectCircularBuffer<Asteroid, 1024>>();
+  particles = std::make_unique<ObjectCircularBuffer<Particle, 4096>>();
+  pickables = std::make_unique<ObjectCircularBuffer<Pickable, 1024>>();
+
+  SetTraceLogLevel(LOG_TRACE);
+
+  TraceLog(LOG_TRACE, "Size of Asteroid buffer: %zukB", sizeof(Asteroid) * asteroids->capacity / 1024);
+  TraceLog(LOG_TRACE, "Size of Bullet buffer: %zukB", sizeof(Bullet) * bullets->capacity / 1024);
+  TraceLog(LOG_TRACE, "Size of Particle buffer: %zukB", sizeof(Particle) * particles->capacity / 1024);
+  TraceLog(LOG_TRACE, "Size of Pickable buffer: %zukB", sizeof(Pickable) * pickables->capacity / 1024);
 
   for (size_t i = 0; i < NUMBER_OF_ASTEROIDS; i++)
   {
@@ -81,6 +88,23 @@ void Game::update()
       stars[i].y = static_cast<float>(GetRandomValue(0, height));
     }
   }
+
+#if defined(DEBUG)
+
+  if (IsKeyDown(KEY_LEFT_SHIFT))
+  {
+    if (IsKeyPressed(KEY_F1))
+    {
+      for (size_t i = 0; i < NUMBER_OF_ASTEROIDS; i++)
+      {
+        const Vector2 position = { static_cast<float>(GetRandomValue(0, width)),
+                                   static_cast<float>(GetRandomValue(0, height)) };
+        asteroids->push(Asteroid::create(position, 2));
+      }
+    }
+  }
+
+#endif
 
   frame++;
 }

@@ -69,7 +69,11 @@ Sprite::Sprite(const std::string &file_path, std::string tag_name)
 Sprite::~Sprite()
 {
   file_path_usage_count[path] -= 1;
-  assert(file_path_usage_count[path] >= 0);
+  if (file_path_usage_count[path] == 0)
+  {
+    TraceLog(LOG_TRACE, "Sprite(%s) unloaded", path.data());
+    sprite_cache.erase(path);
+  }
 }
 
 void Sprite::load_texture_with_animation()

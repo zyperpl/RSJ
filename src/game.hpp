@@ -29,10 +29,10 @@ public:
   static Game &get() noexcept;
 
   std::unique_ptr<Player> player;
-  std::unique_ptr<ObjectCircularBuffer<Bullet, 64>> bullets;
-  std::unique_ptr<ObjectCircularBuffer<Asteroid, 128>> asteroids;
-  std::unique_ptr<ObjectCircularBuffer<Particle, 1024>> particles;
-  std::unique_ptr<ObjectCircularBuffer<Pickable, 64>> pickables;
+  std::unique_ptr<ObjectCircularBuffer<Bullet, 128>> bullets;
+  std::unique_ptr<ObjectCircularBuffer<Asteroid, 1024>> asteroids;
+  std::unique_ptr<ObjectCircularBuffer<Particle, 4096>> particles;
+  std::unique_ptr<ObjectCircularBuffer<Pickable, 1024>> pickables;
 
   static constexpr int width               = 640;
   static constexpr int height              = 360;

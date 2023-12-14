@@ -25,7 +25,7 @@ Particle create_asteroid_particle(const Vector2 &position, unsigned char alpha =
   return Particle::create(pos, vel, color);
 }
 
-[[nodiscard]] Asteroid Asteroid::create(const Vector2 &position, int size)
+[[nodiscard]] Asteroid Asteroid::create(const Vector2 &position, uint8_t size)
 {
   assert(size >= 0 && size < 3);
 
