@@ -46,33 +46,29 @@ void update_draw_frame()
     {
       const float font_size = 10.0f;
       DrawText(TextFormat("FPS: %i", GetFPS()), 10, 10, font_size, WHITE);
-      DrawText(TextFormat("Bullets: %i (%zu - %zu)", game.bullets->size(), game.bullets->tail, game.bullets->head),
-               10,
-               30,
-               font_size,
-               WHITE);
-      DrawText(
-        TextFormat("Asteroids: %i (%zu - %zu)", game.asteroids->size(), game.asteroids->tail, game.asteroids->head),
-        10,
-        50,
-        font_size,
-        WHITE);
 
-      DrawText("Lives: ", 10, 70, font_size, WHITE);
-      Vector2 text_size = MeasureTextEx(GetFontDefault(), "Lives: ", font_size, 1.0f);
-      const float x     = 15 + text_size.x;
-      const float y     = 70 + text_size.y * 0.5f;
+      const char *lives_text = "Lives: ";
+      DrawText(lives_text, 10, 70, font_size, WHITE);
+      Vector2 text_size = MeasureTextEx(GetFontDefault(), lives_text, font_size, 1.0f);
+      float x     = 15 + text_size.x;
+      float y     = 70 + text_size.y * 0.5f;
       for (int i = 0; i < game.player->lives; i++)
       {
         DrawCircle(x + i * 20, y, 5, RED);
       }
 
-      DrawText(
-        TextFormat("Particles: %i (%zu - %zu)", game.particles->size(), game.particles->tail, game.particles->head),
-        10,
-        90,
-        font_size,
-        WHITE);
+      DrawText(TextFormat("Score: %i", game.score), 10, 90, font_size, WHITE);
+
+      const char *crystals_text = TextFormat("Crystals: %i", game.coins);
+      DrawText(crystals_text, 10, 110, font_size, WHITE);
+      text_size = MeasureTextEx(GetFontDefault(), crystals_text, font_size, 1.0f);
+      static Sprite crystal_sprite{ "resources/ore.aseprite" };
+      crystal_sprite.set_frame(0);
+      crystal_sprite.scale = Vector2{ 0.4f, 0.4f };
+      crystal_sprite.set_centered();
+      crystal_sprite.position.x = 15 + text_size.x + 2;
+      crystal_sprite.position.y = 110 + text_size.y * 0.5f;
+      crystal_sprite.draw();
     };
 
   const float screen_width_float  = static_cast<float>(GetScreenWidth());

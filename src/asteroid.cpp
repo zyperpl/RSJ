@@ -5,6 +5,7 @@
 #include "bullet.hpp"
 #include "game.hpp"
 #include "particle.hpp"
+#include "pickable.hpp"
 #include "utils.hpp"
 
 static constexpr const float ASTEROIDS_SIZE[]   = { 8.0f, 16.0f, 32.0f };
@@ -96,6 +97,28 @@ void Asteroid::die()
   {
     Game::get().particles->push(create_asteroid_particle(position));
   }
+
+  int r = GetRandomValue(0, 100);
+  if (r > 60)
+  {
+    int pickables_n = size;
+    if (size >= 2)
+    {
+      r = GetRandomValue(0, 100);
+      if (r < 10)
+        pickables_n = 3;
+      else if (r == 10)
+        pickables_n = 4;
+    }
+    for (int i = 0; i < pickables_n; i++)
+    {
+      const Vector2 pos{ position.x + static_cast<float>(GetRandomValue(-4 * size, 4 * size)),
+                         position.y + static_cast<float>(GetRandomValue(-3 * size, 3 * size)) };
+      Game::get().pickables->push(Pickable::create_ore(pos, Vector2Scale(velocity, 0.5f)));
+    }
+  }
+
+  Game::get().score += 100 * (3 - size);
 }
 
 void Asteroid::draw() const noexcept

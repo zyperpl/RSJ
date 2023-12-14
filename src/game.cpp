@@ -52,9 +52,7 @@ void Game::init()
   {
     const Vector2 position = { static_cast<float>(GetRandomValue(0, width)),
                                static_cast<float>(GetRandomValue(0, height)) };
-    Pickable pickable;
-    pickable.position = position;
-    pickables->push(std::move(pickable));
+    pickables->push(Pickable::create_ore(position, Vector2Zero()));
   }
 
   for (size_t i = 0; i < stars.size(); i++)
@@ -104,9 +102,9 @@ void Game::draw_background() noexcept
   {
     const Vector2 &star = stars[i];
     if (i % 2 == 0)
-      DrawPixel(star.x, star.y, Color{ 180, 180, 100, 255 });
+      DrawPixel(star.x, star.y, Color{ 240, 180, 100, 255 });
     else
-      DrawPixel(star.x, star.y, Color{ 120, 120, 100, 255 });
+      DrawPixel(star.x, star.y, Color{ 120, 230, 100, 255 });
   }
 
   auto asteroid_sprite = Sprite{ "resources/asteroid.aseprite" };

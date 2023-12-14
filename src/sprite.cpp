@@ -147,7 +147,8 @@ size_t Sprite::get_height() const
 
 void Sprite::set_centered()
 {
-  origin = Vector2{ static_cast<float>(get_width()) / 2.0f, static_cast<float>(get_height()) / 2.0f };
+  origin =
+    Vector2{ static_cast<float>(scale.x * get_width()) / 2.0f, static_cast<float>(scale.y * get_height()) / 2.0f };
 }
 
 Rectangle Sprite::get_source_rect() const

@@ -17,10 +17,10 @@ class ObjectCircularBuffer;
 
 struct Config
 {
-  bool show_debug{ true };
+  bool show_debug{ false };
   bool show_masks{ false };
   bool show_velocity{ false };
-  bool debug_bullets { false };
+  bool debug_bullets{ false };
 };
 
 class Game
@@ -46,6 +46,9 @@ public:
   void update();
 
   void draw() noexcept;
+
+  size_t coins{ 0 };
+  size_t score{ 0 };
 
 private:
   [[nodiscard]] Game() noexcept = default;

@@ -13,7 +13,7 @@ public:
   Vector2 position{};
   Vector2 velocity{};
   int size{ 2 };
-  int max_life { 2 };
+  int max_life { 1 };
   int life{ max_life };
   mutable Sprite sprite{ "resources/asteroid.aseprite" };
   Mask mask{};
