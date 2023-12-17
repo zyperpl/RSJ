@@ -1,3 +1,4 @@
+#define _USE_MATH_DEFINES
 #include <cassert>
 #include <cmath>
 #include <functional>
@@ -50,8 +51,8 @@ void update_draw_frame()
       const char *lives_text = "Lives: ";
       DrawText(lives_text, 10, 70, font_size, WHITE);
       Vector2 text_size = MeasureTextEx(GetFontDefault(), lives_text, font_size, 1.0f);
-      float x     = 15 + text_size.x;
-      float y     = 70 + text_size.y * 0.5f;
+      float x           = 15 + text_size.x;
+      float y           = 70 + text_size.y * 0.5f;
       for (int i = 0; i < game.player->lives; i++)
       {
         DrawCircle(x + i * 20, y, 5, RED);

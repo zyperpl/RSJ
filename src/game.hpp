@@ -13,7 +13,7 @@ class Particle;
 class Pickable;
 
 template<typename T, size_t>
-class ObjectCircularBuffer;
+struct ObjectCircularBuffer;
 
 struct Config
 {

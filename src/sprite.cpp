@@ -1,5 +1,6 @@
 #include "sprite.hpp"
 
+#define _USE_MATH_DEFINES
 #include <cassert>
 #include <chrono>
 #include <cmath>

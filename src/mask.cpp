@@ -1,6 +1,7 @@
 #include "mask.hpp"
 
 #include <algorithm>
+#define _USE_MATH_DEFINES
 #include <cmath>
 #include <variant>
 
@@ -113,18 +114,18 @@ void Mask::draw() const noexcept
       const auto &circle = std::get<Circle>(shape);
       const auto &center = Vector2Add(position, circle.center);
 
-      DrawCircleLines(center.x, center.y, circle.radius, color);
-      DrawCircleLines(center.x + Game::width, center.y, circle.radius, color);
-      DrawCircleLines(center.x - Game::width, center.y, circle.radius, color);
-      DrawCircleLines(center.x, center.y + Game::height, circle.radius, color);
+      DrawCircleLinesV(center, circle.radius, color);
+      DrawCircleLinesV(Vector2{center.x + Game::width, center.y}, circle.radius, color);
+      DrawCircleLinesV(Vector2{center.x - Game::width, center.y}, circle.radius, color);
+      DrawCircleLinesV(Vector2{center.x, center.y + Game::height}, circle.radius, color);
     }
     else if (std::holds_alternative<Rectangle>(shape))
     {
       const auto &rectangle = std::get<Rectangle>(shape);
-      auto x                = rectangle.x + position.x;
-      auto y                = rectangle.y + position.y;
-      const auto &w         = rectangle.width;
-      const auto &h         = rectangle.height;
+      int x                = rectangle.x + position.x;
+      int y                = rectangle.y + position.y;
+      const int w         = rectangle.width;
+      const int h         = rectangle.height;
 
       DrawRectangleLines(x, y, w, h, color);
       DrawRectangleLines(x + Game::width, y, w, h, color);

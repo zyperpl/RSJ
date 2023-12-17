@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2022
     
     env:
       PROJECT_NAME: ${{ github.event.repository.name }}
@@ -52,7 +52,7 @@ jobs:
         Copy-Item ${{ env.PROJECT_NAME }}/build/src/Release/game.exe ${{ env.PROJECT_RELEASE_PATH }}
         Copy-Item ${{ env.PROJECT_NAME }}/README.md ${{ env.PROJECT_RELEASE_PATH }}
         Copy-Item ${{ env.PROJECT_NAME }}/LICENSE ${{ env.PROJECT_RELEASE_PATH }}
-        Copy-Item ${{ env.PROJECT_NAME }}/resources ${{ env.PROJECT_RELEASE_PATH }}
+        Copy-Item ${{ env.PROJECT_NAME }}/resources ${{ env.PROJECT_RELEASE_PATH }} -Recurse
         Compress-Archive -Path ./${{ env.PROJECT_RELEASE_PATH }}/* -DestinationPath ./${{ env.PROJECT_RELEASE_PATH }}.zip
       shell: pwsh
 

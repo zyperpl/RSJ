@@ -1,7 +1,13 @@
 #pragma once
 
+#define _USE_MATH_DEFINES
+#include <cmath>
 #include <functional>
 #include <memory>
+
+#if !defined(M_PI)
+static constexpr const float M_PI = 3.14159265358979323846f;
+#endif
 
 #include <raylib.h>
 #include <raymath.h>
