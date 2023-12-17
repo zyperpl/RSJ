@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -14,8 +15,8 @@ class Sprite final
 public:
   struct AnimationTag
   {
-    int start_frame{ 0 };
-    int end_frame{ 1 };
+    uint8_t start_frame{ 0 };
+    uint8_t end_frame{ 1 };
 
     auto operator<=>(const AnimationTag &) const = default;
   };
@@ -66,13 +67,13 @@ private:
   AnimationTag default_tag;
 
   AnimationTag tag{ 0, 1 };
-  int frame_index{ 0 };
+  int8_t frame_index{ 0 };
+  int8_t frame_count{ 0 };
   size_t frame_width{ 0 };
   size_t frame_height{ 0 };
-  int frame_count{ 0 };
-  std::vector<int> frame_durations; // in milliseconds
-  int64_t frame_timer{ 0 };
 
+  std::vector<int32_t> frame_durations; // in milliseconds
+  int64_t frame_timer{ 0 };
   int64_t last_time_ms{ 0 };
 
   static bool use_cache(Sprite &, const std::string &);

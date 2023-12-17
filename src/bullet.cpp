@@ -22,7 +22,7 @@ static Vector2 DEBUG_asteroid_position;
 
 const Asteroid &get_nearest_asteroid(const Vector2 &position)
 {
-  auto &asteroids                  = Game::get().asteroids;
+  auto &asteroids                  = GAME.asteroids;
   const Asteroid *nearest_asteroid = &asteroids->objects[0];
   float nearest_distance{ std::numeric_limits<float>::max() };
 
@@ -79,7 +79,7 @@ bool Bullet::update()
     for (size_t i = 0; i < number_of_particles; ++i)
     {
       const Vector2 velocity{ GetRandomValue(-100, 100) / 100.0f, GetRandomValue(-100, 100) / 100.0f };
-      Game::get().particles->push(Particle::create(position, velocity, particle_color));
+      GAME.particles->push(Particle::create(position, velocity, particle_color));
     }
     return false;
   }
@@ -113,7 +113,7 @@ bool Bullet::update()
     particles_per_frame = 1;
   if (life % particles_per_frame == 0)
   {
-    Game::get().particles->push(Particle::create(position, Vector2{ 0.0f, 0.0f }, particle_color));
+    GAME.particles->push(Particle::create(position, Vector2{ 0.0f, 0.0f }, particle_color));
   }
 
   return true;
@@ -130,7 +130,7 @@ void Bullet::draw() const noexcept
                [&](const Vector2 &P) { DrawCircle(P.x, P.y, 2.0f, color); });
 
 #if defined(DEBUG)
-  if (Game::get().CONFIG.debug_bullets)
+  if (CONFIG(debug_bullets))
   {
     DrawCircleV(DEBUG_asteroid_position, 2.0f, RED);
     DrawCircleLinesV(DEBUG_asteroid_position, 20.0f, RED);

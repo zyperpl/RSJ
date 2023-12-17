@@ -23,7 +23,7 @@ bool Particle::update() noexcept
 
   wrap_position(position);
 
-  Game::get().asteroids->for_each(
+  GAME.asteroids->for_each(
     [&](Asteroid &asteroid)
     {
       const Vector2 &asteroid_position = asteroid.position;
@@ -44,7 +44,7 @@ bool Particle::update() noexcept
       return true;
     });
 
-  const auto &player             = Game::get().player;
+  const auto &player             = GAME.player;
   const Vector2 &player_position = player->position;
   const float distance           = Vector2Distance(position, player_position);
 

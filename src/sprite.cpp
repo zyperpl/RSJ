@@ -115,14 +115,21 @@ void Sprite::load_texture_with_animation()
   texture = TextureResource(LoadTextureFromImage(image));
   UnloadImage(image);
 
+  assert(ase->frame_count < std::numeric_limits<int8_t>::max() - 1);
   if (ase->tag_count > 0 && ase->frame_count > 0)
   {
-    TraceLog(LOG_INFO, "Sprite(%s, %d frames) has %d tags:", path.data(), frame_count, tags.size());
+    TraceLog(LOG_INFO, "Sprite(%s, %d frames) has %d tags:", path.data(), frame_count, ase->tag_count);
     for (int i = 0; i < ase->tag_count; ++i)
     {
       const auto &atag = ase->tags[i];
-      TraceLog(LOG_INFO, "\t%d. AnimationTag \"%s\", frames: %d - %d", i, atag.name, atag.from_frame, atag.to_frame);
-      tags.insert(std::make_pair(atag.name, AnimationTag{ atag.from_frame, atag.to_frame }));
+      TraceLog(
+        LOG_INFO, "    > AnimationTag (%d) \"%s\", frames: %d - %d", i, atag.name, atag.from_frame, atag.to_frame);
+
+      assert(atag.from_frame < std::numeric_limits<uint8_t>::max());
+      assert(atag.to_frame < std::numeric_limits<uint8_t>::max());
+
+      tags.insert(std::make_pair(
+        atag.name, AnimationTag{ static_cast<uint8_t>(atag.from_frame), static_cast<uint8_t>(atag.to_frame) }));
     }
   }
 

@@ -8,10 +8,10 @@
 #include "object_circular_buffer.hpp"
 #include "particle.hpp"
 #include "pickable.hpp"
-#include "player.hpp"
+#include "player_ship.hpp"
 #include "utils.hpp"
 
-Config Game::CONFIG{};
+Config Game::config{};
 uint64_t Game::frame{ 0 };
 
 Game &Game::get() noexcept
@@ -22,7 +22,7 @@ Game &Game::get() noexcept
 
 void Game::init()
 {
-  player    = std::make_unique<Player>();
+  player    = std::make_unique<PlayerShip>();
   bullets   = std::make_unique<ObjectCircularBuffer<Bullet, 128>>();
   asteroids = std::make_unique<ObjectCircularBuffer<Asteroid, 1024>>();
   particles = std::make_unique<ObjectCircularBuffer<Particle, 4096>>();

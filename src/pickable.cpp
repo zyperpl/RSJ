@@ -20,8 +20,8 @@ Pickable Pickable::create_ore(const Vector2 &position, const Vector2 &velocity)
                 velocity,
                 []()
                 {
-                  Game::get().coins += 1;
-                  Game::get().score += 100;
+                  GAME.coins += 1;
+                  GAME.score += 100;
                 });
 }
 
@@ -40,14 +40,14 @@ bool Pickable::update()
   mask.position = position;
   wrap_position(position);
 
-  if (!Game::get().player)
+  if (!GAME.player)
     return true;
 
   if (!player)
   {
-    if (mask.check_collision(Game::get().player->mask))
+    if (mask.check_collision(GAME.player->get_mask()))
     {
-      player = Game::get().player.get();
+      player = GAME.player.get();
 
       velocity = Vector2Normalize(Vector2Subtract(position, player->position));
       velocity.x *= 1.1f;
@@ -68,14 +68,17 @@ bool Pickable::update()
     }
     const Vector2 dir = Vector2Normalize(Vector2Subtract(player->position, position));
 
-    if (d > 64.0f)
+    if (d > std::min(Game::width, Game::height) / 2.0f)
     {
-      position.x = player->position.x - dir.x * 16.0f;
-      position.y = player->position.y - dir.y * 16.0f;
+      position.x = player->position.x - dir.x * 7.0f;
+      position.y = player->position.y - dir.y * 7.0f;
     }
 
-    velocity.x += dir.x * 0.3f;
-    velocity.y += dir.y * 0.3f;
+    velocity.x += dir.x * 0.1f;
+    velocity.y += dir.y * 0.1f;
+
+    position.x += dir.x * 0.4f;
+    position.y += dir.y * 0.4f;
   }
 
   return true;

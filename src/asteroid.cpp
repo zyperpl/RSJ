@@ -50,7 +50,7 @@ bool Asteroid::update()
 
   wrap_position(position);
 
-  Game::get().bullets->for_each(
+  GAME.bullets->for_each(
     [&](Bullet &bullet) -> bool
     {
       if (bullet.life <= 0)
@@ -66,7 +66,7 @@ bool Asteroid::update()
           die();
 
         for (int i = 0; i < 20; i++)
-          Game::get().particles->push(create_asteroid_particle(position, 100));
+          GAME.particles->push(create_asteroid_particle(position, 100));
 
         bullet.life = 0;
         return false;
@@ -89,13 +89,13 @@ void Asteroid::die()
   {
     for (size_t i = 0; i < ASTEROID_SPLIT_COUNT; i++)
     {
-      Game::get().asteroids->push(Asteroid::create(position, size - 1));
+      GAME.asteroids->push(Asteroid::create(position, size - 1));
     }
   }
 
   for (int i = 0; i < 20 - std::max(1, size * 5); i++)
   {
-    Game::get().particles->push(create_asteroid_particle(position));
+    GAME.particles->push(create_asteroid_particle(position));
   }
 
   int r = GetRandomValue(0, 100);
@@ -114,11 +114,11 @@ void Asteroid::die()
     {
       const Vector2 pos{ position.x + static_cast<float>(GetRandomValue(-4 * size, 4 * size)),
                          position.y + static_cast<float>(GetRandomValue(-3 * size, 3 * size)) };
-      Game::get().pickables->push(Pickable::create_ore(pos, Vector2Scale(velocity, 0.5f)));
+      GAME.pickables->push(Pickable::create_ore(pos, Vector2Scale(velocity, 0.5f)));
     }
   }
 
-  Game::get().score += 100 * (3 - size);
+  GAME.score += 100 * (3 - size);
 }
 
 void Asteroid::draw() const noexcept
@@ -132,7 +132,7 @@ void Asteroid::draw() const noexcept
                  sprite.position = P;
                  sprite.draw();
 
-                 if (Game::CONFIG.show_masks)
+                 if (CONFIG(show_masks))
                  {
                    Mask mask_copy     = mask;
                    mask_copy.position = P;
@@ -140,11 +140,11 @@ void Asteroid::draw() const noexcept
                  }
                });
 
-  if (Game::CONFIG.show_debug)
+  if (CONFIG(show_debug))
   {
     DrawPixelV(position, PINK);
     DrawText(TextFormat("%d", size), position.x, position.y, 10, RED);
   }
-  if (Game::CONFIG.show_velocity)
+  if (CONFIG(show_velocity))
     DrawLineEx(position, Vector2{ position.x + velocity.x * 20.0f, position.y + velocity.y * 20.0f }, 1.0f, RED);
 }

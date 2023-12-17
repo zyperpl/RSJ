@@ -6,6 +6,9 @@
 #include <raylib.h>
 #include <raymath.h>
 
+#define CONFIG(Option) Game::config.Option
+#define GAME Game::get()
+
 class Player;
 class Bullet;
 class Asteroid;
@@ -38,7 +41,7 @@ public:
   static constexpr int height              = 360;
   static constexpr float delta_time        = 1.0f / 60.0f;
   static constexpr int NUMBER_OF_ASTEROIDS = 10;
-  static Config CONFIG;
+  static Config config;
   static uint64_t frame;
 
   void init();
