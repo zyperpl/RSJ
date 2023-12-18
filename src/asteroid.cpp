@@ -62,9 +62,6 @@ bool Asteroid::update()
       {
         life--;
 
-        if (life <= 0)
-          die();
-
         for (int i = 0; i < 20; i++)
           GAME.particles->push(create_asteroid_particle(position, 100));
 
@@ -78,7 +75,10 @@ bool Asteroid::update()
   mask.position = position;
 
   if (life <= 0)
+  {
+    die();
     return false;
+  }
 
   return true;
 }

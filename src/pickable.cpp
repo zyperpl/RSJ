@@ -77,8 +77,8 @@ bool Pickable::update()
     velocity.x += dir.x * 0.1f;
     velocity.y += dir.y * 0.1f;
 
-    position.x += dir.x * 0.4f;
-    position.y += dir.y * 0.4f;
+    position.x += dir.x * 0.5f;
+    position.y += dir.y * 0.5f;
   }
 
   return true;

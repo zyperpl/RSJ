@@ -29,6 +29,7 @@ ADD_EXECUTABLE(${PROJECT_NAME}
   particle.cpp
   pickable.cpp
   player.cpp
+  player_character.cpp
   player_ship.cpp
   render_pass.cpp
   resource.cpp

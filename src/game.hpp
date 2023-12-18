@@ -7,7 +7,7 @@
 #include <raymath.h>
 
 #define CONFIG(Option) Game::config.Option
-#define GAME Game::get()
+#define GAME           Game::get()
 
 class Player;
 class Bullet;
@@ -24,6 +24,15 @@ struct Config
   bool show_masks{ false };
   bool show_velocity{ false };
   bool debug_bullets{ false };
+};
+
+enum class GameState
+{
+  MENU,
+  PLAYING_PAUSED,
+  PLAYING_ASTEROIDS,
+  PLAYING_STATION,
+  GAME_OVER
 };
 
 class Game
@@ -45,17 +54,20 @@ public:
   static uint64_t frame;
 
   void init();
-
   void update();
-
   void draw() noexcept;
 
   size_t coins{ 0 };
   size_t score{ 0 };
 
+  GameState state { GameState::MENU };
+
 private:
   [[nodiscard]] Game() noexcept = default;
 
   std::array<Vector2, 100> stars;
+  std::unique_ptr<Pickable> station;
+  void update_background() noexcept;
   void draw_background() noexcept;
+  void set_state(GameState new_state) noexcept;
 };

@@ -21,12 +21,12 @@ public:
   [[nodiscard]] static Asteroid create(const Vector2 &position, uint8_t size);
 
   bool update();
-  void die();
 
   void draw() const noexcept;
 
 private:
   Asteroid() = default;
+  void die();
 
   DECLARE_FRIEND_OBJECT_CIRCULAR_BUFFER()
 };
