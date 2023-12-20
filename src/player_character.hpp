@@ -24,5 +24,8 @@ public:
   void update() override;
   void draw() const noexcept override;
   void die() override;
+
 private:
+  Direction direction{ Direction::Down };
+  constexpr static float PLAYER_SPEED = 2.0f;
 };

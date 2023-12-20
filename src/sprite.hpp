@@ -40,7 +40,9 @@ public:
   [[nodiscard]] int get_frame() const;
 
   [[nodiscard]] int get_frame_count() const;
-  void set_tag(std::string tag_name);
+  void set_tag(const std::string &tag_name);
+  inline void set_animation(const std::string &tag_name) { set_tag(tag_name); }
+
   void reset_animation();
   void animate(int step = 1);
 

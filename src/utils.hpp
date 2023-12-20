@@ -28,3 +28,11 @@ static constexpr const float M_PI = 3.14159265358979323846f;
 void wrap_position(Vector2 &position);
 
 void draw_wrapped(const Rectangle &rect, const std::function<void(const Vector2 &)> draw_function);
+
+enum class Direction
+{
+  Left,
+  Right,
+  Up,
+  Down
+};

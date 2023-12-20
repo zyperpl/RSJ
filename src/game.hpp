@@ -46,8 +46,8 @@ public:
   std::unique_ptr<ObjectCircularBuffer<Particle, 4096>> particles;
   std::unique_ptr<ObjectCircularBuffer<Pickable, 1024>> pickables;
 
-  static constexpr int width               = 640;
-  static constexpr int height              = 360;
+  static constexpr int width               = 480;
+  static constexpr int height              = 270;
   static constexpr float delta_time        = 1.0f / 60.0f;
   static constexpr int NUMBER_OF_ASTEROIDS = 10;
   static Config config;

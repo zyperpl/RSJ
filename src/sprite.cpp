@@ -281,7 +281,7 @@ void Sprite::animate(int step)
   }
 }
 
-void Sprite::set_tag(std::string tag_name)
+void Sprite::set_tag(const std::string &tag_name)
 {
   if (!tag_name.empty())
   {
