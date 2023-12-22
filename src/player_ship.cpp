@@ -83,9 +83,64 @@ void PlayerShip::die()
   invincibility_timer.start();
 }
 
+void PlayerShip::shoot() noexcept
+{
+  auto &game = Game::get();
+
+  Vector2 bullet_position;
+  Vector2 bullet_velocity;
+  bullet_position.x = position.x - cos(sprite.rotation * DEG2RAD + M_PI / 2.0f) * 5.0f;
+  bullet_position.y = position.y - sin(sprite.rotation * DEG2RAD + M_PI / 2.0f) * 5.0f;
+  bullet_velocity.x = cos(sprite.rotation * DEG2RAD + M_PI / 2.0f + M_PI) * 5.0f;
+  bullet_velocity.y = sin(sprite.rotation * DEG2RAD + M_PI / 2.0f + M_PI) * 5.0f;
+  bullet_velocity.x += velocity.x * 0.5f;
+  bullet_velocity.y += velocity.y * 0.5f;
+
+  BulletType bullet_type = BulletType::Normal;
+
+  if (bullet_type == BulletType::Normal)
+  {
+    game.bullets->push(Bullet::create_normal(bullet_position, bullet_velocity));
+    for (int i = 0; i < 4; ++i)
+    {
+      const Vector2 pos{
+        static_cast<float>(position.x + cos(sprite.rotation * DEG2RAD + M_PI / 2.0f) * 10.0f + GetRandomValue(-2, 2)),
+        static_cast<float>(position.y + sin(sprite.rotation * DEG2RAD + M_PI / 2.0f) * 10.0f + GetRandomValue(-2, 2))
+      };
+      Color color = PINK;
+      color.a     = 120;
+      game.particles->push(Particle::create(pos, Vector2Scale(bullet_velocity, 0.99f), color));
+      color.a = 20;
+      game.particles->push(Particle::create(pos, Vector2Scale(bullet_velocity, 0.2f), color));
+    }
+  }
+  else if (bullet_type == BulletType::Homing)
+  {
+    game.bullets->push(Bullet::create_homing(bullet_position, bullet_velocity));
+  }
+  else if (bullet_type == BulletType::Assisted)
+  {
+    game.bullets->push(Bullet::create_assisted(position, bullet_velocity));
+  }
+
+  shoot_timer.start();
+}
+
+bool PlayerShip::can_shoot() const noexcept
+{
+  return shoot_timer.is_done() && !is_invincible() && lives > 0 && !is_near_interactive();
+}
+
+bool PlayerShip::can_interact() const noexcept
+{
+  return interactive_found_timer.is_done() && !is_invincible() && lives > 0 && is_near_interactive();
+}
+
 void PlayerShip::handle_input()
 {
   auto &game = Game::get();
+  if (game.get_state() != GameState::PLAYING_ASTEROIDS)
+    return;
 
   if (IsKeyDown(KEY_LEFT))
     sprite.rotation -= 1.0f * rotation_speed;
@@ -132,53 +187,28 @@ void PlayerShip::handle_input()
     velocity.y += sin(sprite.rotation * DEG2RAD + M_PI / 2.0f) * acceleration_speed * 0.005f;
   }
 
-  if (IsKeyDown(KEY_SPACE) && shoot_timer.is_done() && !is_invincible())
+  const bool action_key = IsKeyDown(KEY_SPACE) || IsMouseButtonDown(MOUSE_LEFT_BUTTON);
+  if (action_key && can_shoot())
+    shoot();
+
+  if (action_key && can_interact())
   {
-    Vector2 bullet_position;
-    Vector2 bullet_velocity;
-    bullet_position.x = position.x - cos(sprite.rotation * DEG2RAD + M_PI / 2.0f) * 5.0f;
-    bullet_position.y = position.y - sin(sprite.rotation * DEG2RAD + M_PI / 2.0f) * 5.0f;
-    bullet_velocity.x = cos(sprite.rotation * DEG2RAD + M_PI / 2.0f + M_PI) * 5.0f;
-    bullet_velocity.y = sin(sprite.rotation * DEG2RAD + M_PI / 2.0f + M_PI) * 5.0f;
-    bullet_velocity.x += velocity.x * 0.5f;
-    bullet_velocity.y += velocity.y * 0.5f;
-
-    BulletType bullet_type = BulletType::Normal;
-
-    if (bullet_type == BulletType::Normal)
-    {
-      game.bullets->push(Bullet::create_normal(bullet_position, bullet_velocity));
-      for (int i = 0; i < 4; ++i)
-      {
-        const Vector2 pos{
-          static_cast<float>(position.x + cos(sprite.rotation * DEG2RAD + M_PI / 2.0f) * 10.0f + GetRandomValue(-2, 2)),
-          static_cast<float>(position.y + sin(sprite.rotation * DEG2RAD + M_PI / 2.0f) * 10.0f + GetRandomValue(-2, 2))
-        };
-        Color color = PINK;
-        color.a     = 120;
-        game.particles->push(Particle::create(pos, Vector2Scale(bullet_velocity, 0.99f), color));
-        color.a = 20;
-        game.particles->push(Particle::create(pos, Vector2Scale(bullet_velocity, 0.2f), color));
-      }
-    }
-    else if (bullet_type == BulletType::Homing)
-    {
-      game.bullets->push(Bullet::create_homing(bullet_position, bullet_velocity));
-    }
-    else if (bullet_type == BulletType::Assisted)
-    {
-      game.bullets->push(Bullet::create_assisted(position, bullet_velocity));
-    }
-
-    shoot_timer.start();
+    game.play_action(Action::Type::ChangeLevel, Level::Station);
   }
 }
 
 void PlayerShip::update()
 {
-  invincibility_timer.update(Game::delta_time);
+  auto &game = Game::get();
+  if (game.get_state() != GameState::PLAYING_ASTEROIDS)
+    return;
 
+  // timers
+  invincibility_timer.update(Game::delta_time);
   shoot_timer.update(Game::delta_time);
+  interactive_found_timer.update(Game::delta_time);
+
+  // movement
   handle_input();
 
   position.x += velocity.x;
@@ -195,7 +225,9 @@ void PlayerShip::update()
   }
 
   wrap_position(position);
+  calculate_nearest_interactive();
 
+  // logic
   if (!is_invincible())
   {
     GAME.asteroids->for_each(
@@ -209,6 +241,31 @@ void PlayerShip::update()
       });
   }
 
+  // sprite and mask
   sprite.animate();
   mask.position = position;
+}
+
+void PlayerShip::calculate_nearest_interactive() noexcept
+{
+  auto &game = Game::get();
+
+  nearest_interactive.first    = InteractiveType::NONE;
+  nearest_interactive.second.x = 0.0f;
+  nearest_interactive.second.y = 0.0f;
+
+  // station
+  if (auto *station = game.get_station(); station)
+  {
+    const float min_distance = std::max(station->get_width(), station->get_height()) * 0.5f;
+    const float distance     = Vector2Distance(position, station->position);
+    if (distance < min_distance)
+    {
+      nearest_interactive.first  = InteractiveType::STATION;
+      nearest_interactive.second = station->position;
+
+      if (interactive_found_timer.is_done())
+        interactive_found_timer.start();
+    }
+  }
 }

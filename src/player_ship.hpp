@@ -20,9 +20,6 @@ public:
   PlayerShip();
   mutable Sprite sprite{ "resources/ship.aseprite", "idle" };
 
-  Timer shoot_timer{ FRAMES(20) };
-  Timer invincibility_timer{ FRAMES(180) };
-
   void handle_input() override;
 
   void update() override;
@@ -31,5 +28,24 @@ public:
   void die() override;
 
 private:
+  enum class InteractiveType
+  {
+    NONE,
+    STATION
+  };
+
+  Timer shoot_timer{ FRAMES(20) };
+  Timer invincibility_timer{ FRAMES(150) };
+
   [[nodiscard]] bool is_invincible() const noexcept { return !invincibility_timer.is_done(); }
+
+  void calculate_nearest_interactive() noexcept;
+  [[nodiscard]] bool is_near_interactive() const noexcept { return nearest_interactive.first != InteractiveType::NONE; }
+  std::pair<InteractiveType, Vector2> nearest_interactive{ InteractiveType::NONE, Vector2{ 0.0f, 0.0f } };
+  Timer interactive_found_timer{ FRAMES(4) };
+
+  void shoot() noexcept;
+
+  bool can_shoot() const noexcept;
+  bool can_interact() const noexcept;
 };

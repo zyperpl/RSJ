@@ -1,5 +1,7 @@
 #include "game.hpp"
 
+#include <cassert>
+
 #include <raylib.h>
 #include <raymath.h>
 
@@ -11,6 +13,8 @@
 #include "player_character.hpp"
 #include "player_ship.hpp"
 #include "utils.hpp"
+
+static constexpr const float TRANSITION_SPEED{ 1.5f };
 
 Config Game::config{};
 uint64_t Game::frame{ 0 };
@@ -40,13 +44,37 @@ void Game::init()
 
 void Game::update()
 {
+  if (!actions.empty())
+  {
+    {
+      Action &action = actions.front();
+      action.update();
+      if (action.done && action.on_done)
+        action.on_done();
+    }
+
+    if (actions.front().done)
+      actions.pop();
+  }
+
+  update_game();
+
+  frame++;
+}
+
+void Game::update_game()
+{
   if (state == GameState::PLAYING_ASTEROIDS)
   {
-    player->update();
-    bullets->for_each(std::bind(&Bullet::update, std::placeholders::_1));
-    asteroids->for_each(std::bind(&Asteroid::update, std::placeholders::_1));
+    if (!freeze_entities)
+    {
+      player->update();
+      bullets->for_each(std::bind(&Bullet::update, std::placeholders::_1));
+      asteroids->for_each(std::bind(&Asteroid::update, std::placeholders::_1));
+      pickables->for_each(std::bind(&Pickable::update, std::placeholders::_1));
+    }
+
     particles->for_each(std::bind(&Particle::update, std::placeholders::_1));
-    pickables->for_each(std::bind(&Pickable::update, std::placeholders::_1));
 
     update_background();
 
@@ -54,23 +82,16 @@ void Game::update()
     {
       if (asteroids->empty())
       {
-        station               = std::make_unique<Pickable>(Pickable::create(Vector2{ width / 2.0f, height / 2.0f },
-                                                              Vector2{ 0.0f, 0.0f },
-                                                              [&]() { set_state(GameState::PLAYING_STATION); }));
-        station->sprite       = Sprite{ "resources/station.aseprite" };
-        station->sprite.scale = Vector2{ 0.1f, 0.1f };
+        station           = std::make_unique<Sprite>("resources/station.aseprite");
+        station->position = Vector2{ width / 2.0f, height / 2.0f };
+        station->scale    = Vector2{ 0.1f, 0.1f };
       }
     }
     else
     {
-      station->update();
       station->position = Vector2{ width / 2.0f, height / 2.0f + sin(frame * 0.001f) * 10.0f };
-      station->velocity = Vector2{ 0.0f, 0.0f };
-      if (station->sprite.scale.x < 1.0f)
-      {
-        station->sprite.scale.x += 0.01f;
-        station->sprite.scale.y += 0.01f;
-      }
+      if (station->scale.x < 1.0f)
+        station->scale = Vector2Add(station->scale, Vector2{ 0.01f, 0.01f });
     }
 
 #if defined(DEBUG)
@@ -97,11 +118,12 @@ void Game::update()
   }
 
   if (state == GameState::PLAYING_STATION)
-  {
-    player->update();
+  { 
+    if (!freeze_entities)
+    {
+      player->update();
+    }
   }
-
-  frame++;
 }
 
 void Game::update_background() noexcept
@@ -130,8 +152,8 @@ void Game::draw() noexcept
     {
       if (station)
       {
-        station->sprite.position = station->position;
-        station->sprite.tint     = ColorBrightness(BLACK, 0.7f);
+        station->tint = ColorBrightness(BLACK, 0.7f);
+        station->set_centered();
         station->draw();
       }
 
@@ -152,6 +174,12 @@ void Game::draw() noexcept
       break;
     case GameState::MENU:
       break;
+  }
+
+  if (!actions.empty())
+  {
+    const Action &action = actions.front();
+    action.draw();
   }
 }
 
@@ -240,5 +268,111 @@ void Game::set_state(GameState new_state) noexcept
       break;
     default:
       break;
+  }
+}
+
+void Game::play_action(const Action::Type &action_type, const Level &level) noexcept
+{
+  assert(action_type != Action::Type::Invalid);
+  assert(action_type == Action::Type::ChangeLevel);
+
+  // player animation
+  {
+    Action action;
+    action.on_update = [this](Action &action)
+    {
+      const auto &station_position = station->position;
+
+      PlayerShip *player_ship = dynamic_cast<PlayerShip *>(player.get());
+      if (!player_ship)
+        return;
+
+      player_ship->position = Vector2Lerp(player_ship->position, station_position, 0.1f);
+
+      if (player_ship->sprite.scale.x > 0.1f)
+        player_ship->sprite.scale = Vector2Scale(player_ship->sprite.scale, 0.9f);
+
+      const bool near_station =
+        Vector2Distance(player_ship->sprite.position, station_position) < 4.0f || player_ship->sprite.scale.x < 0.1f;
+
+      freeze_entities = true;
+
+      if (near_station)
+        action.done = true;
+    };
+
+    actions.push(std::move(action));
+  }
+
+  // fade-in transition
+  {
+    Action action;
+    action.on_update = [](Action &action)
+    {
+      action.data = std::get<float>(action.data) + Game::delta_time * TRANSITION_SPEED;
+
+      if (std::get<float>(action.data) >= 1.0f)
+        action.done = true;
+    };
+
+    action.on_draw = [](const Action &action)
+    {
+      const float &data = std::get<float>(action.data);
+      const float size  = std::max(width, height) * 0.5f * data;
+      DrawPoly(Vector2{ width * 0.5f, height * 0.5f }, 8, size, data * 0.1f, BLACK);
+    };
+
+    action.on_done = [this, level]()
+    {
+      switch (level)
+      {
+        case Level::None:
+          assert(false);
+          break;
+        case Level::Asteroids:
+          set_state(GameState::PLAYING_ASTEROIDS);
+          break;
+        case Level::Station:
+          set_state(GameState::PLAYING_STATION);
+          break;
+      }
+    };
+
+    action.data = 0.0f;
+    actions.push(std::move(action));
+  }
+
+  // fade-out transition
+  {
+    Action action;
+    action.on_update = [](Action &action)
+    {
+      action.data = std::get<float>(action.data) + Game::delta_time * TRANSITION_SPEED;
+
+      if (std::get<float>(action.data) >= 1.0f)
+        action.done = true;
+    };
+
+    action.on_draw = [](const Action &action)
+    {
+      const float &data = std::get<float>(action.data);
+
+#if defined(ALPHA_FADEOUT)
+      float alpha = std::max(0.0f, std::min(255.0f, 255.0f * data));
+      alpha = std::floor(alpha / 20.0f) * 20.0f;
+      Color color { 0, 0, 0, static_cast<unsigned char>(alpha) };
+      DrawRectangle(0, 0, width, height, color);
+#endif
+
+      DrawRing(Vector2 { width * 0.5f, height * 0.5f }, width * data, width, 0.0f, 360.0f, 8, BLACK);
+    };
+
+    action.on_done = [this]()
+    {
+      freeze_entities = false;
+    };
+
+    action.data = 0.0f;
+    actions.push(std::move(action));
   }
 }
