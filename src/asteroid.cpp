@@ -8,8 +8,8 @@
 #include "pickable.hpp"
 #include "utils.hpp"
 
-static constexpr const float ASTEROIDS_SIZE[]   = { 8.0f, 16.0f, 32.0f };
-static constexpr const int ASTEROID_SPLIT_COUNT = 2;
+static constexpr const float ASTEROIDS_SIZE[]{ 8.0f, 16.0f, 32.0f };
+static constexpr const int ASTEROID_SPLIT_COUNT{ 2 };
 
 Particle create_asteroid_particle(const Vector2 &position, unsigned char alpha = 255)
 {

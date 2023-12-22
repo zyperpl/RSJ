@@ -32,6 +32,8 @@ const bool integer_scaling = false;
 static RenderPass *game_render_pass;
 static RenderPass *ui_render_pass;
 
+static Font font;
+
 void update_draw_frame()
 {
   Game &game = Game::get();
@@ -46,29 +48,39 @@ void update_draw_frame()
     ui_render_pass->render_func = [&]()
     {
       const float font_size = 10.0f;
-      DrawText(TextFormat("FPS: %i", GetFPS()), 10, 10, font_size, WHITE);
+      Vector2 text_position{ 10.0f, 10.0f };
+      DrawTextEx(font, TextFormat("FPS: %i", GetFPS()), text_position, font_size, 1.0f, WHITE);
 
+      text_position.y += font_size + 5.0f;
       const char *lives_text = "Lives: ";
-      DrawText(lives_text, 10, 70, font_size, WHITE);
-      Vector2 text_size = MeasureTextEx(GetFontDefault(), lives_text, font_size, 1.0f);
-      float x           = 15 + text_size.x;
-      float y           = 70 + text_size.y * 0.5f;
+      DrawTextEx(font, lives_text, text_position, font_size, 1.0f, WHITE);
+      Vector2 text_size = MeasureTextEx(font, lives_text, font_size, 1.0f);
+      float x           = text_position.x + text_size.x + 5.0f;
+      float y           = text_position.y + text_size.y * 0.5f;
       for (int i = 0; i < game.player->lives; i++)
       {
         DrawCircle(x + i * 20, y, 5, RED);
       }
 
-      DrawText(TextFormat("Score: %i", game.score), 10, 90, font_size, WHITE);
+      text_position.y += font_size + 5.0f;
+      static uint64_t draw_score = 0;
+      uint64_t score_step = std::max<uint64_t>(1, (game.score - draw_score) / 20);
+      if (draw_score < game.score)
+        draw_score += score_step;
+      if (draw_score > game.score)
+        draw_score = game.score;
+      DrawTextEx(font, TextFormat("Score: %i", draw_score), text_position, font_size, 1.0f, WHITE);
 
+      text_position.y += font_size + 5.0f;
       const char *crystals_text = TextFormat("Crystals: %i", game.coins);
-      DrawText(crystals_text, 10, 110, font_size, WHITE);
-      text_size = MeasureTextEx(GetFontDefault(), crystals_text, font_size, 1.0f);
+      DrawTextEx(font, crystals_text, text_position, font_size, 1.0f, WHITE);
+      text_size = MeasureTextEx(font, crystals_text, font_size, 1.0f);
       static Sprite crystal_sprite{ "resources/ore.aseprite" };
       crystal_sprite.set_frame(0);
       crystal_sprite.scale = Vector2{ 0.4f, 0.4f };
       crystal_sprite.set_centered();
-      crystal_sprite.position.x = 15 + text_size.x + 2;
-      crystal_sprite.position.y = 110 + text_size.y * 0.5f;
+      crystal_sprite.position.x = text_position.x + text_size.x + 5.0f;
+      crystal_sprite.position.y = text_position.y + text_size.y * 0.5f;
       crystal_sprite.draw();
     };
 
@@ -101,9 +113,7 @@ void update_draw_frame()
 
     steps--;
     if (steps == 0)
-    {
       accumulator = 0;
-    }
   }
 
   BeginDrawing();
@@ -127,6 +137,7 @@ int main(void)
   InitAudioDevice();
   SetTargetFPS(60);
 
+  font = LoadFontEx("resources/Kenney Mini Square.ttf", 10, nullptr, 0);
   Game &game = Game::get();
   game.init();
 
