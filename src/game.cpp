@@ -7,6 +7,7 @@
 
 #include "asteroid.hpp"
 #include "bullet.hpp"
+#include "interactable.hpp"
 #include "object_circular_buffer.hpp"
 #include "particle.hpp"
 #include "pickable.hpp"
@@ -37,9 +38,11 @@ void Game::init()
   TraceLog(LOG_TRACE, "Size of Pickable buffer: %zukB", sizeof(Pickable) * pickables->capacity / 1024);
 
   for (size_t i = 0; i < stars.size(); i++)
-  {
     stars[i] = Vector2{ static_cast<float>(GetRandomValue(0, width)), static_cast<float>(GetRandomValue(0, height)) };
-  }
+
+  interactables.reserve(128);
+
+  TraceLog(LOG_TRACE, "Game initialized");
 }
 
 void Game::update()
@@ -64,6 +67,9 @@ void Game::update()
 
 void Game::update_game()
 {
+  for (auto &interactable : interactables)
+    interactable->update();
+
   if (state == GameState::PLAYING_ASTEROIDS)
   {
     if (!freeze_entities)
@@ -77,22 +83,6 @@ void Game::update_game()
     particles->for_each(std::bind(&Particle::update, std::placeholders::_1));
 
     update_background();
-
-    if (!station)
-    {
-      if (asteroids->empty())
-      {
-        station           = std::make_unique<Sprite>("resources/station.aseprite");
-        station->position = Vector2{ width / 2.0f, height / 2.0f };
-        station->scale    = Vector2{ 0.1f, 0.1f };
-      }
-    }
-    else
-    {
-      station->position = Vector2{ width / 2.0f, height / 2.0f + sin(frame * 0.001f) * 10.0f };
-      if (station->scale.x < 1.0f)
-        station->scale = Vector2Add(station->scale, Vector2{ 0.01f, 0.01f });
-    }
 
 #if defined(DEBUG)
 
@@ -118,7 +108,7 @@ void Game::update_game()
   }
 
   if (state == GameState::PLAYING_STATION)
-  { 
+  {
     if (!freeze_entities)
     {
       player->update();
@@ -150,12 +140,8 @@ void Game::draw() noexcept
   {
     case GameState::PLAYING_ASTEROIDS:
     {
-      if (station)
-      {
-        station->tint = ColorBrightness(BLACK, 0.7f);
-        station->set_centered();
-        station->draw();
-      }
+      for (const auto &interactable : interactables)
+        interactable->draw();
 
       particles->for_each(std::bind(&Particle::draw, std::placeholders::_1));
 
@@ -260,6 +246,9 @@ void Game::set_state(GameState new_state) noexcept
                                    static_cast<float>(GetRandomValue(0, height)) };
         pickables->push(Pickable::create_ore(position, Vector2Zero()));
       }
+
+      interactables.push_back(std::make_unique<Station>());
+
       break;
     case GameState::PLAYING_STATION:
       player = std::make_unique<PlayerCharacter>();
@@ -281,7 +270,7 @@ void Game::play_action(const Action::Type &action_type, const Level &level) noex
     Action action;
     action.on_update = [this](Action &action)
     {
-      const auto &station_position = station->position;
+      const auto &station_position = Vector2 { width * 0.5f, height * 0.5f };
 
       PlayerShip *player_ship = dynamic_cast<PlayerShip *>(player.get());
       if (!player_ship)
@@ -359,18 +348,15 @@ void Game::play_action(const Action::Type &action_type, const Level &level) noex
 
 #if defined(ALPHA_FADEOUT)
       float alpha = std::max(0.0f, std::min(255.0f, 255.0f * data));
-      alpha = std::floor(alpha / 20.0f) * 20.0f;
-      Color color { 0, 0, 0, static_cast<unsigned char>(alpha) };
+      alpha       = std::floor(alpha / 20.0f) * 20.0f;
+      Color color{ 0, 0, 0, static_cast<unsigned char>(alpha) };
       DrawRectangle(0, 0, width, height, color);
 #endif
 
-      DrawRing(Vector2 { width * 0.5f, height * 0.5f }, width * data, width, 0.0f, 360.0f, 8, BLACK);
+      DrawRing(Vector2{ width * 0.5f, height * 0.5f }, width * data, width, 0.0f, 360.0f, 8, BLACK);
     };
 
-    action.on_done = [this]()
-    {
-      freeze_entities = false;
-    };
+    action.on_done = [this]() { freeze_entities = false; };
 
     action.data = 0.0f;
     actions.push(std::move(action));

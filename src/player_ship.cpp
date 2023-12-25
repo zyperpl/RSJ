@@ -10,6 +10,7 @@
 #include "asteroid.hpp"
 #include "bullet.hpp"
 #include "game.hpp"
+#include "interactable.hpp"
 #include "particle.hpp"
 #include "utils.hpp"
 
@@ -133,7 +134,7 @@ bool PlayerShip::can_shoot() const noexcept
 
 bool PlayerShip::can_interact() const noexcept
 {
-  return interactive_found_timer.is_done() && !is_invincible() && lives > 0 && is_near_interactive();
+  return interactive_found_timer.is_done() && !is_invincible() && is_near_interactive();
 }
 
 void PlayerShip::handle_input()
@@ -254,15 +255,14 @@ void PlayerShip::calculate_nearest_interactive() noexcept
   nearest_interactive.second.x = 0.0f;
   nearest_interactive.second.y = 0.0f;
 
-  // station
-  if (auto *station = game.get_station(); station)
+  for (auto &obj : game.interactables)
   {
-    const float min_distance = std::max(station->get_width(), station->get_height()) * 0.5f;
-    const float distance     = Vector2Distance(position, station->position);
+    const float min_distance = std::max(obj->get_sprite().get_width(), obj->get_sprite().get_height()) * 0.5f;
+    const float distance     = Vector2Distance(position, obj->get_sprite().position);
     if (distance < min_distance)
     {
       nearest_interactive.first  = InteractiveType::STATION;
-      nearest_interactive.second = station->position;
+      nearest_interactive.second = obj->get_sprite().position;
 
       if (interactive_found_timer.is_done())
         interactive_found_timer.start();

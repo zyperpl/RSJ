@@ -18,6 +18,7 @@ class Bullet;
 class Asteroid;
 class Particle;
 class Pickable;
+class Interactable;
 
 template<typename T, size_t>
 struct ObjectCircularBuffer;
@@ -89,8 +90,7 @@ public:
   std::unique_ptr<ObjectCircularBuffer<Asteroid, 1024>> asteroids;
   std::unique_ptr<ObjectCircularBuffer<Particle, 4096>> particles;
   std::unique_ptr<ObjectCircularBuffer<Pickable, 1024>> pickables;
-
-  const auto *get_station() const noexcept { return station.get(); }
+  std::vector<std::unique_ptr<Interactable>> interactables;
 
   static constexpr int width               = 480;
   static constexpr int height              = 270;
@@ -118,7 +118,6 @@ private:
   void update_game();
 
   std::array<Vector2, 100> stars;
-  std::unique_ptr<Sprite> station;
   void update_background() noexcept;
   void draw_background() noexcept;
 
