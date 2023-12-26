@@ -159,8 +159,9 @@ size_t Sprite::get_height() const
 
 void Sprite::set_centered()
 {
-  origin =
-    Vector2{ static_cast<float>(scale.x * get_width()) / 2.0f, static_cast<float>(scale.y * get_height()) / 2.0f };
+  const float origin_x = static_cast<float>(scale.x * get_width()) / 2.0f;
+  const float origin_y = static_cast<float>(scale.y * get_height()) / 2.0f;
+  origin               = Vector2{ std::floor(origin_x), std::floor(origin_y) };
 }
 
 Rectangle Sprite::get_source_rect() const
@@ -169,6 +170,7 @@ Rectangle Sprite::get_source_rect() const
   const float sprite_h{ static_cast<float>(get_height()) };
   const float h_flip{ scale.x > 0.0f ? 1.0f : -1.0f };
   const float v_flip{ scale.y > 0.0f ? 1.0f : -1.0f };
+
   return Rectangle{ static_cast<float>(frame_index) * sprite_w, 0.0f, h_flip * sprite_w, v_flip * sprite_h };
 }
 
@@ -176,6 +178,7 @@ Rectangle Sprite::get_destination_rect() const
 {
   const float sprite_w{ static_cast<float>(get_width()) };
   const float sprite_h{ static_cast<float>(get_height()) };
+
   return Rectangle{ std::roundf(position.x + offset.x),
                     std::roundf(position.y + offset.y),
                     sprite_w * fabsf(scale.x),
