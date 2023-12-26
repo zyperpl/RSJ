@@ -33,3 +33,15 @@ void Station::update()
   if (sprite.scale.x < 1.0f)
     sprite.scale = Vector2Add(sprite.scale, Vector2{ 0.01f, 0.01f });
 }
+
+DialogEntity::DialogEntity(const Vector2 &position)
+  : Interactable{}
+{
+  sprite = Sprite{ "resources/npc.aseprite", "idle_down" };
+  sprite.set_centered();
+  sprite.position = position;
+}
+
+void DialogEntity::update()
+{
+}

@@ -39,8 +39,6 @@ void PlayerShip::draw() const noexcept
                  sprite.position = P;
                  sprite.draw();
 
-                 DrawCircleV(P, 1.0f, GREEN);
-
                  if (CONFIG(show_masks))
                  {
                    Mask mask_copy     = mask;

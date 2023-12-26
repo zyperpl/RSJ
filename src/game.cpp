@@ -15,7 +15,7 @@
 #include "player_ship.hpp"
 #include "utils.hpp"
 
-static constexpr const float TRANSITION_SPEED{ 1.5f };
+static constexpr const float TRANSITION_SPEED{ 1.25f };
 
 Config Game::config{};
 uint64_t Game::frame{ 0 };
@@ -30,7 +30,7 @@ void Game::init()
 {
   SetTraceLogLevel(LOG_TRACE);
 
-  set_state(GameState::PLAYING_ASTEROIDS);
+  set_state(GameState::PLAYING_STATION);
 
   TraceLog(LOG_TRACE, "Size of Asteroid buffer: %zukB", sizeof(Asteroid) * asteroids->capacity / 1024);
   TraceLog(LOG_TRACE, "Size of Bullet buffer: %zukB", sizeof(Bullet) * bullets->capacity / 1024);
@@ -39,8 +39,6 @@ void Game::init()
 
   for (size_t i = 0; i < stars.size(); i++)
     stars[i] = Vector2{ static_cast<float>(GetRandomValue(0, width)), static_cast<float>(GetRandomValue(0, height)) };
-
-  interactables.reserve(128);
 
   TraceLog(LOG_TRACE, "Game initialized");
 }
@@ -83,28 +81,6 @@ void Game::update_game()
     particles->for_each(std::bind(&Particle::update, std::placeholders::_1));
 
     update_background();
-
-#if defined(DEBUG)
-
-    if (IsKeyDown(KEY_LEFT_SHIFT))
-    {
-      if (IsKeyPressed(KEY_F1))
-      {
-        for (size_t i = 0; i < NUMBER_OF_ASTEROIDS; i++)
-        {
-          const Vector2 position = { static_cast<float>(GetRandomValue(0, width)),
-                                     static_cast<float>(GetRandomValue(0, height)) };
-          asteroids->push(Asteroid::create(position, 2));
-        }
-      }
-
-      if (IsKeyPressed(KEY_F2))
-      {
-        asteroids->for_each([](Asteroid &asteroid) { asteroid.life = 0; });
-      }
-    }
-
-#endif
   }
 
   if (state == GameState::PLAYING_STATION)
@@ -114,6 +90,39 @@ void Game::update_game()
       player->update();
     }
   }
+
+#if defined(DEBUG)
+  if (IsKeyDown(KEY_LEFT_SHIFT))
+  {
+    if (IsKeyPressed(KEY_F1) && asteroids)
+    {
+      for (size_t i = 0; i < NUMBER_OF_ASTEROIDS; i++)
+      {
+        const Vector2 position = { static_cast<float>(GetRandomValue(0, width)),
+                                   static_cast<float>(GetRandomValue(0, height)) };
+        asteroids->push(Asteroid::create(position, 2));
+      }
+    }
+
+    if (IsKeyPressed(KEY_F2) && asteroids)
+    {
+      asteroids->for_each([](Asteroid &asteroid) { asteroid.life = 0; });
+    }
+
+    if (IsKeyPressed(KEY_F3))
+    {
+      if (state == GameState::PLAYING_ASTEROIDS)
+        set_state(GameState::PLAYING_STATION);
+      else
+        set_state(GameState::PLAYING_ASTEROIDS);
+    }
+
+    if (IsKeyPressed(KEY_F4))
+    {
+      CONFIG(show_masks) = !CONFIG(show_masks);
+    }
+  }
+#endif
 }
 
 void Game::update_background() noexcept
@@ -152,7 +161,22 @@ void Game::draw() noexcept
     }
     case GameState::PLAYING_STATION:
     {
+      for (const auto &interactable : interactables)
+        interactable->draw();
+
+      particles->for_each(std::bind(&Particle::draw, std::placeholders::_1));
+      pickables->for_each(std::bind(&Pickable::draw, std::placeholders::_1));
+
       player->draw();
+
+      if (CONFIG(show_masks))
+      {
+        for (const auto &mask : masks)
+          mask.draw();
+
+        for (const auto &interactable : interactables)
+          Mask(interactable->get_sprite().get_destination_rect()).draw();
+      }
     }
     case GameState::PLAYING_PAUSED:
       break;
@@ -206,19 +230,19 @@ void Game::set_state(GameState new_state) noexcept
 {
   state = new_state;
 
-  bullets.reset();
-  asteroids.reset();
-  particles.reset();
-  pickables.reset();
+  bullets   = std::make_unique<ObjectCircularBuffer<Bullet, 128>>();
+  asteroids = std::make_unique<ObjectCircularBuffer<Asteroid, 2048>>();
+  particles = std::make_unique<ObjectCircularBuffer<Particle, 4096>>();
+  pickables = std::make_unique<ObjectCircularBuffer<Pickable, 1024>>();
+  interactables.reserve(128);
+  interactables.clear();
+  masks.reserve(1024);
+  masks.clear();
 
   switch (state)
   {
     case GameState::PLAYING_ASTEROIDS:
-      player    = std::make_unique<PlayerShip>();
-      bullets   = std::make_unique<ObjectCircularBuffer<Bullet, 128>>();
-      asteroids = std::make_unique<ObjectCircularBuffer<Asteroid, 2048>>();
-      particles = std::make_unique<ObjectCircularBuffer<Particle, 4096>>();
-      pickables = std::make_unique<ObjectCircularBuffer<Pickable, 1024>>();
+      player = std::make_unique<PlayerShip>();
 
       for (size_t i = 0; i < NUMBER_OF_ASTEROIDS; i++)
       {
@@ -252,6 +276,10 @@ void Game::set_state(GameState new_state) noexcept
       break;
     case GameState::PLAYING_STATION:
       player = std::make_unique<PlayerCharacter>();
+
+      interactables.emplace_back(std::make_unique<DialogEntity>(Vector2{ width * 0.85f, height * 0.5f }));
+
+      masks.push_back(Mask{ Rectangle{ width * 0.35f - 8.0f, height * 0.5f + 32.0f, 16.0f, 16.0f } });
       break;
     case GameState::GAME_OVER:
       break;
@@ -276,7 +304,7 @@ void Game::play_action(const Action::Type &action_type, const Level &level) noex
       if (!player_ship)
         return;
 
-      player_ship->position = Vector2Lerp(player_ship->position, station_position, 0.1f);
+      player_ship->position = Vector2Lerp(player_ship->position, station_position, 0.05f);
 
       if (player_ship->sprite.scale.x > 0.1f)
         player_ship->sprite.scale = Vector2Scale(player_ship->sprite.scale, 0.9f);
@@ -345,14 +373,6 @@ void Game::play_action(const Action::Type &action_type, const Level &level) noex
     action.on_draw = [](const Action &action)
     {
       const float &data = std::get<float>(action.data);
-
-#if defined(ALPHA_FADEOUT)
-      float alpha = std::max(0.0f, std::min(255.0f, 255.0f * data));
-      alpha       = std::floor(alpha / 20.0f) * 20.0f;
-      Color color{ 0, 0, 0, static_cast<unsigned char>(alpha) };
-      DrawRectangle(0, 0, width, height, color);
-#endif
-
       DrawRing(Vector2{ width * 0.5f, height * 0.5f }, width * data, width, 0.0f, 360.0f, 8, BLACK);
     };
 

@@ -9,6 +9,8 @@
 #include <raylib.h>
 #include <raymath.h>
 
+#include "mask.hpp"
+
 #define CONFIG(Option) Game::config.Option
 #define GAME           Game::get()
 
@@ -19,6 +21,7 @@ class Asteroid;
 class Particle;
 class Pickable;
 class Interactable;
+struct Mask;
 
 template<typename T, size_t>
 struct ObjectCircularBuffer;
@@ -91,6 +94,7 @@ public:
   std::unique_ptr<ObjectCircularBuffer<Particle, 4096>> particles;
   std::unique_ptr<ObjectCircularBuffer<Pickable, 1024>> pickables;
   std::vector<std::unique_ptr<Interactable>> interactables;
+  std::vector<Mask> masks;
 
   static constexpr int width               = 480;
   static constexpr int height              = 270;

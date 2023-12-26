@@ -10,23 +10,32 @@
 #include "asteroid.hpp"
 #include "bullet.hpp"
 #include "game.hpp"
+#include "interactable.hpp"
 #include "particle.hpp"
 #include "utils.hpp"
 
 PlayerCharacter::PlayerCharacter()
 {
-  mask.shapes.push_back(Rectangle{ 0.0f, 0.0f, 24.0f, 32.0f });
+  mask.shapes.push_back(Rectangle{ 0.0f, 0.0f, 16.0f, 32.0f });
   mask.position = position;
-
-  sprite.set_centered();
-  sprite.position = position;
 }
 
 void PlayerCharacter::draw() const noexcept
 {
+  sprite.position.x = std::round(position.x);
+  sprite.position.y = std::round(position.y);
   sprite.set_centered();
-  sprite.position = position;
+
   sprite.draw();
+
+  if (CONFIG(show_masks))
+    mask.draw();
+
+  if (interactable)
+  {
+    DrawCircle(static_cast<int>(interactable->get_sprite().position.x),
+               static_cast<int>(interactable->get_sprite().position.y), 5.0f, RED);
+  }
 }
 
 void PlayerCharacter::handle_input()
@@ -46,6 +55,11 @@ void PlayerCharacter::handle_input()
     velocity.y = 0.0f;
 
   velocity = Vector2Scale(Vector2Normalize(velocity), PLAYER_SPEED);
+  
+  const bool can_interact = interactable;
+  if (IsKeyPressed(KEY_SPACE) && can_interact)
+  {
+  }
 }
 
 std::string idle_tag_from_direction(Direction direction)
@@ -80,13 +94,28 @@ std::string walk_tag_from_direction(Direction direction)
   return "walk_down";
 }
 
+bool PlayerCharacter::is_colliding() const
+{
+  for (const auto &obj : GAME.interactables)
+  {
+    if (mask.check_collision(Mask(obj->get_sprite().get_destination_rect())))
+      return true;
+  }
+
+  for (const auto &mask : GAME.masks)
+  {
+    if (mask.check_collision(this->mask))
+      return true;
+  }
+
+  return false;
+}
+
 void PlayerCharacter::update()
 {
   handle_input();
 
-  position.x += velocity.x;
-  position.y += velocity.y;
-
+  // animation
   if (velocity.x < 0.0f)
     direction = Direction::Left;
   else if (velocity.x > 0.0f)
@@ -100,9 +129,72 @@ void PlayerCharacter::update()
     sprite.set_animation(walk_tag_from_direction(direction));
   else
     sprite.set_animation(idle_tag_from_direction(direction));
-
   sprite.animate();
-  mask.position = position;
+
+  // collisions
+  {
+    const float pos_x = std::round(position.x + velocity.x);
+    mask.position.x   = pos_x;
+    if (!is_colliding())
+      position.x = pos_x;
+    else
+    {
+      if (fabs(velocity.x) > 0.25f)
+      {
+        const float step  = velocity.x > 0.0f ? 1.0f : -1.0f;
+        uint8_t max_steps = 250;
+        while (fabs(position.x - pos_x) > 0.0f && max_steps-- > 0)
+        {
+          position.x += step;
+          mask.position.x = position.x;
+          if (is_colliding())
+          {
+            position.x -= step;
+            mask.position.x = position.x;
+            velocity.x      = 0.0f;
+            break;
+          }
+        }
+      }
+    }
+
+    const float pos_y = std::round(position.y + velocity.y);
+    mask.position.y   = pos_y;
+    if (!is_colliding())
+      position.y = pos_y;
+    else
+    {
+      if (fabs(velocity.y) > 0.25f)
+      {
+        const float step  = velocity.y > 0.0f ? 1.0f : -1.0f;
+        uint8_t max_steps = 250;
+        while (fabs(position.y - pos_y) > 0.0f && max_steps-- > 0)
+        {
+          position.y += step;
+          mask.position.y = position.y;
+          if (is_colliding())
+          {
+            position.y -= step;
+            mask.position.y = position.y;
+            velocity.y      = 0.0f;
+            break;
+          }
+        }
+      }
+    }
+    mask.position = position;
+  }
+
+  interactable = nullptr;
+  for (const auto &obj : GAME.interactables)
+  {
+    const Mask obj_mask(obj->get_sprite().get_destination_rect());
+    if (mask.check_collision(obj_mask, 2.0f))
+    {
+      interactable = obj.get();
+      break;
+    }
+  }
 }
 
 void PlayerCharacter::die() {}

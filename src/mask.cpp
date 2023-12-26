@@ -24,7 +24,7 @@ Mask::Mask(const std::vector<Shape> &shapes) noexcept
 {
 }
 
-bool Mask::check_collision(const Mask &other) const
+bool Mask::check_collision(const Mask &other, float inflate) const
 {
   const auto get_transformed_circle = [](const Shape &shape, const Vector2 &position)
   {
@@ -37,9 +37,10 @@ bool Mask::check_collision(const Mask &other) const
 
   const auto get_transformed_rectangle = [](const Shape &shape, const Vector2 &position)
   {
+    // Mask rectangle origin is at the center
     const auto &rectangle = std::get<Rectangle>(shape);
-    const auto &x         = rectangle.x;
-    const auto &y         = rectangle.y;
+    const auto &x         = rectangle.x - rectangle.width / 2;
+    const auto &y         = rectangle.y - rectangle.height / 2;
     const auto &w         = rectangle.width;
     const auto &h         = rectangle.height;
 
@@ -51,35 +52,57 @@ bool Mask::check_collision(const Mask &other) const
 
   for (const auto &this_shape : this_shapes)
   {
+    auto my_shape = this_shape;
+
+    if (inflate != 0.0f)
+    {
+      const auto inflated_shape = [&]() -> Shape
+      {
+        if (std::holds_alternative<Circle>(this_shape))
+        {
+          const auto &circle = std::get<Circle>(this_shape);
+          return Circle{ circle.center, circle.radius + inflate };
+        }
+        else if (std::holds_alternative<Rectangle>(this_shape))
+        {
+          const auto &rectangle = std::get<Rectangle>(this_shape);
+          return Rectangle{ rectangle.x, rectangle.y, rectangle.width + inflate, rectangle.height + inflate };
+        }
+
+        return this_shape;
+      }();
+      my_shape = inflated_shape;
+    }
+
     for (const auto &other_shape : other_shapes)
     {
       if (std::holds_alternative<Circle>(this_shape) && std::holds_alternative<Circle>(other_shape))
       {
-        const auto &this_circle  = get_transformed_circle(this_shape, position);
+        const auto &this_circle  = get_transformed_circle(my_shape, position);
         const auto &other_circle = get_transformed_circle(other_shape, other.position);
 
         if (CheckCollisionCircles(this_circle.center, this_circle.radius, other_circle.center, other_circle.radius))
           return true;
       }
-      else if (std::holds_alternative<Rectangle>(this_shape) && std::holds_alternative<Rectangle>(other_shape))
+      else if (std::holds_alternative<Rectangle>(my_shape) && std::holds_alternative<Rectangle>(other_shape))
       {
-        const auto &this_rectangle  = get_transformed_rectangle(this_shape, position);
+        const auto &this_rectangle  = get_transformed_rectangle(my_shape, position);
         const auto &other_rectangle = get_transformed_rectangle(other_shape, other.position);
 
         if (CheckCollisionRecs(this_rectangle, other_rectangle))
           return true;
       }
-      else if (std::holds_alternative<Circle>(this_shape) && std::holds_alternative<Rectangle>(other_shape))
+      else if (std::holds_alternative<Circle>(my_shape) && std::holds_alternative<Rectangle>(other_shape))
       {
-        const auto &this_circle     = get_transformed_circle(this_shape, position);
+        const auto &this_circle     = get_transformed_circle(my_shape, position);
         const auto &other_rectangle = get_transformed_rectangle(other_shape, other.position);
 
         if (CheckCollisionCircleRec(this_circle.center, this_circle.radius, other_rectangle))
           return true;
       }
-      else if (std::holds_alternative<Rectangle>(this_shape) && std::holds_alternative<Circle>(other_shape))
+      else if (std::holds_alternative<Rectangle>(my_shape) && std::holds_alternative<Circle>(other_shape))
       {
-        const auto &this_rectangle = get_transformed_rectangle(this_shape, position);
+        const auto &this_rectangle = get_transformed_rectangle(my_shape, position);
         const auto &other_circle   = get_transformed_circle(other_shape, other.position);
 
         if (CheckCollisionCircleRec(other_circle.center, other_circle.radius, this_rectangle))
@@ -93,7 +116,6 @@ bool Mask::check_collision(const Mask &other) const
 
 void Mask::draw() const noexcept
 {
-  // get random, but predictable color based on *this pointer (lower bits have more entropy)
   const auto color = [&]() -> Color
   {
     const auto pointer = reinterpret_cast<uintptr_t>(this);
@@ -121,9 +143,10 @@ void Mask::draw() const noexcept
     }
     else if (std::holds_alternative<Rectangle>(shape))
     {
+      // Mask rectangle origin is at the center
       const auto &rectangle = std::get<Rectangle>(shape);
-      int x                 = rectangle.x + position.x;
-      int y                 = rectangle.y + position.y;
+      int x                 = rectangle.x + position.x - rectangle.width / 2;
+      int y                 = rectangle.y + position.y - rectangle.height / 2;
       const int w           = rectangle.width;
       const int h           = rectangle.height;
 

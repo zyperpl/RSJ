@@ -6,6 +6,7 @@
 #include <raylib.h>
 #include <raymath.h>
 
+#include "sprite.hpp"
 #include "game.hpp"
 
 struct Circle
@@ -31,6 +32,6 @@ struct Mask
   Vector2 position{};
   std::vector<Shape> shapes;
 
-  [[nodiscard]] bool check_collision(const Mask &other) const;
+  [[nodiscard]] bool check_collision(const Mask &other, float inflate = 0.0f) const;
   void draw() const noexcept;
 };

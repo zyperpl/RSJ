@@ -14,6 +14,8 @@
 
 #include "player.hpp"
 
+class Interactable;
+
 class PlayerCharacter final : public Player
 {
 public:
@@ -25,7 +27,12 @@ public:
   void draw() const noexcept override;
   void die() override;
 
+  bool is_colliding() const;
+
 private:
   Direction direction{ Direction::Down };
+
+  Interactable *interactable{ nullptr };
+
   constexpr static float PLAYER_SPEED = 2.0f;
 };

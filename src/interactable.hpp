@@ -29,5 +29,6 @@ private:
 class DialogEntity final : public Interactable
 {
 public:
+  DialogEntity(const Vector2 &position);
   void update() override;
 };
