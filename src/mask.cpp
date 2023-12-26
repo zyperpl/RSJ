@@ -97,13 +97,13 @@ void Mask::draw() const noexcept
   const auto color = [&]() -> Color
   {
     const auto pointer = reinterpret_cast<uintptr_t>(this);
-    int64_t seed = static_cast<int64_t>(pointer);
+    int64_t seed       = static_cast<int64_t>(pointer);
     seed ^= seed << 2;
     seed ^= seed >> 3;
 
-    const auto r       = static_cast<uint8_t>((seed & 0xF0) | 0x0F);
-    const auto g       = static_cast<uint8_t>(((seed >> 8) & 0xF0) | 0x0F);
-    const auto b       = static_cast<uint8_t>(((seed >> 16) & 0xF0) | 0x0F);
+    const auto r = static_cast<uint8_t>((seed & 0xF0) | 0x0F);
+    const auto g = static_cast<uint8_t>(((seed >> 8) & 0xF0) | 0x0F);
+    const auto b = static_cast<uint8_t>(((seed >> 16) & 0xF0) | 0x0F);
     return Color{ r, g, b, 255 };
   }();
 
@@ -115,17 +115,17 @@ void Mask::draw() const noexcept
       const auto &center = Vector2Add(position, circle.center);
 
       DrawCircleLinesV(center, circle.radius, color);
-      DrawCircleLinesV(Vector2{center.x + Game::width, center.y}, circle.radius, color);
-      DrawCircleLinesV(Vector2{center.x - Game::width, center.y}, circle.radius, color);
-      DrawCircleLinesV(Vector2{center.x, center.y + Game::height}, circle.radius, color);
+      DrawCircleLinesV(Vector2{ center.x + Game::width, center.y }, circle.radius, color);
+      DrawCircleLinesV(Vector2{ center.x - Game::width, center.y }, circle.radius, color);
+      DrawCircleLinesV(Vector2{ center.x, center.y + Game::height }, circle.radius, color);
     }
     else if (std::holds_alternative<Rectangle>(shape))
     {
       const auto &rectangle = std::get<Rectangle>(shape);
-      int x                = rectangle.x + position.x;
-      int y                = rectangle.y + position.y;
-      const int w         = rectangle.width;
-      const int h         = rectangle.height;
+      int x                 = rectangle.x + position.x;
+      int y                 = rectangle.y + position.y;
+      const int w           = rectangle.width;
+      const int h           = rectangle.height;
 
       DrawRectangleLines(x, y, w, h, color);
       DrawRectangleLines(x + Game::width, y, w, h, color);

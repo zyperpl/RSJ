@@ -19,7 +19,7 @@ struct ObjectCircularBuffer
   size_t tail{ 0 };
   const size_t capacity{ BUFFER_SIZE };
 
-  void push(T &&obj)
+  constexpr void push(T &&obj)
   {
     objects[head] = std::move(obj);
     head          = (head + 1) % BUFFER_SIZE;
@@ -30,12 +30,12 @@ struct ObjectCircularBuffer
     }
   }
 
-  size_t size() const { return head >= tail ? head - tail : BUFFER_SIZE - tail + head; }
+  constexpr size_t size() const { return head >= tail ? head - tail : BUFFER_SIZE - tail + head; }
 
-  bool empty() const { return head == tail; }
-  bool full() const { return (head + 1) % BUFFER_SIZE == tail; }
+  constexpr bool empty() const { return head == tail; }
+  constexpr bool full() const { return (head + 1) % BUFFER_SIZE == tail; }
 
-  void clear()
+  constexpr void clear()
   {
     head = 0;
     tail = 0;
@@ -66,7 +66,7 @@ struct ObjectCircularBuffer
     }
   }
 
-  void remove(size_t index)
+  constexpr void remove(size_t index)
   {
     if (index >= BUFFER_SIZE)
       return;

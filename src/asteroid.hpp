@@ -13,9 +13,8 @@ public:
   Vector2 position{};
   Vector2 velocity{};
   uint8_t size{ 2 };
-  uint8_t max_life { 1 };
+  uint8_t max_life{ 1 };
   uint8_t life{ max_life };
-  mutable Sprite sprite{ "resources/asteroid.aseprite" };
   Mask mask{};
 
   [[nodiscard]] static Asteroid create(const Vector2 &position, uint8_t size);

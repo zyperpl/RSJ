@@ -64,7 +64,7 @@ void update_draw_frame()
 
       text_position.y += font_size + 5.0f;
       static uint64_t draw_score = 0;
-      uint64_t score_step = std::max<uint64_t>(1, (game.score - draw_score) / 20);
+      uint64_t score_step        = std::max<uint64_t>(1, (game.score - draw_score) / 20);
       if (draw_score < game.score)
         draw_score += score_step;
       if (draw_score > game.score)
@@ -137,7 +137,7 @@ int main(void)
   InitAudioDevice();
   SetTargetFPS(60);
 
-  font = LoadFontEx("resources/Kenney Mini Square.ttf", 10, nullptr, 0);
+  font       = LoadFontEx("resources/Kenney Mini Square.ttf", 10, nullptr, 0);
   Game &game = Game::get();
   game.init();
 

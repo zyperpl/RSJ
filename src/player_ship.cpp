@@ -255,11 +255,13 @@ void PlayerShip::calculate_nearest_interactive() noexcept
   nearest_interactive.second.x = 0.0f;
   nearest_interactive.second.y = 0.0f;
 
+  const bool no_asteroids = game.asteroids->empty();
+
   for (auto &obj : game.interactables)
   {
     const float min_distance = std::max(obj->get_sprite().get_width(), obj->get_sprite().get_height()) * 0.5f;
     const float distance     = Vector2Distance(position, obj->get_sprite().position);
-    if (distance < min_distance)
+    if (distance < min_distance && no_asteroids)
     {
       nearest_interactive.first  = InteractiveType::STATION;
       nearest_interactive.second = obj->get_sprite().position;

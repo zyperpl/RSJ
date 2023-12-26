@@ -216,7 +216,7 @@ void Game::set_state(GameState new_state) noexcept
     case GameState::PLAYING_ASTEROIDS:
       player    = std::make_unique<PlayerShip>();
       bullets   = std::make_unique<ObjectCircularBuffer<Bullet, 128>>();
-      asteroids = std::make_unique<ObjectCircularBuffer<Asteroid, 1024>>();
+      asteroids = std::make_unique<ObjectCircularBuffer<Asteroid, 2048>>();
       particles = std::make_unique<ObjectCircularBuffer<Particle, 4096>>();
       pickables = std::make_unique<ObjectCircularBuffer<Pickable, 1024>>();
 
@@ -270,7 +270,7 @@ void Game::play_action(const Action::Type &action_type, const Level &level) noex
     Action action;
     action.on_update = [this](Action &action)
     {
-      const auto &station_position = Vector2 { width * 0.5f, height * 0.5f };
+      const auto &station_position = Vector2{ width * 0.5f, height * 0.5f };
 
       PlayerShip *player_ship = dynamic_cast<PlayerShip *>(player.get());
       if (!player_ship)

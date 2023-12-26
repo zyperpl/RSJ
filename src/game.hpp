@@ -87,7 +87,7 @@ public:
 
   std::unique_ptr<Player> player;
   std::unique_ptr<ObjectCircularBuffer<Bullet, 128>> bullets;
-  std::unique_ptr<ObjectCircularBuffer<Asteroid, 1024>> asteroids;
+  std::unique_ptr<ObjectCircularBuffer<Asteroid, 2048>> asteroids;
   std::unique_ptr<ObjectCircularBuffer<Particle, 4096>> particles;
   std::unique_ptr<ObjectCircularBuffer<Pickable, 1024>> pickables;
   std::vector<std::unique_ptr<Interactable>> interactables;

@@ -12,6 +12,7 @@ public:
   virtual void draw() const;
 
   const Sprite &get_sprite() const noexcept { return sprite; }
+
 protected:
   mutable Sprite sprite{};
 };

@@ -23,10 +23,10 @@ struct Mask
   Mask(const Shape &shape) noexcept;
   Mask(const std::vector<Shape> &shapes) noexcept;
   Mask(const Mask &other) noexcept = default;
-  Mask(Mask &&other) noexcept = default;
+  Mask(Mask &&other) noexcept      = default;
 
-  Mask &operator= (const Mask &other) noexcept = default;
-  Mask &operator= (Mask &&other) noexcept = default;
+  Mask &operator=(const Mask &other) noexcept = default;
+  Mask &operator=(Mask &&other) noexcept      = default;
 
   Vector2 position{};
   std::vector<Shape> shapes;

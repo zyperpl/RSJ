@@ -11,11 +11,11 @@ class SoundManager
 public:
   struct Sound
   {
-    Sound() = default;
+    Sound()                   = default;
     Sound(const Sound &other) = default;
     Sound(std::string_view path) { ray_sound = LoadSound(path.data()); }
 
-    Sound &operator=(const Sound&) = default;
+    Sound &operator=(const Sound &) = default;
 
     void play() const
     {
@@ -41,7 +41,7 @@ public:
   static void clear()
   {
     for (auto &[name, sound] : sounds)
-      UnloadSound(sound.ray_sound); 
+      UnloadSound(sound.ray_sound);
     sounds.clear();
   }
 

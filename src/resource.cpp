@@ -45,13 +45,13 @@ TextureResource &TextureResource::operator=(const TextureResource &other)
   texture = other.texture;
 
   use_counter(texture);
-  
+
   return *this;
 }
 
 TextureResource &TextureResource::operator=(TextureResource &&other)
 {
-  texture = std::move(other.texture);
+  texture          = std::move(other.texture);
   other.texture.id = 0;
   return *this;
 }
@@ -79,7 +79,7 @@ const Texture *TextureResource::operator->() const
 TextureResource::~TextureResource()
 {
   texture_counter[texture.id] -= 1;
-  
+
   if (texture_counter[texture.id] > 0)
     return;
 

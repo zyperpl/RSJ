@@ -7,27 +7,31 @@
 #include "player.hpp"
 #include "utils.hpp"
 
-Pickable Pickable::create(const Vector2 &position, const Vector2 &velocity, std::function<void()> func)
+static std::unique_ptr<Sprite> ORE_SPRITE;
+
+Pickable Pickable::create(const Vector2 &position, const Vector2 &velocity, const std::function<void()> &func)
 {
+  if (!ORE_SPRITE)
+    ORE_SPRITE = std::make_unique<Sprite>("resources/ore.aseprite");
+
   Pickable pickable(position, func);
   pickable.velocity = velocity;
   return pickable;
 }
 
-Pickable Pickable::create_ore(const Vector2 &position, const Vector2 &velocity)
+void ore_func()
 {
-  return create(position,
-                velocity,
-                []()
-                {
-                  GAME.coins += 1;
-                  GAME.score += 100;
-                });
+  GAME.coins += 1;
+  GAME.score += 100;
 }
 
-Pickable::Pickable(const Vector2 &position, std::function<void()> func)
+Pickable Pickable::create_ore(const Vector2 &position, const Vector2 &velocity)
+{
+  return create(position, velocity, ore_func);
+}
+
+Pickable::Pickable(const Vector2 &position, const std::function<void()> &func)
   : position{ position }
-  , velocity{ 0.0f, 0.0f }
   , func{ func }
 {
 }
@@ -43,23 +47,23 @@ bool Pickable::update()
   if (!GAME.player)
     return true;
 
-  if (!player)
+  const auto &player = GAME.player;
+
+  if (player_id == -1)
   {
-    if (mask.check_collision(GAME.player->get_mask()))
+    if (mask.check_collision(player->get_mask()))
     {
-      player = GAME.player.get();
+      player_id = 1;
 
       velocity = Vector2Normalize(Vector2Subtract(position, player->position));
       velocity.x *= 1.1f;
       velocity.y *= 1.1f;
-
-      sprite.scale = Vector2{ 0.86f, 0.86f };
     }
   }
   else
   {
-    const float d = Vector2Distance(position, player->position);
-    if (d < 8.0f)
+    const float player_distance = Vector2Distance(position, player->position);
+    if (player_distance < 8.0f)
     {
       if (func)
         func();
@@ -68,7 +72,7 @@ bool Pickable::update()
     }
     const Vector2 dir = Vector2Normalize(Vector2Subtract(player->position, position));
 
-    if (d > std::min(Game::width, Game::height) / 2.0f)
+    if (player_distance > std::min(Game::width, Game::height) / 2.0f)
     {
       position.x = player->position.x - dir.x * 7.0f;
       position.y = player->position.y - dir.y * 7.0f;
@@ -86,12 +90,17 @@ bool Pickable::update()
 
 void Pickable::draw() const
 {
-  sprite.set_centered();
-  sprite.position = position;
-  draw_wrapped(sprite.get_destination_rect(),
+  if (player_id != -1)
+    ORE_SPRITE->scale = Vector2{ 0.86f, 0.86f };
+  else
+    ORE_SPRITE->scale = Vector2{ 1.0f, 1.0f };
+
+  ORE_SPRITE->set_centered();
+  ORE_SPRITE->position = position;
+  draw_wrapped(ORE_SPRITE->get_destination_rect(),
                [&](const Vector2 &position)
                {
-                 sprite.position = position;
-                 sprite.draw();
+                 ORE_SPRITE->position = position;
+                 ORE_SPRITE->draw();
                });
 }

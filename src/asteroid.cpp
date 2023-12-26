@@ -11,6 +11,8 @@
 static constexpr const float ASTEROIDS_SIZE[]{ 8.0f, 16.0f, 32.0f };
 static constexpr const int ASTEROID_SPLIT_COUNT{ 2 };
 
+static std::unique_ptr<Sprite> ASTEROID_SPRITE;
+
 Particle create_asteroid_particle(const Vector2 &position, unsigned char alpha = 255)
 {
   const Vector2 pos{ position.x + static_cast<float>(GetRandomValue(-10, 10)),
@@ -29,6 +31,9 @@ Particle create_asteroid_particle(const Vector2 &position, unsigned char alpha =
 {
   assert(size >= 0 && size < 3);
 
+  if (!ASTEROID_SPRITE)
+    ASTEROID_SPRITE = std::make_unique<Sprite>("resources/asteroid.aseprite");
+
   const float speed_factor = 0.5f + (4.0f - static_cast<float>(size)) * 0.3f * 0.5f;
   const float random_angle = (static_cast<float>(GetRandomValue(0, 100)) / 100.0f) * M_PI * 2.0f;
   Asteroid asteroid;
@@ -38,8 +43,6 @@ Particle create_asteroid_particle(const Vector2 &position, unsigned char alpha =
   asteroid.size         = size;
   const float mask_size = ASTEROIDS_SIZE[size] * 0.5f;
   asteroid.mask.shapes.push_back(Circle{ Vector2{ 0.0f, 0.0f }, mask_size });
-  asteroid.sprite.set_frame(3 - size - 1);
-  asteroid.sprite.set_centered();
   return asteroid;
 }
 
@@ -123,14 +126,18 @@ void Asteroid::die()
 
 void Asteroid::draw() const noexcept
 {
-  Color color     = DARKPURPLE;
-  sprite.tint     = ColorBrightness(color, 0.5f + static_cast<float>(life) / static_cast<float>(max_life) * 0.5f);
-  sprite.position = position;
-  draw_wrapped(sprite.get_destination_rect(),
+  Color color = DARKPURPLE;
+
+  ASTEROID_SPRITE->set_centered();
+  ASTEROID_SPRITE->set_frame(3 - size - 1);
+  ASTEROID_SPRITE->tint = ColorBrightness(color, 0.5f + static_cast<float>(life) / static_cast<float>(max_life) * 0.5f);
+  ASTEROID_SPRITE->position = position;
+
+  draw_wrapped(ASTEROID_SPRITE->get_destination_rect(),
                [&](const Vector2 &P)
                {
-                 sprite.position = P;
-                 sprite.draw();
+                 ASTEROID_SPRITE->position = P;
+                 ASTEROID_SPRITE->draw();
 
                  if (CONFIG(show_masks))
                  {
