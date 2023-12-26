@@ -1,5 +1,8 @@
 #include "particle.hpp"
 
+#include <cassert>
+#include <cmath>
+
 #include "asteroid.hpp"
 #include "game.hpp"
 #include "player.hpp"
@@ -14,6 +17,8 @@ Particle Particle::create(const Vector2 &position, const Vector2 &velocity, cons
   return particle;
 }
 
+static const constexpr float asteroid_size_threshold[]{ 100.0f, 400.0f, 1600.0f, 6400.0f };
+
 bool Particle::update() noexcept
 {
   position.x += velocity.x;
@@ -23,26 +28,37 @@ bool Particle::update() noexcept
 
   wrap_position(position);
 
-  GAME.asteroids->for_each(
-    [&](Asteroid &asteroid)
+  if (GAME.particles && GAME.particles->capacity > 0 && GAME.frame % 3 == 0)
+  {
+    const auto *first                 = &GAME.particles->objects[0];
+    [[maybe_unused]] const auto *last = &GAME.particles->objects[GAME.particles->capacity];
+    assert(this >= first && this < last);
+
+    const size_t object_id = this - first;
+    if ((GAME.frame % 2 == 0 && object_id % 2 == 0) || (GAME.frame % 2 == 1 && object_id % 2 == 1))
     {
-      const Vector2 &asteroid_position = asteroid.position;
+      GAME.asteroids->for_each(
+        [&](Asteroid &asteroid) -> bool
+        {
+          const Vector2 &asteroid_position = asteroid.position;
+          const float x_diff               = position.x - asteroid_position.x;
+          const float y_diff               = position.y - asteroid_position.y;
+          const float distance_sqr         = x_diff * x_diff + y_diff * y_diff;
+          if (distance_sqr < 25.0f)
+            return true;
 
-      const float distance = Vector2Distance(position, asteroid_position);
-      if (distance < 5.0f)
-        return true;
+          assert(asteroid.size < 3);
+          if (distance_sqr < asteroid_size_threshold[asteroid.size])
+          {
+            const float factor = 0.1f / sqrt(distance_sqr);
+            velocity.x += x_diff * factor;
+            velocity.y += y_diff * factor;
+          }
 
-      const float x_diff = position.x - asteroid_position.x;
-      const float y_diff = position.y - asteroid_position.y;
-
-      if (distance < asteroid.size * 10.0f)
-      {
-        velocity.x += (x_diff * 0.1f) / distance;
-        velocity.y += (y_diff * 0.1f) / distance;
-      }
-
-      return true;
-    });
+          return true;
+        });
+    }
+  }
 
   const auto &player             = GAME.player;
   const Vector2 &player_position = player->position;
