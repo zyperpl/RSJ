@@ -34,6 +34,11 @@ void Station::update()
     sprite.scale = Vector2Add(sprite.scale, Vector2{ 0.01f, 0.01f });
 }
 
+void Station::interact()
+{
+  GAME.play_action(Action::Type::ChangeLevel, Level::Station);
+}
+
 DialogEntity::DialogEntity(const Vector2 &position)
   : Interactable{}
 {
@@ -42,6 +47,9 @@ DialogEntity::DialogEntity(const Vector2 &position)
   sprite.position = position;
 }
 
-void DialogEntity::update()
+void DialogEntity::update() {}
+
+void DialogEntity::interact()
 {
+  printf("Interacting with dialog entity\n");
 }

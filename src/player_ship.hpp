@@ -39,9 +39,8 @@ private:
 
   [[nodiscard]] bool is_invincible() const noexcept { return !invincibility_timer.is_done(); }
 
-  void calculate_nearest_interactive() noexcept;
-  [[nodiscard]] bool is_near_interactive() const noexcept { return nearest_interactive.first != InteractiveType::NONE; }
-  std::pair<InteractiveType, Vector2> nearest_interactive{ InteractiveType::NONE, Vector2{ 0.0f, 0.0f } };
+  void find_nearest_interactive() noexcept;
+  Interactable *interactable{ nullptr };
   Timer interactive_found_timer{ FRAMES(4) };
 
   void shoot() noexcept;

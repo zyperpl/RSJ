@@ -34,7 +34,9 @@ void PlayerCharacter::draw() const noexcept
   if (interactable)
   {
     DrawCircle(static_cast<int>(interactable->get_sprite().position.x),
-               static_cast<int>(interactable->get_sprite().position.y), 5.0f, RED);
+               static_cast<int>(interactable->get_sprite().position.y),
+               5.0f,
+               RED);
   }
 }
 
@@ -55,10 +57,11 @@ void PlayerCharacter::handle_input()
     velocity.y = 0.0f;
 
   velocity = Vector2Scale(Vector2Normalize(velocity), PLAYER_SPEED);
-  
+
   const bool can_interact = interactable;
   if (IsKeyPressed(KEY_SPACE) && can_interact)
   {
+    interactable->interact();
   }
 }
 

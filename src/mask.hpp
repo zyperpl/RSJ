@@ -6,8 +6,8 @@
 #include <raylib.h>
 #include <raymath.h>
 
-#include "sprite.hpp"
 #include "game.hpp"
+#include "sprite.hpp"
 
 struct Circle
 {

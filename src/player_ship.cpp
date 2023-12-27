@@ -127,12 +127,12 @@ void PlayerShip::shoot() noexcept
 
 bool PlayerShip::can_shoot() const noexcept
 {
-  return shoot_timer.is_done() && !is_invincible() && lives > 0 && !is_near_interactive();
+  return shoot_timer.is_done() && !is_invincible() && !interactable;
 }
 
 bool PlayerShip::can_interact() const noexcept
 {
-  return interactive_found_timer.is_done() && !is_invincible() && is_near_interactive();
+  return interactive_found_timer.is_done() && !is_invincible() && interactable;
 }
 
 void PlayerShip::handle_input()
@@ -190,9 +190,9 @@ void PlayerShip::handle_input()
   if (action_key && can_shoot())
     shoot();
 
-  if (action_key && can_interact())
+  if (action_key && can_interact() && interactable)
   {
-    game.play_action(Action::Type::ChangeLevel, Level::Station);
+    interactable->interact();
   }
 }
 
@@ -224,7 +224,7 @@ void PlayerShip::update()
   }
 
   wrap_position(position);
-  calculate_nearest_interactive();
+  find_nearest_interactive();
 
   // logic
   if (!is_invincible())
@@ -245,27 +245,25 @@ void PlayerShip::update()
   mask.position = position;
 }
 
-void PlayerShip::calculate_nearest_interactive() noexcept
+void PlayerShip::find_nearest_interactive() noexcept
 {
-  auto &game = Game::get();
-
-  nearest_interactive.first    = InteractiveType::NONE;
-  nearest_interactive.second.x = 0.0f;
-  nearest_interactive.second.y = 0.0f;
+  interactable = nullptr;
+  auto &game   = Game::get();
 
   const bool no_asteroids = game.asteroids->empty();
 
   for (auto &obj : game.interactables)
   {
-    const float min_distance = std::max(obj->get_sprite().get_width(), obj->get_sprite().get_height()) * 0.5f;
-    const float distance     = Vector2Distance(position, obj->get_sprite().position);
-    if (distance < min_distance && no_asteroids)
+    const float min_distance       = std::max(obj->get_sprite().get_width(), obj->get_sprite().get_height()) * 0.5f;
+    const float distance           = Vector2Distance(position, obj->get_sprite().position);
+    Interactable *interactable_ptr = obj.get();
+    if (distance < min_distance && no_asteroids && dynamic_cast<Station *>(interactable_ptr))
     {
-      nearest_interactive.first  = InteractiveType::STATION;
-      nearest_interactive.second = obj->get_sprite().position;
-
+      interactable = interactable_ptr;
       if (interactive_found_timer.is_done())
         interactive_found_timer.start();
+
+      break;
     }
   }
 }
