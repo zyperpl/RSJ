@@ -1,5 +1,6 @@
 #pragma once
 
+#include "dialog.hpp"
 #include "mask.hpp"
 #include "sprite.hpp"
 
@@ -34,4 +35,7 @@ public:
   DialogEntity(const Vector2 &position);
   void update() override;
   void interact() override;
+
+private:
+  DialogId dialog_id{ "start" };
 };

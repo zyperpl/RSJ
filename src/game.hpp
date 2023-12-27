@@ -3,13 +3,17 @@
 #include <array>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <queue>
 #include <variant>
+#include <vector>
 
 #include <raylib.h>
 #include <raymath.h>
 
+#include "dialog.hpp"
 #include "mask.hpp"
+#include "utils.hpp"
 
 #define CONFIG(Option) Game::config.Option
 #define GAME           Game::get()
@@ -37,7 +41,6 @@ struct Config
 enum class GameState
 {
   MENU,
-  PLAYING_PAUSED,
   PLAYING_ASTEROIDS,
   PLAYING_STATION,
   GAME_OVER
@@ -50,21 +53,16 @@ enum class Level
   Station,
 };
 
-enum class Transition
-{
-  Circle
-};
-
 struct Action
 {
   enum class Type
   {
     Invalid,
     ChangeLevel,
-    Transition,
+    Dialog,
   };
 
-  std::variant<float> data{};
+  std::variant<float, DialogId> data{};
   std::function<void(Action &action)> on_update{};
   std::function<void(const Action &action)> on_draw{};
   std::function<void()> on_done{};
@@ -86,7 +84,7 @@ struct Action
 class Game
 {
 public:
-  static Game &get() noexcept;
+  [[nodiscard]] static Game &get() noexcept;
 
   std::unique_ptr<Player> player;
   std::unique_ptr<ObjectCircularBuffer<Bullet, 128>> bullets;
@@ -113,11 +111,20 @@ public:
 
   GameState get_state() const noexcept { return state; }
   void play_action(const Action::Type &action_type, const Level &level) noexcept;
+  void play_action(const Action::Type &action_type, const DialogId &dialog_id) noexcept;
 
   bool freeze_entities{ false };
 
+  std::optional<Dialog> dialog;
+  std::optional<size_t> selected_dialog_response_index;
+
 private:
   [[nodiscard]] Game() noexcept = default;
+
+  Game(const Game &)            = delete;
+  Game(Game &&)                 = delete;
+  Game &operator=(const Game &) = delete;
+  Game &operator=(Game &&)      = delete;
 
   void update_game();
 
@@ -129,4 +136,6 @@ private:
   void set_state(GameState new_state) noexcept;
 
   std::queue<Action> actions;
+
+  DialogManager dialog_manager;
 };

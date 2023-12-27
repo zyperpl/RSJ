@@ -21,6 +21,7 @@ IF (CMAKE_BUILD_TYPE STREQUAL "Release")
 ENDIF()
 
 ADD_EXECUTABLE(${PROJECT_NAME}
+  action.cpp
   asteroid.cpp
   bullet.cpp
   game.cpp

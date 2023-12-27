@@ -16,10 +16,8 @@ public:
   std::function<void()> render_func;
 
   RenderPass(int width, int height);
-
   ~RenderPass();
 
   void render();
-
   void draw(const Rectangle &render_destination);
 };

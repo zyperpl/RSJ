@@ -51,5 +51,5 @@ void DialogEntity::update() {}
 
 void DialogEntity::interact()
 {
-  printf("Interacting with dialog entity\n");
+  GAME.play_action(Action::Type::Dialog, dialog_id);
 }
