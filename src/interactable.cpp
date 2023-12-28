@@ -38,7 +38,19 @@ void Station::update()
 
 void Station::interact()
 {
-  GAME.play_action(Action::Type::ChangeLevel, Level::Station);
+  GAME.schedule_action_change_level(Level::Station, this);
+}
+
+DockedShip::DockedShip()
+{
+  sprite = Sprite{ "resources/ship.aseprite", "idle" };
+  sprite.set_centered();
+  sprite.position = Vector2{ Game::width * 0.5f, Game::height * 0.25f };
+}
+
+void DockedShip::interact()
+{
+  GAME.schedule_action_change_level(Level::Asteroids, this);
 }
 
 DialogEntity::DialogEntity(const Vector2 &position, const std::string &name)
@@ -78,5 +90,5 @@ void DialogEntity::interact()
   }
 
   set_dialog_id(Dialog::START_DIALOG_ID);
-  GAME.play_action(Action::Type::Dialog, *this);
+  GAME.schedule_action_conversation(*this);
 }

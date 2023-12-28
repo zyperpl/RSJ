@@ -56,13 +56,6 @@ enum class Level
 
 struct Action
 {
-  enum class Type
-  {
-    Invalid,
-    ChangeLevel,
-    Dialog,
-  };
-
   std::variant<float, DialogId> data{};
   std::function<void(Action &action)> on_start{};
   std::function<void(Action &action)> on_update{};
@@ -99,6 +92,12 @@ struct Action
   }
 };
 
+struct Artifact
+{
+  std::string name;
+  std::string description;
+};
+
 class Game
 {
 public:
@@ -124,12 +123,13 @@ public:
 
   void draw() noexcept;
 
-  size_t coins{ 0 };
+  size_t crystals{ 0 };
   size_t score{ 0 };
+  std::queue<Artifact> artifacts;
 
   GameState get_state() const noexcept { return state; }
-  void play_action(const Action::Type &action_type, const Level &) noexcept;
-  void play_action(const Action::Type &action_type, DialogEntity &) noexcept;
+  void schedule_action_change_level(const Level &, const Interactable *) noexcept;
+  void schedule_action_conversation(DialogEntity &) noexcept;
 
   bool freeze_entities{ false };
 

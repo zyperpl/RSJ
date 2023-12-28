@@ -67,7 +67,7 @@ void update_draw_frame()
       DrawTextEx(GAME.font, TextFormat("Score: %i", draw_score), text_position, font_size, 1.0f, WHITE);
 
       text_position.y += font_size + 5.0f;
-      const char *crystals_text = TextFormat("Crystals: %i", game.coins);
+      const char *crystals_text = TextFormat("Crystals: %i", game.crystals);
       DrawTextEx(GAME.font, crystals_text, text_position, font_size, 1.0f, WHITE);
       text_size = MeasureTextEx(GAME.font, crystals_text, font_size, 1.0f);
       static Sprite crystal_sprite{ "resources/ore.aseprite" };
@@ -206,8 +206,8 @@ void update_draw_frame()
       }
 
       {
-        const float quest_x = Game::width - 200.0f;
-        float quest_y       = 10.0f;
+        const float quest_right_margin = 10.0f;
+        float quest_y                  = 10.0f;
         for (const auto &[quest_name, quest] : game.quests)
         {
           if (!quest.is_accepted() || quest.is_reported())
@@ -215,7 +215,9 @@ void update_draw_frame()
 
           const auto &quest_text =
             TextFormat("%s: %i/%i", quest.description.c_str(), quest.progress(), quest.max_progress());
-          const Color color = quest.is_completed() ? GREEN : WHITE;
+          const float quest_x =
+            Game::width - MeasureTextEx(GAME.font, quest_text, font_size, 1.0f).x - quest_right_margin;
+          const Color color = quest.is_completed() ? LIME : WHITE;
           DrawTextEx(GAME.font, quest_text, Vector2{ quest_x, quest_y }, font_size, 1.0f, color);
           quest_y += font_size + 5.0f;
         }

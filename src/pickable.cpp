@@ -21,7 +21,7 @@ Pickable Pickable::create(const Vector2 &position, const Vector2 &velocity, cons
 
 void ore_func()
 {
-  GAME.coins += 1;
+  GAME.crystals += 1;
   GAME.score += 100;
 }
 

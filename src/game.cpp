@@ -41,10 +41,18 @@ void Game::init()
   for (size_t i = 0; i < stars.size(); i++)
     stars[i] = Vector2{ static_cast<float>(GetRandomValue(0, width)), static_cast<float>(GetRandomValue(0, height)) };
 
+  quests.clear();
   quests.emplace("captain1",
                  Quest{ .description  = "Collect 10 crystals",
-                        .progress     = []() { return GAME.coins; },
-                        .max_progress = []() { return 10; } });
+                        .progress     = []() { return GAME.crystals; },
+                        .max_progress = []() { return 10; },
+                        .on_report    = []() { GAME.crystals -= 10; } });
+
+  quests.emplace("archeologist1",
+                 Quest{ .description  = "Collect ancient artifact",
+                        .progress     = []() { return GAME.artifacts.size(); },
+                        .max_progress = []() { return 1; },
+                        .on_report    = []() { GAME.artifacts.pop(); } });
 
   TraceLog(LOG_TRACE, "Game initialized");
 }
@@ -294,7 +302,9 @@ void Game::set_state(GameState new_state) noexcept
     case GameState::PLAYING_STATION:
       player = std::make_unique<PlayerCharacter>();
 
+      interactables.emplace_back(std::make_unique<DockedShip>());
       interactables.emplace_back(std::make_unique<DialogEntity>(Vector2{ width * 0.85f, height * 0.5f }, "captain"));
+      interactables.emplace_back(std::make_unique<DialogEntity>(Vector2{ width * 0.15f, height * 0.5f }, "archeologist"));
 
       masks.push_back(Mask{ Rectangle{ width * 0.35f - 8.0f, height * 0.5f + 32.0f, 16.0f, 16.0f } });
       break;

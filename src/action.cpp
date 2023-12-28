@@ -17,42 +17,62 @@
 
 static constexpr const float TRANSITION_SPEED{ 1.25f };
 
-void Game::play_action(const Action::Type &action_type, const Level &level) noexcept
+void Game::schedule_action_change_level(const Level &level, const Interactable *obj) noexcept
 {
-  assert(action_type != Action::Type::Invalid);
-  assert(action_type == Action::Type::ChangeLevel);
-
   TraceLog(LOG_INFO, "Changing level to %i", static_cast<int>(level));
 
   // player animation
   {
     Action action;
-    action.on_update = [this](Action &action)
+    action.on_update = [this, target_rect = obj->get_sprite().get_destination_rect()](Action &action)
     {
-      const auto &station_position = Vector2{ width * 0.5f, height * 0.5f };
+      bool reached_interactable{ false };
+      const Vector2 target_position{ target_rect.x, target_rect.y };
+      if (PlayerShip *player_ship = dynamic_cast<PlayerShip *>(player.get()); player_ship)
+      {
+        player_ship->position = Vector2Lerp(player_ship->position, target_position, 0.05f);
 
-      PlayerShip *player_ship = dynamic_cast<PlayerShip *>(player.get());
-      if (!player_ship)
-        return;
+        if (player_ship->sprite.scale.x > 0.1f)
+          player_ship->sprite.scale = Vector2Scale(player_ship->sprite.scale, 0.9f);
 
-      player_ship->position = Vector2Lerp(player_ship->position, station_position, 0.05f);
+        reached_interactable =
+          Vector2Distance(player_ship->sprite.position, target_position) < 4.0f || player_ship->sprite.scale.x < 0.1f;
+      }
+      if (PlayerCharacter *player_character = dynamic_cast<PlayerCharacter *>(player.get()); player_character)
+      {
+        const auto &pos = player_character->position;
+        const float walk_speed = 0.5f;
+        if (pos.x < target_position.x)
+          player_character->velocity.x = walk_speed;
+        else if (pos.x > target_position.x)
+          player_character->velocity.x = -walk_speed;
+        else
+          player_character->velocity.x = 0.0f;
 
-      if (player_ship->sprite.scale.x > 0.1f)
-        player_ship->sprite.scale = Vector2Scale(player_ship->sprite.scale, 0.9f);
+        if (pos.y < target_position.y)
+          player_character->velocity.y = walk_speed;
+        else if (pos.y > target_position.y)
+          player_character->velocity.y = -walk_speed;
+        else
+          player_character->velocity.y = 0.0f;
 
-      const bool near_station =
-        Vector2Distance(player_ship->sprite.position, station_position) < 4.0f || player_ship->sprite.scale.x < 0.1f;
+        player_character->position = Vector2Add(player_character->position, player_character->velocity);
+        player_character->animate();
+
+        if (Vector2Distance(player_character->position, target_position) < 8.0f)
+          reached_interactable = true;
+      }
 
       freeze_entities = true;
 
-      if (near_station)
+      if (reached_interactable)
         action.is_done = true;
     };
 
     actions.push(std::move(action));
   }
 
-  // fade-in transition
+  // fade-out transition
   {
     Action action;
     action.on_update = [](Action &action)
@@ -90,7 +110,7 @@ void Game::play_action(const Action::Type &action_type, const Level &level) noex
     actions.push(std::move(action));
   }
 
-  // fade-out transition
+  // fade-in transition
   {
     Action action;
     action.on_update = [](Action &action)
@@ -114,14 +134,8 @@ void Game::play_action(const Action::Type &action_type, const Level &level) noex
   }
 }
 
-void Game::play_action(const Action::Type &action_type, DialogEntity &entity) noexcept
+void Game::schedule_action_conversation(DialogEntity &entity) noexcept
 {
-  assert(action_type != Action::Type::Invalid);
-  assert(action_type == Action::Type::Dialog);
-
-  if (action_type != Action::Type::Dialog)
-    return;
-
   Action action;
 
   action.on_start = [this, &entity](Action &action)
@@ -182,9 +196,7 @@ void Game::play_action(const Action::Type &action_type, DialogEntity &entity) no
         if (next_dialog_id.starts_with('_'))
         {
           if (next_dialog_id == "_end")
-          {
             TraceLog(LOG_INFO, "Dialog ended");
-          }
           else
             TraceLog(LOG_WARNING, "Unknown dialog id: %s", next_dialog_id.c_str());
         }
@@ -207,7 +219,7 @@ void Game::play_action(const Action::Type &action_type, DialogEntity &entity) no
     {
       const auto &next_dialog_id = std::get<DialogId>(action.data);
       entity.set_dialog_id(next_dialog_id);
-      play_action(Action::Type::Dialog, entity);
+      schedule_action_conversation(entity);
     }
     freeze_entities = false;
   };

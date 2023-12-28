@@ -121,11 +121,8 @@ bool PlayerCharacter::is_colliding() const
   return false;
 }
 
-void PlayerCharacter::update()
+void PlayerCharacter::animate()
 {
-  handle_input();
-
-  // animation
   if (velocity.x < 0.0f)
     direction = Direction::Left;
   else if (velocity.x > 0.0f)
@@ -140,6 +137,14 @@ void PlayerCharacter::update()
   else
     sprite.set_animation(idle_tag_from_direction(direction));
   sprite.animate();
+}
+
+void PlayerCharacter::update()
+{
+  handle_input();
+
+  // animation
+  animate();
 
   // collisions
   {
@@ -198,6 +203,9 @@ void PlayerCharacter::update()
   interactable = nullptr;
   for (const auto &obj : GAME.interactables)
   {
+    if (!obj->is_interactable())
+      continue;
+
     const Mask obj_mask(obj->get_sprite().get_destination_rect());
     if (mask.check_collision(obj_mask, 2.0f))
     {

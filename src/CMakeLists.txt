@@ -34,6 +34,7 @@ ADD_EXECUTABLE(${PROJECT_NAME}
   player.cpp
   player_character.cpp
   player_ship.cpp
+  quest.cpp
   render_pass.cpp
   resource.cpp
   sound_manager.cpp

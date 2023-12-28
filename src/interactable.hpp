@@ -10,11 +10,13 @@ class Interactable
 public:
   virtual ~Interactable() = default;
 
-  virtual void update() = 0;
+  virtual void update(){};
   virtual void draw() const;
   virtual void interact() = 0;
 
   [[nodiscard]] const Sprite &get_sprite() const noexcept { return sprite; }
+
+  [[nodiscard]] virtual bool is_interactable() const { return true; }
 
 protected:
   mutable Sprite sprite{};
@@ -26,8 +28,13 @@ public:
   Station();
   void update() override;
   void interact() override;
+};
 
-private:
+class DockedShip final : public Interactable
+{
+public:
+  DockedShip();
+  void interact() override;
 };
 
 class DialogEntity final : public Interactable
@@ -43,6 +50,8 @@ public:
   const std::string &get_dialog_id() const { return dialog_id; }
 
   void reset_animation() { sprite.set_animation(default_animation_tag); }
+
+  [[nodiscard]] bool is_interactable() const override { return !dialogs.empty(); }
 
 private:
   [[nodiscard]] const Dialog &get_dialog(const DialogId &dialog_id) const

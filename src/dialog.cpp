@@ -35,7 +35,7 @@ std::unordered_map<DialogId, Dialog> Dialog::load_dialogs(const std::string &nam
               "Hello, my name is Captain. What is your name?",
               {
                 { "My name is James", "name", [name]() { introduced.insert_or_assign(name, true); } },
-                { "Goodbye", "_end" },
+                { "I'm busy, goodbye", "_end" },
               },
               [name]() -> std::optional<DialogId>
               {
@@ -67,7 +67,7 @@ std::unordered_map<DialogId, Dialog> Dialog::load_dialogs(const std::string &nam
                                     "You can find them in the asteroids.\n"
                                     "Be careful, there are many dangers in space.",
                                     {
-                                      { "Ok", "help_ok" },
+                                      { "Okay", "help_ok" },
                                     } });
 
     captain_dialogs.emplace("help2",
@@ -76,7 +76,7 @@ std::unordered_map<DialogId, Dialog> Dialog::load_dialogs(const std::string &nam
                                     "You can find them in the asteroids.\n"
                                     "Be careful, there are many dangers in space.",
                                     {
-                                      { "Ok", "help_ok" },
+                                      { "Okay", "help_ok" },
                                     },
                                     [&]() -> std::optional<DialogId>
                                     {
@@ -89,7 +89,7 @@ std::unordered_map<DialogId, Dialog> Dialog::load_dialogs(const std::string &nam
                             Dialog{ "Captain",
                                     "Good luck, James. I'll be waiting for you on the station.",
                                     {
-                                      { "Goodbye", "_end" },
+                                      { "Goodbye!", "_end" },
                                     } });
 
     captain_dialogs.emplace("no_help",
@@ -104,7 +104,7 @@ std::unordered_map<DialogId, Dialog> Dialog::load_dialogs(const std::string &nam
                                     "Thank you for collecting $1the crystals$0!\n"
                                     "Now we can repair the station.",
                                     {
-                                      { "Goodbye", "_end", []() { QUEST("captain1").report(); } },
+                                      { "Goodbye!", "_end", []() { QUEST("captain1").report(); } },
                                     },
                                     []() -> std::optional<DialogId>
                                     {
@@ -113,7 +113,7 @@ std::unordered_map<DialogId, Dialog> Dialog::load_dialogs(const std::string &nam
                                       return std::nullopt;
                                     } });
 
-    captain_dialogs.emplace("hello", Dialog{ "Captain", "Hello, James.", { { "Goodbye", "_end" } } });
+    captain_dialogs.emplace("hello", Dialog{ "Captain", "Hello, James.", { { "See you later!", "_end" } } });
 
     dialogs.emplace("captain", captain_dialogs);
   }

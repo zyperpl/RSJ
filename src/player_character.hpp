@@ -27,6 +27,8 @@ public:
   void draw() const noexcept override;
   void die() override;
 
+  void animate();
+
   bool is_colliding() const;
 
 private:
