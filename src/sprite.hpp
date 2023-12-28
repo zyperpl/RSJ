@@ -38,10 +38,11 @@ public:
 
   void set_frame(int frame);
   [[nodiscard]] int get_frame() const;
-
   [[nodiscard]] int get_frame_count() const;
+
   void set_tag(const std::string &tag_name);
   inline void set_animation(const std::string &tag_name) { set_tag(tag_name); }
+  [[nodiscard]] bool is_playing_animation(const std::string &tag_name) const { return tag == tags.at(tag_name); }
 
   void reset_animation();
   void animate(int step = 1);

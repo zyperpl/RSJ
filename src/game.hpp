@@ -12,8 +12,6 @@
 #include <raymath.h>
 
 #include "dialog.hpp"
-#include "mask.hpp"
-#include "utils.hpp"
 
 #define CONFIG(Option) Game::config.Option
 #define GAME           Game::get()

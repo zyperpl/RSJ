@@ -67,7 +67,7 @@ std::unordered_map<DialogId, Dialog> Dialog::load_dialogs(const std::string &nam
     captain_dialogs.emplace("help",
                             Dialog{ "Captain",
                                     "Thank you, James. I'm glad to hear that.\n"
-                                    "We need to collect 10 crystals to repair the ship.\n"
+                                    "We need to $1collect 10 crystals$0 to repair the ship.\n"
                                     "You can find them in the asteroids.\n"
                                     "Be careful, there are many dangers in space.",
                                     {
@@ -76,7 +76,7 @@ std::unordered_map<DialogId, Dialog> Dialog::load_dialogs(const std::string &nam
 
     captain_dialogs.emplace("help2",
                             Dialog{ "Captain",
-                                    "We need to collect 10 crystals to repair the ship.\n"
+                                    "We need to $1collect 10 crystals$0 to repair the ship.\n"
                                     "You can find them in the asteroids.\n"
                                     "Be careful, there are many dangers in space.",
                                     {

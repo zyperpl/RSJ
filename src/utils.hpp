@@ -21,6 +21,8 @@ static constexpr const float M_PI = 3.14159265358979323846f;
 
 #define FRAMES(n) (Game::delta_time * (float)(n))
 
+const Color CRYSTAL_COLOR{ 255, 137, 51, 255 };
+
 [[nodiscard]] Rectangle texture_rect(const Texture2D &texture);
 
 [[nodiscard]] Rectangle texture_rect_flipped(const Texture2D &texture);

@@ -93,8 +93,12 @@ void update_draw_frame()
 
         // name
         {
-          DrawTextEx(
-            GAME.font, dialog.actor_name.c_str(), Vector2{ dialog_x + 10.0f, dialog_y + 10.0f }, font_size, 2.0f, RAYWHITE);
+          DrawTextEx(GAME.font,
+                     dialog.actor_name.c_str(),
+                     Vector2{ dialog_x + 10.0f, dialog_y + 10.0f },
+                     font_size,
+                     2.0f,
+                     RAYWHITE);
           DrawTextEx(GAME.font,
                      dialog.actor_name.c_str(),
                      Vector2{ dialog_x + 10.0f + 1.0f, dialog_y + 10.0f },
@@ -108,15 +112,64 @@ void update_draw_frame()
                      RAYWHITE);
         }
 
-        // dialog text
         {
-          SetTextLineSpacing(font_size);
-          DrawTextEx(GAME.dialog_font,
-                     dialog.text.c_str(),
-                     Vector2{ dialog_x + 10.0f, dialog_y + 10.0f + font_size + 5.0f },
-                     font_size,
-                     1.0f,
-                     WHITE);
+          const float line_spacing = font_size - 2.0f;
+          SetTextLineSpacing(line_spacing);
+          const std::string &t = dialog.text;
+
+          if (t.find('$') != std::string::npos)
+          {
+
+            const float text_x = dialog_x + 10.0f;
+            const float text_y = dialog_y + 10.0f + font_size + 5.0f;
+            float x            = text_x;
+            float y            = text_y;
+            Color color        = WHITE;
+
+            for (size_t i = 0; i < t.size(); i++)
+            {
+              const char c = t[i];
+              if (c == '$' && i + 1 < t.size())
+              {
+                if (t[i + 1] == '1')
+                {
+                  color = CRYSTAL_COLOR;
+                  i++;
+                  continue;
+                }
+                else if (t[i + 1] == '0')
+                {
+                  color = WHITE;
+                  i++;
+                  continue;
+                }
+              }
+              if (c == '\n')
+              {
+                x = text_x;
+                y += line_spacing;
+                continue;
+              }
+
+              const auto text = TextFormat("%c", c);
+              DrawTextEx(GAME.dialog_font, text, Vector2{ x, y }, font_size, 0.0f, color);
+              x += MeasureTextEx(GAME.dialog_font, text, font_size, 0.0f).x + 1.0f;
+              if (x > dialog_x + dialog_width - 10.0f)
+              {
+                x = text_x;
+                y += line_spacing;
+              }
+            }
+          }
+          else
+          {
+            DrawTextEx(GAME.dialog_font,
+                       t.c_str(),
+                       Vector2{ dialog_x + 10.0f, dialog_y + 10.0f + font_size + 5.0f },
+                       font_size,
+                       1.0f,
+                       WHITE);
+          }
         }
         const auto text_size = MeasureTextEx(GAME.dialog_font, dialog.text.c_str(), font_size, 1.0f);
 
@@ -141,7 +194,7 @@ void update_draw_frame()
                        1.0f,
                        selected_response_color);
 
-            const float triangle_size = 10.0f;
+            const float triangle_size = 8.0f;
             const float triangle_x    = dialog_x + 10.0f;
             const float triangle_y    = response_y + font_size * 0.5f + (font_size + 5.0f) * i;
             DrawTriangle(Vector2{ triangle_x, triangle_y - triangle_size * 0.5f },
@@ -208,7 +261,7 @@ int main(void)
   InitAudioDevice();
   SetTargetFPS(60);
 
-  Game &game  = Game::get();
+  Game &game = Game::get();
   game.init();
 
   game_render_pass = std::make_unique<RenderPass>(Game::width, Game::height);

@@ -67,7 +67,7 @@ void PlayerCharacter::handle_input()
   const bool can_interact = interactable;
   if (IsKeyPressed(KEY_SPACE) && can_interact)
   {
-    TraceLog(LOG_TRACE, "Interacting with %p", (void*)interactable);
+    TraceLog(LOG_TRACE, "Interacting with %p", (void *)interactable);
     interactable->interact();
   }
 }
