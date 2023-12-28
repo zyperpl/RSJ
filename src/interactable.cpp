@@ -3,6 +3,7 @@
 #include "asteroid.hpp"
 #include "dialog.hpp"
 #include "game.hpp"
+#include "player_character.hpp"
 #include "utils.hpp"
 
 void Interactable::draw() const
@@ -49,10 +50,33 @@ DialogEntity::DialogEntity(const Vector2 &position, const std::string &name)
   sprite.position = position;
 }
 
-void DialogEntity::update() {}
+void DialogEntity::update()
+{
+  if (!sprite.is_playing_animation(default_animation_tag))
+    sprite.set_animation(default_animation_tag);
+}
 
 void DialogEntity::interact()
 {
+  const auto &player_position = GAME.player->position;
+  const auto &position        = sprite.position;
+
+  const auto &diff = Vector2Subtract(player_position, position);
+  if (abs(diff.x) > abs(diff.y))
+  {
+    if (diff.x > 0)
+      sprite.set_animation("idle_right");
+    else
+      sprite.set_animation("idle_left");
+  }
+  else
+  {
+    if (diff.y > 0)
+      sprite.set_animation("idle_down");
+    else
+      sprite.set_animation("idle_up");
+  }
+
   set_dialog_id(Dialog::START_DIALOG_ID);
   GAME.play_action(Action::Type::Dialog, *this);
 }

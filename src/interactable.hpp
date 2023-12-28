@@ -42,6 +42,8 @@ public:
   void set_dialog_id(const DialogId &id) { dialog_id = id; }
   const std::string &get_dialog_id() const { return dialog_id; }
 
+  void reset_animation() { sprite.set_animation(default_animation_tag); }
+
 private:
   [[nodiscard]] const Dialog &get_dialog(const DialogId &dialog_id) const
   {
@@ -61,4 +63,6 @@ private:
 
   DialogMap dialogs;
   DialogId dialog_id{ Dialog::START_DIALOG_ID };
+
+  std::string default_animation_tag{ "idle_down" };
 };
