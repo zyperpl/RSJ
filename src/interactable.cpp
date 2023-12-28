@@ -1,6 +1,7 @@
 #include "interactable.hpp"
 
 #include "asteroid.hpp"
+#include "dialog.hpp"
 #include "game.hpp"
 #include "utils.hpp"
 
@@ -39,8 +40,9 @@ void Station::interact()
   GAME.play_action(Action::Type::ChangeLevel, Level::Station);
 }
 
-DialogEntity::DialogEntity(const Vector2 &position)
+DialogEntity::DialogEntity(const Vector2 &position, const std::string &name)
   : Interactable{}
+  , dialogs{ Dialog::load_dialogs(name) }
 {
   sprite = Sprite{ "resources/npc.aseprite", "idle_down" };
   sprite.set_centered();
@@ -51,5 +53,6 @@ void DialogEntity::update() {}
 
 void DialogEntity::interact()
 {
-  GAME.play_action(Action::Type::Dialog, dialog_id);
+  set_dialog_id(Dialog::START_DIALOG_ID);
+  GAME.play_action(Action::Type::Dialog, *this);
 }

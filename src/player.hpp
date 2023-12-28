@@ -15,6 +15,8 @@
 class Player
 {
 public:
+  virtual ~Player() = default;
+
   Vector2 position{ Game::width / 2.0f, Game::height / 2.0f };
   Vector2 velocity{ 0.0f, 0.0f };
   Mask mask{};

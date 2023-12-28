@@ -28,6 +28,9 @@ void Game::init()
 {
   SetTraceLogLevel(LOG_TRACE);
 
+  font        = LoadFontEx("resources/Kenney Mini Square.ttf", 10, nullptr, 0);
+  dialog_font = LoadFontEx("resources/Kenney Mini.ttf", 10, nullptr, 0);
+
   set_state(GameState::PLAYING_STATION);
 
   TraceLog(LOG_TRACE, "Size of Asteroid buffer: %zukB", sizeof(Asteroid) * asteroids->capacity / 1024);
@@ -47,13 +50,23 @@ void Game::update()
   {
     {
       Action &action = actions.front();
+
+      if (!action.has_started)
+      {
+        action.start();
+        action.has_started = true;
+      }
+
       action.update();
-      if (action.done && action.on_done)
-        action.on_done();
+      if (action.is_done)
+        action.done();
     }
 
-    if (actions.front().done)
+    if (actions.front().is_done)
+    {
       actions.pop();
+      return;
+    }
   }
 
   update_game();
@@ -89,54 +102,6 @@ void Game::update_game()
       {
         player->update();
       }
-    }
-  }
-
-  if (dialog)
-  {
-    if (!dialog->responses.empty() && !selected_dialog_response_index.has_value())
-      selected_dialog_response_index.value() = 0;
-
-    if (selected_dialog_response_index.has_value())
-    {
-      size_t &response_index = selected_dialog_response_index.value();
-
-      if (IsKeyPressed(KEY_DOWN))
-      {
-        response_index++;
-        if (response_index >= dialog->responses.size())
-          response_index = 0;
-      }
-
-      if (IsKeyPressed(KEY_UP))
-      {
-        if (response_index == 0)
-          response_index = dialog->responses.size() - 1;
-        else
-          response_index--;
-      }
-    }
-
-    if (IsKeyPressed(KEY_SPACE) || IsKeyPressedRepeat(KEY_SPACE))
-    {
-      TraceLog(LOG_TRACE, "Selected dialog response: %zu", selected_dialog_response_index.value());
-      if (selected_dialog_response_index.has_value())
-      {
-        assert(selected_dialog_response_index.value() < dialog->responses.size());
-        const auto &response       = dialog->responses[selected_dialog_response_index.value()];
-        const auto &next_dialog_id = response.next_dialog_id;
-        if (next_dialog_id.starts_with('_'))
-        {
-          TraceLog(LOG_WARNING, "Unknown dialog id: %s", next_dialog_id.c_str());
-        }
-        else
-        {
-          play_action(Action::Type::Dialog, next_dialog_id);
-        }
-      }
-
-      dialog.reset();
-      selected_dialog_response_index.reset();
     }
   }
 
@@ -324,7 +289,7 @@ void Game::set_state(GameState new_state) noexcept
     case GameState::PLAYING_STATION:
       player = std::make_unique<PlayerCharacter>();
 
-      interactables.emplace_back(std::make_unique<DialogEntity>(Vector2{ width * 0.85f, height * 0.5f }));
+      interactables.emplace_back(std::make_unique<DialogEntity>(Vector2{ width * 0.85f, height * 0.5f }, "captain"));
 
       masks.push_back(Mask{ Rectangle{ width * 0.35f - 8.0f, height * 0.5f + 32.0f, 16.0f, 16.0f } });
       break;

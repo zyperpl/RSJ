@@ -24,6 +24,7 @@ ADD_EXECUTABLE(${PROJECT_NAME}
   action.cpp
   asteroid.cpp
   bullet.cpp
+  dialog.cpp
   game.cpp
   interactable.cpp
   main.cpp 

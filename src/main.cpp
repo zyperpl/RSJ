@@ -29,9 +29,6 @@ const bool integer_scaling = false;
 static std::unique_ptr<RenderPass> game_render_pass;
 static std::unique_ptr<RenderPass> ui_render_pass;
 
-static Font font;
-static Font dialog_font;
-
 void update_draw_frame()
 {
   Game &game = Game::get();
@@ -47,12 +44,12 @@ void update_draw_frame()
     {
       const float font_size = 10.0f;
       Vector2 text_position{ 10.0f, 10.0f };
-      DrawTextEx(font, TextFormat("FPS: %i", GetFPS()), text_position, font_size, 1.0f, WHITE);
+      DrawTextEx(GAME.font, TextFormat("FPS: %i", GetFPS()), text_position, font_size, 1.0f, WHITE);
 
       text_position.y += font_size + 5.0f;
       const char *lives_text = "Lives: ";
-      DrawTextEx(font, lives_text, text_position, font_size, 1.0f, WHITE);
-      Vector2 text_size = MeasureTextEx(font, lives_text, font_size, 1.0f);
+      DrawTextEx(GAME.font, lives_text, text_position, font_size, 1.0f, WHITE);
+      Vector2 text_size = MeasureTextEx(GAME.font, lives_text, font_size, 1.0f);
       float x           = text_position.x + text_size.x + 5.0f;
       float y           = text_position.y + text_size.y * 0.5f;
       for (int i = 0; i < game.player->lives; i++)
@@ -67,12 +64,12 @@ void update_draw_frame()
         draw_score += score_step;
       if (draw_score > game.score)
         draw_score = game.score;
-      DrawTextEx(font, TextFormat("Score: %i", draw_score), text_position, font_size, 1.0f, WHITE);
+      DrawTextEx(GAME.font, TextFormat("Score: %i", draw_score), text_position, font_size, 1.0f, WHITE);
 
       text_position.y += font_size + 5.0f;
       const char *crystals_text = TextFormat("Crystals: %i", game.coins);
-      DrawTextEx(font, crystals_text, text_position, font_size, 1.0f, WHITE);
-      text_size = MeasureTextEx(font, crystals_text, font_size, 1.0f);
+      DrawTextEx(GAME.font, crystals_text, text_position, font_size, 1.0f, WHITE);
+      text_size = MeasureTextEx(GAME.font, crystals_text, font_size, 1.0f);
       static Sprite crystal_sprite{ "resources/ore.aseprite" };
       crystal_sprite.set_frame(0);
       crystal_sprite.scale = Vector2{ 0.4f, 0.4f };
@@ -97,14 +94,14 @@ void update_draw_frame()
         // name
         {
           DrawTextEx(
-            font, dialog.actor_name.c_str(), Vector2{ dialog_x + 10.0f, dialog_y + 10.0f }, font_size, 2.0f, RAYWHITE);
-          DrawTextEx(font,
+            GAME.font, dialog.actor_name.c_str(), Vector2{ dialog_x + 10.0f, dialog_y + 10.0f }, font_size, 2.0f, RAYWHITE);
+          DrawTextEx(GAME.font,
                      dialog.actor_name.c_str(),
                      Vector2{ dialog_x + 10.0f + 1.0f, dialog_y + 10.0f },
                      font_size,
                      2.0f,
                      RAYWHITE);
-          auto name_size = MeasureTextEx(font, dialog.actor_name.c_str(), font_size, 2.0f);
+          auto name_size = MeasureTextEx(GAME.font, dialog.actor_name.c_str(), font_size, 2.0f);
           DrawLineEx(Vector2{ dialog_x + 10.0f, dialog_y + 10.0f + name_size.y },
                      Vector2{ dialog_x + 10.0f + name_size.x, dialog_y + 10.0f + name_size.y },
                      1.0f,
@@ -114,21 +111,21 @@ void update_draw_frame()
         // dialog text
         {
           SetTextLineSpacing(font_size);
-          DrawTextEx(dialog_font,
+          DrawTextEx(GAME.dialog_font,
                      dialog.text.c_str(),
                      Vector2{ dialog_x + 10.0f, dialog_y + 10.0f + font_size + 5.0f },
                      font_size,
                      1.0f,
                      WHITE);
         }
-        const auto text_size = MeasureTextEx(dialog_font, dialog.text.c_str(), font_size, 1.0f);
+        const auto text_size = MeasureTextEx(GAME.dialog_font, dialog.text.c_str(), font_size, 1.0f);
 
         const float response_x = dialog_x + 20.0f + 5.0f;
         const float response_y = dialog_y + 10.0f + text_size.y + font_size * 2.0f;
         for (size_t i = 0; i < dialog.responses.size(); i++)
         {
           const DialogResponse &response = dialog.responses[i];
-          DrawTextEx(dialog_font,
+          DrawTextEx(GAME.dialog_font,
                      response.text.c_str(),
                      Vector2{ response_x, response_y + (font_size + 5.0f) * i },
                      font_size,
@@ -137,7 +134,7 @@ void update_draw_frame()
 
           if (game.selected_dialog_response_index.has_value() && game.selected_dialog_response_index.value() == i)
           {
-            DrawTextEx(dialog_font,
+            DrawTextEx(GAME.dialog_font,
                        response.text.c_str(),
                        Vector2{ response_x, response_y + (font_size + 5.0f) * i },
                        font_size,
@@ -211,8 +208,6 @@ int main(void)
   InitAudioDevice();
   SetTargetFPS(60);
 
-  font        = LoadFontEx("resources/Kenney Mini Square.ttf", 10, nullptr, 0);
-  dialog_font = LoadFontEx("resources/Kenney Mini.ttf", 10, nullptr, 0);
   Game &game  = Game::get();
   game.init();
 

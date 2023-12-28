@@ -25,6 +25,7 @@ class Asteroid;
 class Particle;
 class Pickable;
 class Interactable;
+class DialogEntity;
 struct Mask;
 
 template<typename T, size_t>
@@ -63,10 +64,12 @@ struct Action
   };
 
   std::variant<float, DialogId> data{};
+  std::function<void(Action &action)> on_start{};
   std::function<void(Action &action)> on_update{};
   std::function<void(const Action &action)> on_draw{};
-  std::function<void()> on_done{};
-  bool done{ false };
+  std::function<void(Action &action)> on_done{};
+  bool is_done{ false };
+  bool has_started{ false };
 
   void update()
   {
@@ -78,6 +81,21 @@ struct Action
   {
     if (on_draw)
       on_draw(*this);
+  }
+
+  void start()
+  {
+    if (on_start)
+    {
+      on_start(*this);
+      has_started = true;
+    }
+  }
+
+  void done()
+  {
+    if (on_done)
+      on_done(*this);
   }
 };
 
@@ -110,13 +128,16 @@ public:
   size_t score{ 0 };
 
   GameState get_state() const noexcept { return state; }
-  void play_action(const Action::Type &action_type, const Level &level) noexcept;
-  void play_action(const Action::Type &action_type, const DialogId &dialog_id) noexcept;
+  void play_action(const Action::Type &action_type, const Level &) noexcept;
+  void play_action(const Action::Type &action_type, DialogEntity &) noexcept;
 
   bool freeze_entities{ false };
 
   std::optional<Dialog> dialog;
   std::optional<size_t> selected_dialog_response_index;
+
+  Font font;
+  Font dialog_font;
 
 private:
   [[nodiscard]] Game() noexcept = default;
@@ -136,6 +157,4 @@ private:
   void set_state(GameState new_state) noexcept;
 
   std::queue<Action> actions;
-
-  DialogManager dialog_manager;
 };

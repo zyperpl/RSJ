@@ -33,10 +33,16 @@ void PlayerCharacter::draw() const noexcept
 
   if (interactable)
   {
-    DrawCircle(static_cast<int>(interactable->get_sprite().position.x),
-               static_cast<int>(interactable->get_sprite().position.y),
-               5.0f,
-               RED);
+    const auto &npc_sprite = interactable->get_sprite();
+    const auto &npc_rect   = npc_sprite.get_destination_rect();
+
+    const Vector2 text_size = MeasureTextEx(GAME.font, "!", 10.0f, 1.0f);
+    DrawTextEx(GAME.font,
+               "!",
+               Vector2{ npc_rect.x - text_size.x / 2.0f, npc_rect.y - npc_rect.height / 2.0f - text_size.y - 1.0f },
+               10,
+               1.0f,
+               SKYBLUE);
   }
 }
 
@@ -61,6 +67,7 @@ void PlayerCharacter::handle_input()
   const bool can_interact = interactable;
   if (IsKeyPressed(KEY_SPACE) && can_interact)
   {
+    TraceLog(LOG_TRACE, "Interacting with %p", (void*)interactable);
     interactable->interact();
   }
 }
