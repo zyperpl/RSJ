@@ -124,14 +124,19 @@ void Game::play_action(const Action::Type &action_type, DialogEntity &entity) no
 
   Action action;
 
-  action.on_start = [this, &entity](Action &)
+  action.on_start = [this, &entity](Action &action)
   {
     TraceLog(LOG_INFO, "Playing dialog %p(%s)", (void *)(&entity), entity.get_dialog_id().c_str());
 
     freeze_entities = true;
 
     dialog = entity.dialog();
-    assert(dialog);
+    if (dialog->actor_name == Dialog::END_DIALOG_ID)
+    {
+      TraceLog(LOG_INFO, "Dialog ended");
+      action.is_done = true;
+      return;
+    }
 
     if (!dialog->responses.empty())
       selected_dialog_response_index = 0;
@@ -170,15 +175,21 @@ void Game::play_action(const Action::Type &action_type, DialogEntity &entity) no
         assert(selected_dialog_response_index.value() < dialog->responses.size());
         const auto &response       = dialog->responses[selected_dialog_response_index.value()];
         const auto &next_dialog_id = response.next_dialog_id;
+
+        if (response.func)
+          response.func();
+
         if (next_dialog_id.starts_with('_'))
         {
-          TraceLog(LOG_WARNING, "Unknown dialog id: %s", next_dialog_id.c_str());
+          if (next_dialog_id == "_end")
+          {
+            TraceLog(LOG_INFO, "Dialog ended");
+          }
+          else
+            TraceLog(LOG_WARNING, "Unknown dialog id: %s", next_dialog_id.c_str());
         }
         else
         {
-          if (response.func)
-            response.func();
-
           action.data = DialogId{ next_dialog_id };
         }
       }

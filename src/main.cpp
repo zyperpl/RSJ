@@ -204,6 +204,22 @@ void update_draw_frame()
           }
         }
       }
+
+      {
+        const float quest_x = Game::width - 200.0f;
+        float quest_y       = 10.0f;
+        for (const auto &[quest_name, quest] : game.quests)
+        {
+          if (!quest.is_accepted() || quest.is_reported())
+            continue;
+
+          const auto &quest_text =
+            TextFormat("%s: %i/%i", quest.description.c_str(), quest.progress(), quest.max_progress());
+          const Color color = quest.is_completed() ? GREEN : WHITE;
+          DrawTextEx(GAME.font, quest_text, Vector2{ quest_x, quest_y }, font_size, 1.0f, color);
+          quest_y += font_size + 5.0f;
+        }
+      }
     };
 
   const float screen_width_float  = static_cast<float>(GetScreenWidth());

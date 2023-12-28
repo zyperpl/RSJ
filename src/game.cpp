@@ -41,6 +41,11 @@ void Game::init()
   for (size_t i = 0; i < stars.size(); i++)
     stars[i] = Vector2{ static_cast<float>(GetRandomValue(0, width)), static_cast<float>(GetRandomValue(0, height)) };
 
+  quests.emplace("captain1",
+                 Quest{ .description  = "Collect 10 crystals",
+                        .progress     = []() { return GAME.coins; },
+                        .max_progress = []() { return 10; } });
+
   TraceLog(LOG_TRACE, "Game initialized");
 }
 

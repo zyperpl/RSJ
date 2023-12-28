@@ -12,9 +12,11 @@
 #include <raymath.h>
 
 #include "dialog.hpp"
+#include "quest.hpp"
 
-#define CONFIG(Option) Game::config.Option
-#define GAME           Game::get()
+#define CONFIG(Option)    Game::config.Option
+#define GAME              Game::get()
+#define QUEST(quest_name) Game::get().quests.at(quest_name)
 
 class Sprite;
 class Player;
@@ -136,6 +138,8 @@ public:
 
   Font font;
   Font dialog_font;
+
+  std::unordered_map<std::string, Quest> quests;
 
 private:
   [[nodiscard]] Game() noexcept = default;

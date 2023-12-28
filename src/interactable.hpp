@@ -47,6 +47,9 @@ public:
 private:
   [[nodiscard]] const Dialog &get_dialog(const DialogId &dialog_id) const
   {
+    if (dialog_id == Dialog::END_DIALOG_ID)
+      return Dialog::END_DIALOG;
+
     assert(dialogs.contains(dialog_id));
 
     auto &dialog = dialogs.at(dialog_id);

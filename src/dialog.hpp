@@ -30,6 +30,9 @@ struct Dialog
 
   static DialogMap load_dialogs(const std::string &name);
   static const std::string START_DIALOG_ID;
+  static const std::string END_DIALOG_ID;
+
+  static const Dialog END_DIALOG;
 
 private:
 };
