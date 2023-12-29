@@ -3,10 +3,14 @@
 #include <algorithm>
 #define _USE_MATH_DEFINES
 #include <cmath>
+#include <cstdint>
 #include <variant>
+#include <vector>
 
 #include <raylib.h>
 #include <raymath.h>
+
+#include "game.hpp"
 
 Mask::Mask(const Vector2 &position, const Shape &shape) noexcept
 {

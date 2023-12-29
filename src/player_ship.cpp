@@ -25,9 +25,12 @@ PlayerShip::PlayerShip()
 
 void PlayerShip::draw() const noexcept
 {
-  const int invincibility_timer_int = static_cast<int>(invincibility_timer.get_remaining_time() * 10.0f);
-  if (!invincibility_timer.is_done() && invincibility_timer_int % 2 == 0)
-    return;
+  if (invincibility_timer.get_ratio() < 0.7f)
+  {
+    const int invincibility_timer_int = static_cast<int>(invincibility_timer.get_remaining_time() * 10.0f);
+    if (!invincibility_timer.is_done() && invincibility_timer_int % 2 == 0)
+      return;
+  }
 
   sprite.set_centered();
 
@@ -127,7 +130,7 @@ void PlayerShip::shoot() noexcept
 
 bool PlayerShip::can_shoot() const noexcept
 {
-  return shoot_timer.is_done() && !is_invincible() && !interactable;
+  return shoot_timer.is_done() && invincibility_timer.get_ratio() >= 0.3f && !interactable;
 }
 
 bool PlayerShip::can_interact() const noexcept
@@ -203,9 +206,9 @@ void PlayerShip::update()
     return;
 
   // timers
-  invincibility_timer.update(Game::delta_time);
-  shoot_timer.update(Game::delta_time);
-  interactive_found_timer.update(Game::delta_time);
+  invincibility_timer.update();
+  shoot_timer.update();
+  interactive_found_timer.update();
 
   // movement
   handle_input();
@@ -252,7 +255,7 @@ void PlayerShip::find_nearest_interactive() noexcept
 
   const bool no_asteroids = game.asteroids->empty();
 
-  for (auto &obj : game.interactables)
+  for (auto &obj : game.room->interactables)
   {
     const float min_distance       = std::max(obj->get_sprite().get_width(), obj->get_sprite().get_height()) * 0.5f;
     const float distance           = Vector2Distance(position, obj->get_sprite().position);

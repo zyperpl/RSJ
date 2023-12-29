@@ -13,6 +13,7 @@
 #include "pickable.hpp"
 #include "player_character.hpp"
 #include "player_ship.hpp"
+#include "room.hpp"
 #include "utils.hpp"
 
 static constexpr const float TRANSITION_SPEED{ 1.25f };
@@ -40,7 +41,7 @@ void Game::schedule_action_change_level(const Level &level, const Interactable *
       }
       if (PlayerCharacter *player_character = dynamic_cast<PlayerCharacter *>(player.get()); player_character)
       {
-        const auto &pos = player_character->position;
+        const Vector2 pos{ player_character->position.x, player_character->position.y + 8.0f };
         const float walk_speed = 0.5f;
         if (pos.x < target_position.x)
           player_character->velocity.x = walk_speed;
@@ -59,7 +60,7 @@ void Game::schedule_action_change_level(const Level &level, const Interactable *
         player_character->position = Vector2Add(player_character->position, player_character->velocity);
         player_character->animate();
 
-        if (Vector2Distance(player_character->position, target_position) < 8.0f)
+        if (Vector2Distance(pos, target_position) < 8.0f)
           reached_interactable = true;
       }
 
@@ -77,7 +78,7 @@ void Game::schedule_action_change_level(const Level &level, const Interactable *
     Action action;
     action.on_update = [](Action &action)
     {
-      action.data = std::get<float>(action.data) + Game::delta_time * TRANSITION_SPEED;
+      action.data = std::get<float>(action.data) + DELTA_TIME * TRANSITION_SPEED;
 
       if (std::get<float>(action.data) >= 1.0f)
         action.is_done = true;
@@ -87,7 +88,7 @@ void Game::schedule_action_change_level(const Level &level, const Interactable *
     {
       const float &data = std::get<float>(action.data);
       const float size  = std::max(width, height) * 0.5f * data;
-      DrawPoly(Vector2{ width * 0.5f, height * 0.5f }, 8, size, data * 0.1f, BLACK);
+      DrawPoly(Vector2{ width * 0.5f, height * 0.5f }, 16, size, data * 0.1f, BLACK);
     };
 
     action.on_done = [this, level](Action &)
@@ -102,6 +103,7 @@ void Game::schedule_action_change_level(const Level &level, const Interactable *
           break;
         case Level::Station:
           set_state(GameState::PLAYING_STATION);
+          set_room(Room::Type::DockingBay);
           break;
       }
     };
@@ -115,7 +117,7 @@ void Game::schedule_action_change_level(const Level &level, const Interactable *
     Action action;
     action.on_update = [](Action &action)
     {
-      action.data = std::get<float>(action.data) + Game::delta_time * TRANSITION_SPEED;
+      action.data = std::get<float>(action.data) + DELTA_TIME * TRANSITION_SPEED;
 
       if (std::get<float>(action.data) >= 1.0f)
         action.is_done = true;
@@ -124,7 +126,7 @@ void Game::schedule_action_change_level(const Level &level, const Interactable *
     action.on_draw = [](const Action &action)
     {
       const float &data = std::get<float>(action.data);
-      DrawRing(Vector2{ width * 0.5f, height * 0.5f }, width * data, width, 0.0f, 360.0f, 8, BLACK);
+      DrawRing(Vector2{ width * 0.5f, height * 0.5f }, width * data, width, 0.0f, 360.0f, 16, BLACK);
     };
 
     action.on_done = [this](Action &) { freeze_entities = false; };
@@ -225,4 +227,45 @@ void Game::schedule_action_conversation(DialogEntity &entity) noexcept
   };
 
   actions.push(std::move(action));
+}
+
+void Game::schedule_action_change_room(const Room::Type &room_type) noexcept {}
+
+void Game::set_room(const Room::Type &room_type) noexcept
+{
+  room = Room::get(room_type);
+#if 0
+  switch (room_type)
+  {
+    using enum Room::Type;
+    case DockingBay:
+      interactables.emplace_back(std::make_unique<DockedShip>());
+      interactables.emplace_back(std::make_unique<DialogEntity>(Vector2{ width * 0.85f, height * 0.5f }, "Captain"));
+      interactables.emplace_back(
+        std::make_unique<DialogEntity>(Vector2{ width * 0.15f, height * 0.5f }, "Archeologist"));
+
+      masks.emplace_back(Rectangle{ width * 0.35f - 8.0f, height * 0.5f + 32.0f, 16.0f, 16.0f });
+      masks.emplace_back(Rectangle{ width * 0.35f - 8.0f + 16.0f, height * 0.5f + 32.0f, 16.0f, 16.0f });
+      masks.emplace_back(Rectangle{ width * 0.35f - 8.0f + 16.0f * 2.0f, height * 0.5f + 32.0f, 16.0f, 16.0f });
+      break;
+    case Armory:
+      assert(false);
+      break;
+    case ControlRoom:
+      assert(false);
+      break;
+    case EngineRoom:
+      assert(false);
+      break;
+    case Laboratory:
+      assert(false);
+      break;
+    case MainHall:
+      masks.emplace_back(Rectangle{ width * 0.5f - 8.0f, height * 0.5f + 32.0f, 16.0f, 16.0f });
+      break;
+    case Workshop:
+      assert(false);
+      break;
+  }
+#endif
 }

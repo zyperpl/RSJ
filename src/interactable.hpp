@@ -3,6 +3,7 @@
 #include "dialog.hpp"
 #include "mask.hpp"
 #include "sprite.hpp"
+#include "timer.hpp"
 #include "utils.hpp"
 
 class Interactable
@@ -14,6 +15,7 @@ public:
   virtual void draw() const;
   virtual void interact() = 0;
 
+  Sprite &get_sprite() noexcept { return sprite; }
   [[nodiscard]] const Sprite &get_sprite() const noexcept { return sprite; }
 
   [[nodiscard]] virtual bool is_interactable() const { return true; }
@@ -53,6 +55,8 @@ public:
 
   [[nodiscard]] bool is_interactable() const override { return !dialogs.empty(); }
 
+  bool wander{ false };
+
 private:
   [[nodiscard]] const Dialog &get_dialog(const DialogId &dialog_id) const
   {
@@ -77,4 +81,8 @@ private:
   DialogId dialog_id{ Dialog::START_DIALOG_ID };
 
   std::string default_animation_tag{ "idle_down" };
+  Vector2 velocity{ 0.0f, 0.0f };
+  Vector2 start_position{ 0.0f, 0.0f };
+  Timer wander_timer{ 1.0f };
+  Direction direction{ Direction::Down };
 };

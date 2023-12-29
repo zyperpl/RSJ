@@ -57,3 +57,35 @@ void draw_wrapped(const Rectangle &rect, const std::function<void(const Vector2 
 
   draw_function(Vector2{ x, y });
 }
+
+std::string idle_tag_from_direction(const Direction &direction)
+{
+  switch (direction)
+  {
+    case Direction::Left:
+      return "idle_left";
+    case Direction::Right:
+      return "idle_right";
+    case Direction::Up:
+      return "idle_up";
+    case Direction::Down:
+      return "idle_down";
+  }
+  return "idle_down";
+}
+
+std::string walk_tag_from_direction(const Direction &direction)
+{
+  switch (direction)
+  {
+    case Direction::Left:
+      return "walk_left";
+    case Direction::Right:
+      return "walk_right";
+    case Direction::Up:
+      return "walk_up";
+    case Direction::Down:
+      return "walk_down";
+  }
+  return "walk_down";
+}

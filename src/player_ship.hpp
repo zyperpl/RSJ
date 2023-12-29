@@ -14,6 +14,8 @@
 
 #include "player.hpp"
 
+class Interactable;
+
 class PlayerShip final : public Player
 {
 public:
@@ -35,7 +37,7 @@ private:
   };
 
   Timer shoot_timer{ FRAMES(20) };
-  Timer invincibility_timer{ FRAMES(150) };
+  Timer invincibility_timer{ FRAMES(250) };
 
   [[nodiscard]] bool is_invincible() const noexcept { return !invincibility_timer.is_done(); }
 

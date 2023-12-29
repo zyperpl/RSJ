@@ -13,6 +13,7 @@
 
 #include "dialog.hpp"
 #include "quest.hpp"
+#include "room.hpp"
 
 #define CONFIG(Option)    Game::config.Option
 #define GAME              Game::get()
@@ -104,17 +105,15 @@ public:
   [[nodiscard]] static Game &get() noexcept;
 
   std::unique_ptr<Player> player;
+  std::shared_ptr<Room> room;
   std::unique_ptr<ObjectCircularBuffer<Bullet, 128>> bullets;
   std::unique_ptr<ObjectCircularBuffer<Asteroid, 2048>> asteroids;
   std::unique_ptr<ObjectCircularBuffer<Particle, 4096>> particles;
   std::unique_ptr<ObjectCircularBuffer<Pickable, 1024>> pickables;
-  std::vector<std::unique_ptr<Interactable>> interactables;
-  std::vector<Mask> masks;
 
   static constexpr int width               = 480;
   static constexpr int height              = 270;
-  static constexpr float delta_time        = 1.0f / 60.0f;
-  static constexpr int NUMBER_OF_ASTEROIDS = 10;
+  static constexpr int NUMBER_OF_ASTEROIDS = 6;
   static Config config;
   static uint64_t frame;
 
@@ -128,8 +127,11 @@ public:
   std::queue<Artifact> artifacts;
 
   GameState get_state() const noexcept { return state; }
+  
   void schedule_action_change_level(const Level &, const Interactable *) noexcept;
+  void schedule_action_change_room(const Room::Type &) noexcept;
   void schedule_action_conversation(DialogEntity &) noexcept;
+  void set_room(const Room::Type &) noexcept;
 
   bool freeze_entities{ false };
 
@@ -148,6 +150,8 @@ private:
   Game(Game &&)                 = delete;
   Game &operator=(const Game &) = delete;
   Game &operator=(Game &&)      = delete;
+
+  ~Game() noexcept;
 
   void update_game();
 

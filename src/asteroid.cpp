@@ -59,7 +59,7 @@ bool Asteroid::update()
       if (bullet.life <= 0)
         return true;
 
-      const Mask bullet_mask{ bullet.position, { Circle{ Vector2{ 0.0f, 0.0f }, 2.0f } } };
+      const Mask bullet_mask{ bullet.position, { Circle{ Vector2{ 0.0f, 0.0f }, 5.0f } } };
 
       if (mask.check_collision(bullet_mask))
       {

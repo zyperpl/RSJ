@@ -60,12 +60,93 @@ DialogEntity::DialogEntity(const Vector2 &position, const std::string &name)
   sprite = Sprite{ "resources/npc.aseprite", "idle_down" };
   sprite.set_centered();
   sprite.position = position;
+
+  start_position = position;
 }
 
 void DialogEntity::update()
 {
-  if (!sprite.is_playing_animation(default_animation_tag))
-    sprite.set_animation(default_animation_tag);
+  if (!wander)
+  {
+    if (!sprite.is_playing_animation(default_animation_tag))
+      sprite.set_animation(default_animation_tag);
+  }
+
+  if (wander)
+  {
+    auto &position = sprite.position;
+
+    if (wander_timer.is_done())
+    {
+      velocity = Vector2Zero();
+
+      if (GetRandomValue(0, 1) == 0)
+      {
+        const Direction dir    = static_cast<Direction>(GetRandomValue(0, 3));
+        const float walk_speed = 0.5f;
+        switch (dir)
+        {
+          case Direction::Up:
+            velocity.y = -walk_speed;
+            break;
+          case Direction::Down:
+            velocity.y = walk_speed;
+            break;
+          case Direction::Left:
+            velocity.x = -walk_speed;
+            break;
+          case Direction::Right:
+            velocity.x = walk_speed;
+            break;
+        }
+
+        if (Vector2Distance(start_position, position) > 50.0f)
+        {
+          if (position.x < start_position.x + 10.0f)
+            velocity.x = 1.0f;
+          else if (position.x > start_position.x - 10.0f)
+            velocity.x = -1.0f;
+          else
+            velocity.x = 0.0f;
+
+          if (position.y < start_position.y - 10.0f)
+            velocity.y = 1.0f;
+          else if (position.y > start_position.y + 10.0f)
+            velocity.y = -1.0f;
+          else
+            velocity.y = 0.0f;
+        }
+
+        velocity = Vector2Normalize(velocity);
+      }
+
+      wander_timer.set_max_time(static_cast<float>(GetRandomValue(2, 5)));
+      wander_timer.start();
+    }
+
+    position.x += velocity.x;
+    position.y += velocity.y;
+
+    // TODO: check collisions
+
+    wander_timer.update();
+  }
+
+  if (velocity.x < 0.0f)
+    direction = Direction::Left;
+  else if (velocity.x > 0.0f)
+    direction = Direction::Right;
+  else if (velocity.y < 0.0f)
+    direction = Direction::Up;
+  else if (velocity.y > 0.0f)
+    direction = Direction::Down;
+
+  if (fabs(velocity.x) > 0.0f || fabs(velocity.y) > 0.0f)
+    sprite.set_animation(walk_tag_from_direction(direction));
+  else
+    sprite.set_animation(idle_tag_from_direction(direction));
+
+  sprite.animate();
 }
 
 void DialogEntity::interact()

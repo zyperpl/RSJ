@@ -6,9 +6,6 @@
 #include <raylib.h>
 #include <raymath.h>
 
-#include "game.hpp"
-#include "sprite.hpp"
-
 struct Circle
 {
   Vector2 center{};

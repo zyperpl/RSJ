@@ -13,13 +13,14 @@ static constexpr const float M_PI = 3.14159265358979323846f;
 #include <raymath.h>
 #include <rlgl.h>
 
-#include "game.hpp"
-#include "mask.hpp"
 #include "object_circular_buffer.hpp"
 #include "sprite.hpp"
-#include "timer.hpp"
 
-#define FRAMES(n) (Game::delta_time * (float)(n))
+static constexpr float DELTA_TIME = 1.0f / 60.0f;
+static consteval float FRAMES(auto n)
+{
+  return (DELTA_TIME * (float)(n));
+}
 
 const Color CRYSTAL_COLOR{ 255, 137, 51, 255 };
 
@@ -38,3 +39,7 @@ enum class Direction
   Up,
   Down
 };
+
+std::string idle_tag_from_direction(const Direction &direction);
+
+std::string walk_tag_from_direction(const Direction &direction);

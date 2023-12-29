@@ -13,6 +13,7 @@
 #include "pickable.hpp"
 #include "player_character.hpp"
 #include "player_ship.hpp"
+#include "room.hpp"
 #include "utils.hpp"
 
 Config Game::config{};
@@ -26,12 +27,14 @@ Game &Game::get() noexcept
 
 void Game::init()
 {
-  SetTraceLogLevel(LOG_TRACE);
-
   font        = LoadFontEx("resources/Kenney Mini Square.ttf", 10, nullptr, 0);
   dialog_font = LoadFontEx("resources/Kenney Mini.ttf", 10, nullptr, 0);
 
+  Room::load();
+  room = Room::get(Room::Type::DockingBay);
+
   set_state(GameState::PLAYING_STATION);
+  set_room(Room::Type::DockingBay);
 
   TraceLog(LOG_TRACE, "Size of Asteroid buffer: %zukB", sizeof(Asteroid) * asteroids->capacity / 1024);
   TraceLog(LOG_TRACE, "Size of Bullet buffer: %zukB", sizeof(Bullet) * bullets->capacity / 1024);
@@ -55,6 +58,14 @@ void Game::init()
                         .on_report    = []() { GAME.artifacts.pop(); } });
 
   TraceLog(LOG_TRACE, "Game initialized");
+}
+
+Game::~Game() noexcept
+{
+  Room::unload();
+
+  UnloadFont(font);
+  UnloadFont(dialog_font);
 }
 
 void Game::update()
@@ -89,9 +100,11 @@ void Game::update()
 
 void Game::update_game()
 {
+  assert(room);
+
   if (!dialog)
   {
-    for (auto &interactable : interactables)
+    for (auto &interactable : room->interactables)
       interactable->update();
 
     if (state == GameState::PLAYING_ASTEROIDS)
@@ -114,6 +127,8 @@ void Game::update_game()
       if (!freeze_entities)
       {
         player->update();
+
+        // TODO: check room bounds
       }
     }
   }
@@ -139,7 +154,10 @@ void Game::update_game()
     if (IsKeyPressed(KEY_F3))
     {
       if (state == GameState::PLAYING_ASTEROIDS)
+      {
         set_state(GameState::PLAYING_STATION);
+        set_room(Room::Type::DockingBay);
+      }
       else
         set_state(GameState::PLAYING_ASTEROIDS);
     }
@@ -147,6 +165,13 @@ void Game::update_game()
     if (IsKeyPressed(KEY_F4))
     {
       CONFIG(show_masks) = !CONFIG(show_masks);
+    }
+
+    if (IsKeyPressed(KEY_F5))
+    {
+      static int room = 0;
+      room++;
+      set_room(static_cast<Room::Type>(room % static_cast<int>(Room::Type::Workshop)));
     }
   }
 #endif
@@ -172,11 +197,13 @@ void Game::draw() noexcept
 {
   draw_background();
 
+  assert(room);
+
   switch (state)
   {
     case GameState::PLAYING_ASTEROIDS:
     {
-      for (const auto &interactable : interactables)
+      for (const auto &interactable : room->interactables)
         interactable->draw();
 
       particles->for_each(std::bind(&Particle::draw, std::placeholders::_1));
@@ -188,7 +215,7 @@ void Game::draw() noexcept
     }
     case GameState::PLAYING_STATION:
     {
-      for (const auto &interactable : interactables)
+      for (const auto &interactable : room->interactables)
         interactable->draw();
 
       particles->for_each(std::bind(&Particle::draw, std::placeholders::_1));
@@ -196,12 +223,18 @@ void Game::draw() noexcept
 
       player->draw();
 
+#if defined(DEBUG)
+      // TODO: remove mask drawing
+      for (const auto &mask : room->masks)
+        mask.draw();
+#endif
+
       if (CONFIG(show_masks))
       {
-        for (const auto &mask : masks)
+        for (const auto &mask : room->masks)
           mask.draw();
 
-        for (const auto &interactable : interactables)
+        for (const auto &interactable : room->interactables)
           Mask(interactable->get_sprite().get_destination_rect()).draw();
       }
     }
@@ -259,10 +292,6 @@ void Game::set_state(GameState new_state) noexcept
   asteroids = std::make_unique<ObjectCircularBuffer<Asteroid, 2048>>();
   particles = std::make_unique<ObjectCircularBuffer<Particle, 4096>>();
   pickables = std::make_unique<ObjectCircularBuffer<Pickable, 1024>>();
-  interactables.reserve(128);
-  interactables.clear();
-  masks.reserve(1024);
-  masks.clear();
 
   switch (state)
   {
@@ -296,17 +325,12 @@ void Game::set_state(GameState new_state) noexcept
         pickables->push(Pickable::create_ore(position, Vector2Zero()));
       }
 
-      interactables.push_back(std::make_unique<Station>());
+      room = std::make_shared<Room>(); // XXX: Asteroids room is not loaded from file
+      room->interactables.push_back(std::make_unique<Station>());
 
       break;
     case GameState::PLAYING_STATION:
       player = std::make_unique<PlayerCharacter>();
-
-      interactables.emplace_back(std::make_unique<DockedShip>());
-      interactables.emplace_back(std::make_unique<DialogEntity>(Vector2{ width * 0.85f, height * 0.5f }, "captain"));
-      interactables.emplace_back(std::make_unique<DialogEntity>(Vector2{ width * 0.15f, height * 0.5f }, "archeologist"));
-
-      masks.push_back(Mask{ Rectangle{ width * 0.35f - 8.0f, height * 0.5f + 32.0f, 16.0f, 16.0f } });
       break;
     case GameState::GAME_OVER:
       break;

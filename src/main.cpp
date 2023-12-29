@@ -238,7 +238,7 @@ void update_draw_frame()
   render_destination.width  = Game::width * scale;
   render_destination.height = Game::height * scale;
 
-  const float interval = Game::delta_time;
+  const float interval = DELTA_TIME; 
   size_t steps         = 6;
   const float dt       = GetFrameTime();
 
@@ -278,6 +278,8 @@ int main(void)
   SetExitKey(KEY_NULL);
   InitAudioDevice();
   SetTargetFPS(60);
+
+  SetTraceLogLevel(LOG_TRACE);
 
   Game &game = Game::get();
   game.init();

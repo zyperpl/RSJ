@@ -34,12 +34,12 @@ std::unordered_map<DialogId, Dialog> Dialog::load_dialogs(const std::string &nam
       Dialog{ "Captain",
               "Hello, my name is Captain. What is your name?",
               {
-                { "My name is James", "name", [name]() { introduced.insert_or_assign(name, true); } },
+                { "My name is James", "name", []() { introduced.insert_or_assign("Captain", true); } },
                 { "I'm busy, goodbye", "_end" },
               },
-              [name]() -> std::optional<DialogId>
+              []() -> std::optional<DialogId>
               {
-                if (is_introduced(name))
+                if (is_introduced("Captain"))
                   return "name";
                 return std::nullopt;
               } });
@@ -115,7 +115,7 @@ std::unordered_map<DialogId, Dialog> Dialog::load_dialogs(const std::string &nam
 
     captain_dialogs.emplace("hello", Dialog{ "Captain", "Hello, James.", { { "See you later!", "_end" } } });
 
-    dialogs.emplace("captain", captain_dialogs);
+    dialogs.emplace("Captain", captain_dialogs);
   }
 
   return dialogs[name];

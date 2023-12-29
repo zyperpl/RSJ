@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include "utils.hpp"
+
 class Timer
 {
 public:
@@ -27,7 +29,7 @@ public:
 
   inline void stop() { remaining_time = -0.0f; }
 
-  inline void update(float delta_time)
+  inline void update(float delta_time = DELTA_TIME)
   {
     if (remaining_time <= 0.0f)
       return;

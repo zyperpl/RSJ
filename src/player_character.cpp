@@ -72,47 +72,15 @@ void PlayerCharacter::handle_input()
   }
 }
 
-std::string idle_tag_from_direction(Direction direction)
-{
-  switch (direction)
-  {
-    case Direction::Left:
-      return "idle_left";
-    case Direction::Right:
-      return "idle_right";
-    case Direction::Up:
-      return "idle_up";
-    case Direction::Down:
-      return "idle_down";
-  }
-  return "idle_down";
-}
-
-std::string walk_tag_from_direction(Direction direction)
-{
-  switch (direction)
-  {
-    case Direction::Left:
-      return "walk_left";
-    case Direction::Right:
-      return "walk_right";
-    case Direction::Up:
-      return "walk_up";
-    case Direction::Down:
-      return "walk_down";
-  }
-  return "walk_down";
-}
-
 bool PlayerCharacter::is_colliding() const
 {
-  for (const auto &obj : GAME.interactables)
+  for (const auto &obj : GAME.room->interactables)
   {
     if (mask.check_collision(Mask(obj->get_sprite().get_destination_rect())))
       return true;
   }
 
-  for (const auto &mask : GAME.masks)
+  for (const auto &mask : GAME.room->masks)
   {
     if (mask.check_collision(this->mask))
       return true;
@@ -201,7 +169,7 @@ void PlayerCharacter::update()
   }
 
   interactable = nullptr;
-  for (const auto &obj : GAME.interactables)
+  for (const auto &obj : GAME.room->interactables)
   {
     if (!obj->is_interactable())
       continue;

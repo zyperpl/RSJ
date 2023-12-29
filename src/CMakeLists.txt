@@ -37,6 +37,7 @@ ADD_EXECUTABLE(${PROJECT_NAME}
   quest.cpp
   render_pass.cpp
   resource.cpp
+  room.cpp
   sound_manager.cpp
   sprite.cpp
   utils.cpp
