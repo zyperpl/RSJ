@@ -12,6 +12,9 @@
 
 class Room;
 
+[[nodiscard]] Vector2 position_to_world(const Vector2 &position, const Rectangle &rect);
+[[nodiscard]] Vector2 position_to_room(const Vector2 &position, const Rectangle &rect);
+
 class Room
 {
 public:
@@ -20,12 +23,14 @@ public:
     DockingBay,
     MainHall,
     ControlRoom,
+    Corridor,
     EngineRoom,
     Armory,
     Laboratory,
     Workshop
   };
 
+  Type type{ Type::DockingBay };
   std::unordered_map<Direction, std::shared_ptr<Room>> neighbours;
   Rectangle rect{ 0.0f, 0.0f, 0.0f, 0.0f };
   std::vector<std::unique_ptr<Interactable>> interactables;

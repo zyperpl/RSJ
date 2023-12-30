@@ -103,7 +103,7 @@ void Game::schedule_action_change_level(const Level &level, const Interactable *
           break;
         case Level::Station:
           set_state(GameState::PLAYING_STATION);
-          set_room(Room::Type::DockingBay);
+          room = Room::get(Room::Type::DockingBay);
           break;
       }
     };
@@ -229,43 +229,69 @@ void Game::schedule_action_conversation(DialogEntity &entity) noexcept
   actions.push(std::move(action));
 }
 
-void Game::schedule_action_change_room(const Room::Type &room_type) noexcept {}
+void Game::schedule_action_change_room(const Room::Type &room_type) noexcept
+{
+  // fade to black
+  {
+    Action action;
+    action.on_update = [](Action &action)
+    {
+      action.data = std::get<float>(action.data) + DELTA_TIME * TRANSITION_SPEED * 3.0f;
+
+      if (std::get<float>(action.data) >= 1.0f)
+        action.is_done = true;
+    };
+    action.on_draw = [](const Action &action)
+    {
+      const float &data         = std::get<float>(action.data);
+      const unsigned char alpha = 255.0f * data;
+      DrawRectangle(0, 0, width, height, Color{ 0, 0, 0, alpha });
+    };
+    action.data = 0.0f;
+    actions.push(std::move(action));
+  }
+
+  // change level
+  {
+    Action action;
+    action.on_update = [this, room_type, old_room = room](Action &action)
+    {
+      auto new_room    = Room::get(room_type);
+      player->position = position_to_room(position_to_world(player->position, old_room->rect), new_room->rect);
+      room             = new_room;
+
+      action.is_done = true;
+    };
+    action.on_draw = [](const Action &) {
+      DrawRectangle(0, 0, width, height, Color{ 0, 0, 0, 255 });
+    };
+    actions.push(std::move(action));
+  }
+
+  // fade from black
+  {
+    Action action;
+    action.on_update = [](Action &action)
+    {
+      action.data = std::get<float>(action.data) + DELTA_TIME * TRANSITION_SPEED * 2.0f;
+
+      if (std::get<float>(action.data) >= 1.0f)
+        action.is_done = true;
+    };
+    action.on_draw = [](const Action &action)
+    {
+      const float &data         = std::get<float>(action.data);
+      const unsigned char alpha = 255.0f * (1.0f - data);
+      DrawRectangle(0, 0, width, height, Color{ 0, 0, 0, alpha });
+    };
+    action.on_done = [this](Action &) { freeze_entities = false; };
+    action.data    = 0.0f;
+    actions.push(std::move(action));
+  }
+}
 
 void Game::set_room(const Room::Type &room_type) noexcept
 {
-  room = Room::get(room_type);
-#if 0
-  switch (room_type)
-  {
-    using enum Room::Type;
-    case DockingBay:
-      interactables.emplace_back(std::make_unique<DockedShip>());
-      interactables.emplace_back(std::make_unique<DialogEntity>(Vector2{ width * 0.85f, height * 0.5f }, "Captain"));
-      interactables.emplace_back(
-        std::make_unique<DialogEntity>(Vector2{ width * 0.15f, height * 0.5f }, "Archeologist"));
-
-      masks.emplace_back(Rectangle{ width * 0.35f - 8.0f, height * 0.5f + 32.0f, 16.0f, 16.0f });
-      masks.emplace_back(Rectangle{ width * 0.35f - 8.0f + 16.0f, height * 0.5f + 32.0f, 16.0f, 16.0f });
-      masks.emplace_back(Rectangle{ width * 0.35f - 8.0f + 16.0f * 2.0f, height * 0.5f + 32.0f, 16.0f, 16.0f });
-      break;
-    case Armory:
-      assert(false);
-      break;
-    case ControlRoom:
-      assert(false);
-      break;
-    case EngineRoom:
-      assert(false);
-      break;
-    case Laboratory:
-      assert(false);
-      break;
-    case MainHall:
-      masks.emplace_back(Rectangle{ width * 0.5f - 8.0f, height * 0.5f + 32.0f, 16.0f, 16.0f });
-      break;
-    case Workshop:
-      assert(false);
-      break;
-  }
-#endif
+  freeze_entities = true;
+  schedule_action_change_room(room_type);
 }

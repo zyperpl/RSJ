@@ -155,6 +155,8 @@ private:
 
   void update_game();
 
+  Camera2D camera;
+
   std::array<Vector2, 100> stars;
   void update_background() noexcept;
   void draw_background() noexcept;

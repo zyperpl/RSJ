@@ -11,6 +11,15 @@
 
 #include "utils.hpp"
 
+Vector2 position_to_world(const Vector2 &position, const Rectangle &rect)
+{
+  return Vector2{ position.x + rect.x, position.y + rect.y };
+};
+Vector2 position_to_room(const Vector2 &position, const Rectangle &rect)
+{
+  return Vector2{ position.x - rect.x, position.y - rect.y };
+};
+
 std::unordered_map<Room::Type, std::shared_ptr<Room>> Room::rooms;
 
 template<typename T>
@@ -53,7 +62,7 @@ static std::unordered_map<std::string, std::function<std::unique_ptr<Interactabl
                                const float entity_h = static_cast<float>(ldtk_entity.height);
 
                                auto entity                   = std::make_unique<DockedShip>();
-                               entity->get_sprite().position = Vector2{ entity_x, entity_y };
+                               entity->get_sprite().position = Vector2{ entity_x + entity_w / 2.0f, entity_y + entity_h / 2.0f };
                                entity->get_sprite().scale.x  = entity_w / entity->get_sprite().get_width();
                                entity->get_sprite().scale.y  = entity_h / entity->get_sprite().get_height();
                                return entity;
@@ -81,13 +90,13 @@ void Room::load()
     return;
   }
 
-  std::unordered_map<int64_t, std::shared_ptr<Room>> uid_room_map{};
+  std::unordered_map<std::string, std::shared_ptr<Room>> uid_room_map{};
 
   TraceLog(LOG_TRACE, "---");
   TraceLog(LOG_TRACE, "Loading %d rooms", ldtk.levels.size());
   for (const auto &level : ldtk.levels)
   {
-    const auto &level_uid    = level.uid;
+    const auto &level_iid    = level.iid;
     const auto &level_name   = level.identifier;
     const auto &level_x      = level.world_x;
     const auto &level_y      = level.world_y;
@@ -95,7 +104,7 @@ void Room::load()
     const auto &level_height = level.px_hei;
 
     auto room_type = magic_enum::enum_cast<Room::Type>(level_name);
-    if (!room_type)
+    if (!room_type || !room_type.has_value())
     {
       TraceLog(LOG_ERROR, "Unknown room type: %s", level_name.c_str());
       continue;
@@ -105,7 +114,9 @@ void Room::load()
 
     auto room = std::make_shared<Room>();
 
-    uid_room_map.emplace(level_uid, room);
+    room->type = room_type.value();
+
+    uid_room_map.emplace(level_iid, room);
 
     room->rect = Rectangle{ static_cast<float>(level_x),
                             static_cast<float>(level_y),
@@ -146,8 +157,8 @@ void Room::load()
           const auto &x = coord_id % layer.c_wid;
           const auto &y = coord_id / layer.c_wid;
 
-          room->masks.emplace_back(Rectangle{ static_cast<float>(x * layer.grid_size),
-                                              static_cast<float>(y * layer.grid_size),
+          room->masks.emplace_back(Rectangle{ static_cast<float>(x * layer.grid_size + layer.grid_size / 2.0f),
+                                              static_cast<float>(y * layer.grid_size + layer.grid_size / 2.0f),
                                               static_cast<float>(layer.grid_size),
                                               static_cast<float>(layer.grid_size) });
         }
@@ -156,10 +167,41 @@ void Room::load()
 
     rooms.emplace(room_type.value(), room);
   }
+
+  for (const auto &level : ldtk.levels)
+  {
+    const auto &level_iid = level.iid;
+
+    for (const auto &neighbour : level.neighbours)
+    {
+      if (!uid_room_map.contains(level_iid) || !uid_room_map.contains(neighbour.level_iid))
+      {
+        TraceLog(LOG_ERROR, "Failed to find room with uid %s or %s",
+                 level_iid.c_str(),
+                 neighbour.level_iid.c_str());
+        assert(uid_room_map.contains(level_iid));
+        assert(uid_room_map.contains(neighbour.level_iid));
+        continue;
+      }
+
+      const auto &room          = uid_room_map[level_iid];
+      const auto &neighbour_room = uid_room_map[neighbour.level_iid];
+      Direction dir       = Direction::Down;
+      if (neighbour.dir == "e")
+        dir = Direction::Right;
+      else if (neighbour.dir == "w")
+        dir = Direction::Left;
+      else if (neighbour.dir == "n")
+        dir = Direction::Up;
+      else if (neighbour.dir == "s")
+        dir = Direction::Down;
+
+      room->neighbours.emplace(dir, neighbour_room);
+    }
+  }
+
   TraceLog(LOG_TRACE, "Loaded %d rooms", rooms.size());
   TraceLog(LOG_TRACE, "---");
-
-  // TODO: neighbours
 
   file.close();
 }

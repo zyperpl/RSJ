@@ -33,6 +33,11 @@ void Game::init()
   Room::load();
   room = Room::get(Room::Type::DockingBay);
 
+  camera.offset   = Vector2{ static_cast<float>(width) / 2.0f, static_cast<float>(height) / 2.0f };
+  camera.target   = Vector2{ static_cast<float>(width) / 2.0f, static_cast<float>(height) / 2.0f };
+  camera.zoom     = 1.0f;
+  camera.rotation = 0.0f;
+
   set_state(GameState::PLAYING_STATION);
   set_room(Room::Type::DockingBay);
 
@@ -128,10 +133,32 @@ void Game::update_game()
       {
         player->update();
 
-        // TODO: check room bounds
+        // NOTE: Player's position is relative to the room position,
+        //      so we need to convert it to world coordinates
+        //      and then back to the new room's coordinates
+
+        auto change_room_to_neighbour = [this](const std::shared_ptr<Room> &room, const Direction &direction)
+        {
+          if (auto neighbour = room->neighbours[direction]; neighbour)
+            set_room(neighbour->type);
+        };
+
+        constexpr const float room_margin = 4.0f;
+        if (player->position.x < -room_margin)
+          change_room_to_neighbour(room, Direction::Left);
+        else if (player->position.x > room->rect.width + room_margin)
+          change_room_to_neighbour(room, Direction::Right);
+        else if (player->position.y < -room_margin)
+          change_room_to_neighbour(room, Direction::Up);
+        else if (player->position.y > room->rect.height + room_margin)
+          change_room_to_neighbour(room, Direction::Down);
       }
     }
   }
+
+  camera.target   = player->position;
+  camera.target.x = std::clamp(camera.target.x, camera.offset.x, room->rect.width - camera.offset.x);
+  camera.target.y = std::clamp(camera.target.y, camera.offset.y, room->rect.height - camera.offset.y);
 
 #if defined(DEBUG)
   if (IsKeyDown(KEY_LEFT_SHIFT))
@@ -195,6 +222,8 @@ void Game::update_background() noexcept
 
 void Game::draw() noexcept
 {
+  BeginMode2D(camera);
+
   draw_background();
 
   assert(room);
@@ -244,11 +273,22 @@ void Game::draw() noexcept
       break;
   }
 
+  EndMode2D();
+
   if (!actions.empty())
   {
     const Action &action = actions.front();
     action.draw();
   }
+
+#if defined(DEBUG)
+  DrawTextEx(font,
+             TextFormat("Player position: (%.2f, %.2f)", player->position.x, player->position.y),
+             Vector2{ 0.0f, 0.0f },
+             font.baseSize,
+             1.0f,
+             RAYWHITE);
+#endif
 }
 
 void Game::draw_background() noexcept
@@ -325,7 +365,8 @@ void Game::set_state(GameState new_state) noexcept
         pickables->push(Pickable::create_ore(position, Vector2Zero()));
       }
 
-      room = std::make_shared<Room>(); // XXX: Asteroids room is not loaded from file
+      room       = std::make_shared<Room>(); // XXX: Asteroids room is not loaded from file
+      room->rect = Rectangle{ 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height) };
       room->interactables.push_back(std::make_unique<Station>());
 
       break;

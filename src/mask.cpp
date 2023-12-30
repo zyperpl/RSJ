@@ -141,9 +141,13 @@ void Mask::draw() const noexcept
       const auto &center = Vector2Add(position, circle.center);
 
       DrawCircleLinesV(center, circle.radius, color);
-      DrawCircleLinesV(Vector2{ center.x + Game::width, center.y }, circle.radius, color);
-      DrawCircleLinesV(Vector2{ center.x - Game::width, center.y }, circle.radius, color);
-      DrawCircleLinesV(Vector2{ center.x, center.y + Game::height }, circle.radius, color);
+
+      if (GAME.get_state() == GameState::PLAYING_ASTEROIDS)
+      {
+        DrawCircleLinesV(Vector2{ center.x + Game::width, center.y }, circle.radius, color);
+        DrawCircleLinesV(Vector2{ center.x - Game::width, center.y }, circle.radius, color);
+        DrawCircleLinesV(Vector2{ center.x, center.y + Game::height }, circle.radius, color);
+      }
     }
     else if (std::holds_alternative<Rectangle>(shape))
     {
@@ -155,9 +159,12 @@ void Mask::draw() const noexcept
       const int h           = rectangle.height;
 
       DrawRectangleLines(x, y, w, h, color);
-      DrawRectangleLines(x + Game::width, y, w, h, color);
-      DrawRectangleLines(x - Game::width, y, w, h, color);
-      DrawRectangleLines(x, y + Game::height, w, h, color);
+      if (GAME.get_state() == GameState::PLAYING_ASTEROIDS)
+      {
+        DrawRectangleLines(x + Game::width, y, w, h, color);
+        DrawRectangleLines(x - Game::width, y, w, h, color);
+        DrawRectangleLines(x, y + Game::height, w, h, color);
+      }
     }
   }
 }
