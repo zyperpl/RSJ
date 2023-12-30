@@ -103,7 +103,7 @@ void Game::schedule_action_change_level(const Level &level, const Interactable *
           break;
         case Level::Station:
           set_state(GameState::PLAYING_STATION);
-          room = Room::get(Room::Type::DockingBay);
+          set_room(Room::Type::DockingBay);
           break;
       }
     };
@@ -231,6 +231,10 @@ void Game::schedule_action_conversation(DialogEntity &entity) noexcept
 
 void Game::schedule_action_change_room(const Room::Type &room_type) noexcept
 {
+  TraceLog(LOG_INFO, "Changing room to %i", static_cast<int>(room_type));
+
+  freeze_entities = true;
+
   // fade to black
   {
     Action action;
@@ -256,15 +260,18 @@ void Game::schedule_action_change_room(const Room::Type &room_type) noexcept
     Action action;
     action.on_update = [this, room_type, old_room = room](Action &action)
     {
-      auto new_room    = Room::get(room_type);
+      auto new_room = Room::get(room_type);
+
+      // NOTE: Player's position is relative to the room position,
+      //       so we need to convert it to world coordinates
+      //       and then back to the new room's coordinates
       player->position = position_to_room(position_to_world(player->position, old_room->rect), new_room->rect);
-      room             = new_room;
+
+      set_room(room_type);
 
       action.is_done = true;
     };
-    action.on_draw = [](const Action &) {
-      DrawRectangle(0, 0, width, height, Color{ 0, 0, 0, 255 });
-    };
+    action.on_draw = [](const Action &) { DrawRectangle(0, 0, width, height, Color{ 0, 0, 0, 255 }); };
     actions.push(std::move(action));
   }
 
@@ -292,6 +299,10 @@ void Game::schedule_action_change_room(const Room::Type &room_type) noexcept
 
 void Game::set_room(const Room::Type &room_type) noexcept
 {
-  freeze_entities = true;
-  schedule_action_change_room(room_type);
+  room = Room::get(room_type);
+
+  if (!room->tileset_name.empty() && tileset_sprite.get_path() != room->tileset_name)
+    tileset_sprite = Sprite{ room->tileset_name };
+
+  TraceLog(LOG_INFO, "Room changed to %i", static_cast<int>(room_type));
 }

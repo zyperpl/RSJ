@@ -47,6 +47,8 @@ public:
   void reset_animation();
   void animate(int step = 1);
 
+  const std::string &get_path() const noexcept { return path; }
+
   void set_centered();
 
   Vector2 position{ 0.0f, 0.0f };

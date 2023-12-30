@@ -20,6 +20,21 @@ Vector2 position_to_room(const Vector2 &position, const Rectangle &rect)
   return Vector2{ position.x - rect.x, position.y - rect.y };
 };
 
+Tile tile_from_ldtk_tile(const ldtk::TileInstance &tile_instance, const float &tile_size)
+{
+  const float &x        = tile_instance.px[0];
+  const float &y        = tile_instance.px[1];
+  const float &source_x = tile_instance.src[0];
+  const float &source_y = tile_instance.src[1];
+  const float &w        = tile_size;
+  const float &h        = tile_size;
+  const Rectangle &source{ source_x, source_y, w, h };
+  const Vector2 &pos{ x, y };
+  const Vector2 &size{ w, h };
+
+  return Tile{ pos, size, source };
+}
+
 std::unordered_map<Room::Type, std::shared_ptr<Room>> Room::rooms;
 
 template<typename T>
@@ -41,32 +56,34 @@ T get_field(const std::vector<ldtk::FieldInstance> &fields, const std::string &n
 }
 
 static std::unordered_map<std::string, std::function<std::unique_ptr<Interactable>(const ldtk::EntityInstance &)>>
-  create_entity_from_name{ { "NPC",
-                             [](const ldtk::EntityInstance &ldtk_entity) -> std::unique_ptr<Interactable>
-                             {
-                               const auto &entity_x = ldtk_entity.px[0];
-                               const auto &entity_y = ldtk_entity.px[1];
+  create_entity_from_name{
+    { "NPC",
+      [](const ldtk::EntityInstance &ldtk_entity) -> std::unique_ptr<Interactable>
+      {
+        const auto &entity_x = ldtk_entity.px[0];
+        const auto &entity_y = ldtk_entity.px[1];
 
-                               const std::string name = get_field<std::string>(ldtk_entity.field_instances, "Name");
+        const std::string name = get_field<std::string>(ldtk_entity.field_instances, "Name");
 
-                               auto entity = std::make_unique<DialogEntity>(
-                                 Vector2{ static_cast<float>(entity_x), static_cast<float>(entity_y) }, name);
-                               return entity;
-                             } },
-                           { "DockedShip",
-                             [](const ldtk::EntityInstance &ldtk_entity) -> std::unique_ptr<Interactable>
-                             {
-                               const float entity_x = static_cast<float>(ldtk_entity.px[0]);
-                               const float entity_y = static_cast<float>(ldtk_entity.px[1]);
-                               const float entity_w = static_cast<float>(ldtk_entity.width);
-                               const float entity_h = static_cast<float>(ldtk_entity.height);
+        auto entity =
+          std::make_unique<DialogEntity>(Vector2{ static_cast<float>(entity_x), static_cast<float>(entity_y) }, name);
+        return entity;
+      } },
+    { "DockedShip",
+      [](const ldtk::EntityInstance &ldtk_entity) -> std::unique_ptr<Interactable>
+      {
+        const float entity_x = static_cast<float>(ldtk_entity.px[0]);
+        const float entity_y = static_cast<float>(ldtk_entity.px[1]);
+        const float entity_w = static_cast<float>(ldtk_entity.width);
+        const float entity_h = static_cast<float>(ldtk_entity.height);
 
-                               auto entity                   = std::make_unique<DockedShip>();
-                               entity->get_sprite().position = Vector2{ entity_x + entity_w / 2.0f, entity_y + entity_h / 2.0f };
-                               entity->get_sprite().scale.x  = entity_w / entity->get_sprite().get_width();
-                               entity->get_sprite().scale.y  = entity_h / entity->get_sprite().get_height();
-                               return entity;
-                             } } };
+        auto entity                   = std::make_unique<DockedShip>();
+        entity->get_sprite().position = Vector2{ entity_x + entity_w / 2.0f, entity_y + entity_h / 2.0f };
+        entity->get_sprite().scale.x  = entity_w / entity->get_sprite().get_width();
+        entity->get_sprite().scale.y  = entity_h / entity->get_sprite().get_height();
+        return entity;
+      } }
+  };
 
 void Room::load()
 {
@@ -148,6 +165,7 @@ void Room::load()
           room->interactables.push_back(std::move(interactable));
         }
 
+        TraceLog(LOG_TRACE, "   > Loading colliders");
         for (size_t coord_id = 0; coord_id < layer.int_grid_csv.size(); coord_id++)
         {
           const auto &v = layer.int_grid_csv[coord_id];
@@ -162,6 +180,25 @@ void Room::load()
                                               static_cast<float>(layer.grid_size),
                                               static_cast<float>(layer.grid_size) });
         }
+        TraceLog(LOG_TRACE, "   > Loaded %d colliders", room->masks.size());
+
+        TraceLog(LOG_TRACE, "   > Loading tiles");
+        const auto &tile_size = layer.grid_size;
+        if ((layer_name == "ForegroundTiles" || layer_name == "BackgroundTiles") && layer.tileset_rel_path.has_value())
+        {
+          room->tileset_name = get_resource_path(layer.tileset_rel_path.value());
+          TraceLog(LOG_TRACE, "   > Tileset name: %s", room->tileset_name.c_str());
+        }
+
+        for (const auto &tile_instance : layer.grid_tiles)
+        {
+          if (layer_name == "ForegroundTiles")
+            room->foreground_tiles.emplace_back(tile_from_ldtk_tile(tile_instance, tile_size));
+          else if (layer_name == "BackgroundTiles")
+            room->background_tiles.emplace_back(tile_from_ldtk_tile(tile_instance, tile_size));
+        }
+        TraceLog(LOG_TRACE, "   > Loaded %d background tiles", room->foreground_tiles.size());
+        TraceLog(LOG_TRACE, "   > Loaded %d foreground tiles", room->background_tiles.size());
       }
     }
 
@@ -176,17 +213,15 @@ void Room::load()
     {
       if (!uid_room_map.contains(level_iid) || !uid_room_map.contains(neighbour.level_iid))
       {
-        TraceLog(LOG_ERROR, "Failed to find room with uid %s or %s",
-                 level_iid.c_str(),
-                 neighbour.level_iid.c_str());
+        TraceLog(LOG_ERROR, "Failed to find room with uid %s or %s", level_iid.c_str(), neighbour.level_iid.c_str());
         assert(uid_room_map.contains(level_iid));
         assert(uid_room_map.contains(neighbour.level_iid));
         continue;
       }
 
-      const auto &room          = uid_room_map[level_iid];
+      const auto &room           = uid_room_map[level_iid];
       const auto &neighbour_room = uid_room_map[neighbour.level_iid];
-      Direction dir       = Direction::Down;
+      Direction dir              = Direction::Down;
       if (neighbour.dir == "e")
         dir = Direction::Right;
       else if (neighbour.dir == "w")

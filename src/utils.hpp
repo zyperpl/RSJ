@@ -16,13 +16,18 @@ static constexpr const float M_PI = 3.14159265358979323846f;
 #include "object_circular_buffer.hpp"
 #include "sprite.hpp"
 
-static constexpr float DELTA_TIME = 1.0f / 60.0f;
-static consteval float FRAMES(auto n)
+inline constexpr float DELTA_TIME = 1.0f / 60.0f;
+[[nodiscard]] inline consteval float FRAMES(auto n)
 {
   return (DELTA_TIME * (float)(n));
 }
 
-const Color CRYSTAL_COLOR{ 255, 137, 51, 255 };
+inline constexpr const Color CRYSTAL_COLOR{ 255, 137, 51, 255 };
+inline constexpr const char *RESOURCE_PATH{ "resources/" };
+[[nodiscard]] inline std::string get_resource_path(const std::string &file_name)
+{
+  return RESOURCE_PATH + file_name;
+}
 
 [[nodiscard]] Rectangle texture_rect(const Texture2D &texture);
 
@@ -40,6 +45,6 @@ enum class Direction
   Down
 };
 
-std::string idle_tag_from_direction(const Direction &direction);
+[[nodiscard]] std::string idle_tag_from_direction(const Direction &direction);
 
-std::string walk_tag_from_direction(const Direction &direction);
+[[nodiscard]] std::string walk_tag_from_direction(const Direction &direction);

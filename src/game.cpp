@@ -133,14 +133,10 @@ void Game::update_game()
       {
         player->update();
 
-        // NOTE: Player's position is relative to the room position,
-        //      so we need to convert it to world coordinates
-        //      and then back to the new room's coordinates
-
         auto change_room_to_neighbour = [this](const std::shared_ptr<Room> &room, const Direction &direction)
         {
           if (auto neighbour = room->neighbours[direction]; neighbour)
-            set_room(neighbour->type);
+            schedule_action_change_room(neighbour->type);
         };
 
         constexpr const float room_margin = 4.0f;
@@ -227,6 +223,11 @@ void Game::draw() noexcept
   draw_background();
 
   assert(room);
+  assert(room->background_tiles.empty() || !room->tileset_name.empty());
+  assert(room->foreground_tiles.empty() || !room->tileset_name.empty());
+
+  for (const auto &tile : room->background_tiles)
+    DrawTextureRec(tileset_sprite.get_texture(), tile.source, tile.position, WHITE);
 
   switch (state)
   {
@@ -252,12 +253,6 @@ void Game::draw() noexcept
 
       player->draw();
 
-#if defined(DEBUG)
-      // TODO: remove mask drawing
-      for (const auto &mask : room->masks)
-        mask.draw();
-#endif
-
       if (CONFIG(show_masks))
       {
         for (const auto &mask : room->masks)
@@ -272,6 +267,9 @@ void Game::draw() noexcept
     case GameState::MENU:
       break;
   }
+
+  for (const auto &tile : room->foreground_tiles)
+    DrawTextureRec(tileset_sprite.get_texture(), tile.source, tile.position, WHITE);
 
   EndMode2D();
 

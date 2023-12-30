@@ -15,6 +15,13 @@ class Room;
 [[nodiscard]] Vector2 position_to_world(const Vector2 &position, const Rectangle &rect);
 [[nodiscard]] Vector2 position_to_room(const Vector2 &position, const Rectangle &rect);
 
+struct Tile
+{
+  Vector2 position;
+  Vector2 size;
+  Rectangle source;
+};
+
 class Room
 {
 public:
@@ -35,6 +42,9 @@ public:
   Rectangle rect{ 0.0f, 0.0f, 0.0f, 0.0f };
   std::vector<std::unique_ptr<Interactable>> interactables;
   std::vector<Mask> masks;
+  std::vector<Tile> foreground_tiles;
+  std::vector<Tile> background_tiles;
+  std::string tileset_name{};
 
   static void load();
   static void unload();

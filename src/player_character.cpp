@@ -16,7 +16,7 @@
 
 PlayerCharacter::PlayerCharacter()
 {
-  mask.shapes.push_back(Rectangle{ 0.0f, 0.0f, 16.0f, 32.0f });
+  mask.shapes.push_back(Rectangle{ 0.0f, 8.0f, 16.0f, 16.0f });
   mask.position = position;
 }
 
