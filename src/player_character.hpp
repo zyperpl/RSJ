@@ -30,6 +30,7 @@ public:
   void animate();
 
   bool is_colliding() const;
+
 private:
   Direction direction{ Direction::Down };
 

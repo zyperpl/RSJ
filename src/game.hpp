@@ -106,7 +106,7 @@ public:
 
   std::unique_ptr<Player> player;
   std::shared_ptr<Room> room;
-  Sprite tileset_sprite;
+  std::unique_ptr<Sprite> tileset_sprite;
   std::unique_ptr<ObjectCircularBuffer<Bullet, 128>> bullets;
   std::unique_ptr<ObjectCircularBuffer<Asteroid, 2048>> asteroids;
   std::unique_ptr<ObjectCircularBuffer<Particle, 4096>> particles;
@@ -119,8 +119,8 @@ public:
   static uint64_t frame;
 
   void init();
+  void unload() noexcept;
   void update();
-
   void draw() noexcept;
 
   size_t crystals{ 0 };
@@ -128,13 +128,15 @@ public:
   std::queue<Artifact> artifacts;
 
   GameState get_state() const noexcept { return state; }
-  
+
   void schedule_action_change_level(const Level &, const Interactable *) noexcept;
   void schedule_action_change_room(const Room::Type &) noexcept;
   void schedule_action_conversation(DialogEntity &) noexcept;
   void set_room(const Room::Type &) noexcept;
 
   bool freeze_entities{ false };
+
+  std::unique_ptr<Sprite> ui_crystal;
 
   std::optional<Dialog> dialog;
   std::optional<size_t> selected_dialog_response_index;
@@ -159,6 +161,7 @@ private:
   Camera2D camera;
 
   std::array<Vector2, 100> stars;
+  std::unique_ptr<Sprite> asteroid_bg_sprite;
   void update_background() noexcept;
   void draw_background() noexcept;
 

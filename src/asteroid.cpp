@@ -11,7 +11,7 @@
 static constexpr const float ASTEROIDS_SIZE[]{ 8.0f, 16.0f, 32.0f };
 static constexpr const int ASTEROID_SPLIT_COUNT{ 2 };
 
-static std::unique_ptr<Sprite> ASTEROID_SPRITE;
+std::unique_ptr<Sprite> Asteroid::ASTEROID_SPRITE{ nullptr };
 
 Particle create_asteroid_particle(const Vector2 &position, unsigned char alpha = 255)
 {
@@ -128,6 +128,7 @@ void Asteroid::draw() const noexcept
 {
   Color color = DARKPURPLE;
 
+  assert(ASTEROID_SPRITE);
   ASTEROID_SPRITE->set_centered();
   ASTEROID_SPRITE->set_frame(3 - size - 1);
   ASTEROID_SPRITE->tint = ColorBrightness(color, 0.5f + static_cast<float>(life) / static_cast<float>(max_life) * 0.5f);

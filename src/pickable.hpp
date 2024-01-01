@@ -27,4 +27,8 @@ private:
   std::function<void()> func;
 
   DECLARE_FRIEND_OBJECT_CIRCULAR_BUFFER()
+
+  static std::unique_ptr<Sprite> ORE_SPRITE;
+
+  friend class Game;
 };

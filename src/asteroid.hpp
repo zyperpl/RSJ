@@ -28,4 +28,8 @@ private:
   void die();
 
   DECLARE_FRIEND_OBJECT_CIRCULAR_BUFFER()
+
+  static std::unique_ptr<Sprite> ASTEROID_SPRITE;
+
+  friend class Game;
 };

@@ -301,8 +301,8 @@ void Game::set_room(const Room::Type &room_type) noexcept
 {
   room = Room::get(room_type);
 
-  if (!room->tileset_name.empty() && tileset_sprite.get_path() != room->tileset_name)
-    tileset_sprite = Sprite{ room->tileset_name };
+  if (!room->tileset_name.empty() && (!tileset_sprite || tileset_sprite->get_path() != room->tileset_name))
+    tileset_sprite = std::make_unique<Sprite>(room->tileset_name);
 
   TraceLog(LOG_INFO, "Room changed to %i", static_cast<int>(room_type));
 }

@@ -70,13 +70,13 @@ void update_draw_frame()
       const char *crystals_text = TextFormat("Crystals: %i", game.crystals);
       DrawTextEx(GAME.font, crystals_text, text_position, font_size, 1.0f, WHITE);
       text_size = MeasureTextEx(GAME.font, crystals_text, font_size, 1.0f);
-      static Sprite crystal_sprite{ "resources/ore.aseprite" };
-      crystal_sprite.set_frame(0);
-      crystal_sprite.scale = Vector2{ 0.4f, 0.4f };
-      crystal_sprite.set_centered();
-      crystal_sprite.position.x = text_position.x + text_size.x + 5.0f;
-      crystal_sprite.position.y = text_position.y + text_size.y * 0.5f;
-      crystal_sprite.draw();
+      assert(GAME.ui_crystal);
+      GAME.ui_crystal->set_frame(0);
+      GAME.ui_crystal->scale = Vector2{ 0.4f, 0.4f };
+      GAME.ui_crystal->set_centered();
+      GAME.ui_crystal->position.x = text_position.x + text_size.x + 5.0f;
+      GAME.ui_crystal->position.y = text_position.y + text_size.y * 0.5f;
+      GAME.ui_crystal->draw();
 
       if (game.dialog)
       {
@@ -238,7 +238,7 @@ void update_draw_frame()
   render_destination.width  = Game::width * scale;
   render_destination.height = Game::height * scale;
 
-  const float interval = DELTA_TIME; 
+  const float interval = DELTA_TIME;
   size_t steps         = 6;
   const float dt       = GetFrameTime();
 
@@ -298,6 +298,8 @@ int main(void)
       CloseWindow();
   }
 #endif
+
+  game.unload();
 
   if (IsAudioDeviceReady())
     CloseAudioDevice();

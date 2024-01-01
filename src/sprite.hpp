@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -82,4 +83,6 @@ private:
   int64_t last_time_ms{ 0 };
 
   static bool use_cache(Sprite &, const std::string &);
+  static std::unique_ptr<std::unordered_map<std::string, Sprite>> cache;
+  static std::unique_ptr<std::unordered_map<std::string, size_t>> file_path_usage_count;
 };

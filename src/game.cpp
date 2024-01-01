@@ -30,6 +30,9 @@ void Game::init()
   font        = LoadFontEx("resources/Kenney Mini Square.ttf", 10, nullptr, 0);
   dialog_font = LoadFontEx("resources/Kenney Mini.ttf", 10, nullptr, 0);
 
+  ui_crystal         = std::make_unique<Sprite>("resources/ore.aseprite");
+  asteroid_bg_sprite = std::make_unique<Sprite>("resources/asteroid.aseprite");
+
   Room::load();
   room = Room::get(Room::Type::DockingBay);
 
@@ -65,9 +68,30 @@ void Game::init()
   TraceLog(LOG_TRACE, "Game initialized");
 }
 
+void Game::unload() noexcept
+{
+  room.reset();
+  player.reset();
+  tileset_sprite.reset();
+  bullets.reset();
+  asteroids.reset();
+  particles.reset();
+  pickables.reset();
+  ui_crystal.reset();
+  asteroid_bg_sprite.reset();
+  dialog.reset();
+  selected_dialog_response_index.reset();
+  quests.clear();
+  actions   = std::queue<Action>{};
+  artifacts = std::queue<Artifact>{};
+  Pickable::ORE_SPRITE.reset();
+  Asteroid::ASTEROID_SPRITE.reset();
+}
+
 Game::~Game() noexcept
 {
   Room::unload();
+  unload();
 
   UnloadFont(font);
   UnloadFont(dialog_font);
@@ -227,7 +251,7 @@ void Game::draw() noexcept
   assert(room->foreground_tiles.empty() || !room->tileset_name.empty());
 
   for (const auto &tile : room->background_tiles)
-    DrawTextureRec(tileset_sprite.get_texture(), tile.source, tile.position, WHITE);
+    DrawTextureRec(tileset_sprite->get_texture(), tile.source, tile.position, WHITE);
 
   switch (state)
   {
@@ -269,7 +293,7 @@ void Game::draw() noexcept
   }
 
   for (const auto &tile : room->foreground_tiles)
-    DrawTextureRec(tileset_sprite.get_texture(), tile.source, tile.position, WHITE);
+    DrawTextureRec(tileset_sprite->get_texture(), tile.source, tile.position, WHITE);
 
   EndMode2D();
 
@@ -300,24 +324,23 @@ void Game::draw_background() noexcept
       DrawPixel(star.x, star.y, Color{ 120, 230, 100, 255 });
   }
 
-  static auto asteroid_sprite = Sprite{ "resources/asteroid.aseprite" };
-  asteroid_sprite.set_frame(1);
-  asteroid_sprite.tint = ColorBrightness(BLACK, 0.2f);
-  const long &w        = static_cast<long>(asteroid_sprite.get_width());
-  const long &h        = static_cast<long>(asteroid_sprite.get_height());
+  asteroid_bg_sprite->set_frame(1);
+  asteroid_bg_sprite->tint = ColorBrightness(BLACK, 0.2f);
+  const long &w            = static_cast<long>(asteroid_bg_sprite->get_width());
+  const long &h            = static_cast<long>(asteroid_bg_sprite->get_height());
 
-  for (int x = -w; x <= width + w; x += asteroid_sprite.get_width())
+  for (int x = -w; x <= width + w; x += asteroid_bg_sprite->get_width())
   {
-    for (int y = -h; y <= height + h; y += asteroid_sprite.get_height())
+    for (int y = -h; y <= height + h; y += asteroid_bg_sprite->get_height())
     {
       if ((x * y) % 3 == 0 || (x + y) % 5 == 0 || (x * y) % 7 == 0 || (x + y) % 9 == 0)
         continue;
 
       float xf = static_cast<float>(x) - sin(frame * 0.001f + x * 37.542f) * static_cast<float>(w) * 0.5f;
       float yf = static_cast<float>(y) - cos(frame * 0.002f - y * 13.127f) * static_cast<float>(h) * 0.8f;
-      asteroid_sprite.position = Vector2{ xf, yf };
-      asteroid_sprite.set_frame((x + y - 1) % 3);
-      asteroid_sprite.draw();
+      asteroid_bg_sprite->position = Vector2{ xf, yf };
+      asteroid_bg_sprite->set_frame((x + y - 1) % 3);
+      asteroid_bg_sprite->draw();
     }
   }
 }

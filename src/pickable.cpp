@@ -7,7 +7,7 @@
 #include "player.hpp"
 #include "utils.hpp"
 
-static std::unique_ptr<Sprite> ORE_SPRITE;
+std::unique_ptr<Sprite> Pickable::ORE_SPRITE{};
 
 Pickable Pickable::create(const Vector2 &position, const Vector2 &velocity, const std::function<void()> &func)
 {

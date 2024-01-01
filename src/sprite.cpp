@@ -28,15 +28,21 @@
 #pragma clang diagnostic pop
 #endif
 
-static std::unordered_map<std::string, Sprite> sprite_cache{};
-static std::unordered_map<std::string, size_t> file_path_usage_count{};
+std::unique_ptr<std::unordered_map<std::string, Sprite>> Sprite::cache;
+std::unique_ptr<std::unordered_map<std::string, size_t>> Sprite::file_path_usage_count;
 
 bool Sprite::use_cache(Sprite &sprite, const std::string &file_path)
 {
-  if (sprite_cache.contains(file_path))
+  if (!Sprite::cache)
+    Sprite::cache = std::make_unique<std::unordered_map<std::string, Sprite>>();
+
+  if (!Sprite::file_path_usage_count)
+    Sprite::file_path_usage_count = std::make_unique<std::unordered_map<std::string, size_t>>();
+
+  if (cache->contains(file_path))
   {
-    sprite = sprite_cache[file_path];
-    file_path_usage_count[file_path] += 1;
+    sprite = (*cache)[file_path];
+    (*file_path_usage_count)[file_path] += 1;
 
     return true;
   }
@@ -61,19 +67,23 @@ Sprite::Sprite(const std::string &file_path, std::string tag_name)
   }
 
   TraceLog(LOG_TRACE, "Sprite(%s) loaded", path.data());
-  sprite_cache[path] = *this;
-  file_path_usage_count[path] += 1;
+  (*cache)[path]                 = *this;
+  (*file_path_usage_count)[path] = 1;
 
   assert(IsTextureReady(texture.get()));
 }
 
 Sprite::~Sprite()
 {
-  file_path_usage_count[path] -= 1;
-  if (file_path_usage_count[path] == 0)
+  if (!file_path_usage_count || !cache)
+    return;
+
+  (*file_path_usage_count)[path] -= 1;
+  if ((*file_path_usage_count)[path] == 0)
   {
     TraceLog(LOG_TRACE, "Sprite(%s) unloaded", path.data());
-    sprite_cache.erase(path);
+
+    cache->erase(path);
   }
 }
 
