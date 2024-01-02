@@ -27,10 +27,8 @@ Game &Game::get() noexcept
 
 void Game::init()
 {
-  font        = LoadFontEx("resources/Kenney Mini Square.ttf", 10, nullptr, 0);
-  dialog_font = LoadFontEx("resources/Kenney Mini.ttf", 10, nullptr, 0);
+  gui = std::make_unique<GUI>();
 
-  ui_crystal         = std::make_unique<Sprite>("resources/ore.aseprite");
   asteroid_bg_sprite = std::make_unique<Sprite>("resources/asteroid.aseprite");
 
   Room::load();
@@ -70,6 +68,7 @@ void Game::init()
 
 void Game::unload() noexcept
 {
+  gui.reset();
   room.reset();
   player.reset();
   tileset_sprite.reset();
@@ -77,10 +76,7 @@ void Game::unload() noexcept
   asteroids.reset();
   particles.reset();
   pickables.reset();
-  ui_crystal.reset();
   asteroid_bg_sprite.reset();
-  dialog.reset();
-  selected_dialog_response_index.reset();
   quests.clear();
   actions   = std::queue<Action>{};
   artifacts = std::queue<Artifact>{};
@@ -92,9 +88,6 @@ Game::~Game() noexcept
 {
   Room::unload();
   unload();
-
-  UnloadFont(font);
-  UnloadFont(dialog_font);
 }
 
 void Game::update()
@@ -131,7 +124,7 @@ void Game::update_game()
 {
   assert(room);
 
-  if (!dialog)
+  if (!gui->is_active())
   {
     for (auto &interactable : room->interactables)
       interactable->update();
@@ -302,15 +295,6 @@ void Game::draw() noexcept
     const Action &action = actions.front();
     action.draw();
   }
-
-#if defined(DEBUG)
-  DrawTextEx(font,
-             TextFormat("Player position: (%.2f, %.2f)", player->position.x, player->position.y),
-             Vector2{ 0.0f, 0.0f },
-             font.baseSize,
-             1.0f,
-             RAYWHITE);
-#endif
 }
 
 void Game::draw_background() noexcept

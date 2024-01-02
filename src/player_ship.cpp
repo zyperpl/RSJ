@@ -98,7 +98,7 @@ void PlayerShip::shoot() noexcept
   bullet_velocity.x += velocity.x * 0.5f;
   bullet_velocity.y += velocity.y * 0.5f;
 
-  BulletType bullet_type = BulletType::Normal;
+  BulletType bullet_type = BulletType::Assisted;
 
   if (bullet_type == BulletType::Normal)
   {

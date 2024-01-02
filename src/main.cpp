@@ -15,6 +15,7 @@
 #include "asteroid.hpp"
 #include "bullet.hpp"
 #include "game.hpp"
+#include "gui.hpp"
 #include "object_circular_buffer.hpp"
 #include "particle.hpp"
 #include "player.hpp"
@@ -31,7 +32,13 @@ static std::unique_ptr<RenderPass> ui_render_pass;
 
 void update_draw_frame()
 {
+  const int screen_width          = GetScreenWidth();
+  const int screen_height         = GetScreenHeight();
+  const float screen_width_float  = static_cast<float>(screen_width);
+  const float screen_height_float = static_cast<float>(screen_height);
+
   Game &game = Game::get();
+
   if (!game_render_pass->render_func)
     game_render_pass->render_func = [&game]()
     {
@@ -40,192 +47,7 @@ void update_draw_frame()
     };
 
   if (!ui_render_pass->render_func)
-    ui_render_pass->render_func = [&]()
-    {
-      const float font_size = 10.0f;
-      Vector2 text_position{ 10.0f, 10.0f };
-      DrawTextEx(GAME.font, TextFormat("FPS: %i", GetFPS()), text_position, font_size, 1.0f, WHITE);
-
-      text_position.y += font_size + 5.0f;
-      const char *lives_text = "Lives: ";
-      DrawTextEx(GAME.font, lives_text, text_position, font_size, 1.0f, WHITE);
-      Vector2 text_size = MeasureTextEx(GAME.font, lives_text, font_size, 1.0f);
-      float x           = text_position.x + text_size.x + 5.0f;
-      float y           = text_position.y + text_size.y * 0.5f;
-      for (int i = 0; i < game.player->lives; i++)
-      {
-        DrawCircle(x + i * 20, y, 5, RED);
-      }
-
-      text_position.y += font_size + 5.0f;
-      static uint64_t draw_score = 0;
-      uint64_t score_step        = std::max<uint64_t>(1, (game.score - draw_score) / 20);
-      if (draw_score < game.score)
-        draw_score += score_step;
-      if (draw_score > game.score)
-        draw_score = game.score;
-      DrawTextEx(GAME.font, TextFormat("Score: %i", draw_score), text_position, font_size, 1.0f, WHITE);
-
-      text_position.y += font_size + 5.0f;
-      const char *crystals_text = TextFormat("Crystals: %i", game.crystals);
-      DrawTextEx(GAME.font, crystals_text, text_position, font_size, 1.0f, WHITE);
-      text_size = MeasureTextEx(GAME.font, crystals_text, font_size, 1.0f);
-      assert(GAME.ui_crystal);
-      GAME.ui_crystal->set_frame(0);
-      GAME.ui_crystal->scale = Vector2{ 0.4f, 0.4f };
-      GAME.ui_crystal->set_centered();
-      GAME.ui_crystal->position.x = text_position.x + text_size.x + 5.0f;
-      GAME.ui_crystal->position.y = text_position.y + text_size.y * 0.5f;
-      GAME.ui_crystal->draw();
-
-      if (game.dialog)
-      {
-        const unsigned char r               = 120 + (sin(GetTime() * 6.0f) * 0.5f + 0.5f) * 100;
-        const unsigned char g               = 120 + (sin(GetTime() * 6.0f + 2.0f) * 0.5f + 0.5f) * 100;
-        const Color selected_response_color = Color{ r, g, 255, 255 };
-        const Dialog &dialog                = *game.dialog;
-        const float dialog_width            = 300.0f;
-        const float dialog_height           = 100.0f;
-        const float dialog_x                = (Game::width - dialog_width) * 0.5f;
-        const float dialog_y                = Game::height - dialog_height - 10.0f;
-        DrawRectangle(dialog_x, dialog_y, dialog_width, dialog_height, Color{ 0, 0, 0, 200 });
-        DrawRectangleLinesEx(Rectangle{ dialog_x, dialog_y, dialog_width, dialog_height }, 1, WHITE);
-
-        // name
-        {
-          DrawTextEx(GAME.font,
-                     dialog.actor_name.c_str(),
-                     Vector2{ dialog_x + 10.0f, dialog_y + 10.0f },
-                     font_size,
-                     2.0f,
-                     RAYWHITE);
-          DrawTextEx(GAME.font,
-                     dialog.actor_name.c_str(),
-                     Vector2{ dialog_x + 10.0f + 1.0f, dialog_y + 10.0f },
-                     font_size,
-                     2.0f,
-                     RAYWHITE);
-          auto name_size = MeasureTextEx(GAME.font, dialog.actor_name.c_str(), font_size, 2.0f);
-          DrawLineEx(Vector2{ dialog_x + 10.0f, dialog_y + 10.0f + name_size.y },
-                     Vector2{ dialog_x + 10.0f + name_size.x, dialog_y + 10.0f + name_size.y },
-                     1.0f,
-                     RAYWHITE);
-        }
-
-        {
-          const float line_spacing = font_size - 2.0f;
-          SetTextLineSpacing(line_spacing);
-          const std::string &t = dialog.text;
-
-          if (t.find('$') != std::string::npos)
-          {
-
-            const float text_x = dialog_x + 10.0f;
-            const float text_y = dialog_y + 10.0f + font_size + 5.0f;
-            float x            = text_x;
-            float y            = text_y;
-            Color color        = WHITE;
-
-            for (size_t i = 0; i < t.size(); i++)
-            {
-              const char c = t[i];
-              if (c == '$' && i + 1 < t.size())
-              {
-                if (t[i + 1] == '1')
-                {
-                  color = CRYSTAL_COLOR;
-                  i++;
-                  continue;
-                }
-                else if (t[i + 1] == '0')
-                {
-                  color = WHITE;
-                  i++;
-                  continue;
-                }
-              }
-              if (c == '\n')
-              {
-                x = text_x;
-                y += line_spacing;
-                continue;
-              }
-
-              const auto text = TextFormat("%c", c);
-              DrawTextEx(GAME.dialog_font, text, Vector2{ x, y }, font_size, 0.0f, color);
-              x += MeasureTextEx(GAME.dialog_font, text, font_size, 0.0f).x + 1.0f;
-              if (x > dialog_x + dialog_width - 10.0f)
-              {
-                x = text_x;
-                y += line_spacing;
-              }
-            }
-          }
-          else
-          {
-            DrawTextEx(GAME.dialog_font,
-                       t.c_str(),
-                       Vector2{ dialog_x + 10.0f, dialog_y + 10.0f + font_size + 5.0f },
-                       font_size,
-                       1.0f,
-                       WHITE);
-          }
-        }
-        const auto text_size = MeasureTextEx(GAME.dialog_font, dialog.text.c_str(), font_size, 1.0f);
-
-        const float response_x = dialog_x + 20.0f + 5.0f;
-        const float response_y = dialog_y + 10.0f + text_size.y + font_size * 2.0f;
-        for (size_t i = 0; i < dialog.responses.size(); i++)
-        {
-          const DialogResponse &response = dialog.responses[i];
-          DrawTextEx(GAME.dialog_font,
-                     response.text.c_str(),
-                     Vector2{ response_x, response_y + (font_size + 5.0f) * i },
-                     font_size,
-                     1.0f,
-                     WHITE);
-
-          if (game.selected_dialog_response_index.has_value() && game.selected_dialog_response_index.value() == i)
-          {
-            DrawTextEx(GAME.dialog_font,
-                       response.text.c_str(),
-                       Vector2{ response_x, response_y + (font_size + 5.0f) * i },
-                       font_size,
-                       1.0f,
-                       selected_response_color);
-
-            const float triangle_size = 8.0f;
-            const float triangle_x    = dialog_x + 10.0f;
-            const float triangle_y    = response_y + font_size * 0.5f + (font_size + 5.0f) * i;
-            DrawTriangle(Vector2{ triangle_x, triangle_y - triangle_size * 0.5f },
-                         Vector2{ triangle_x, triangle_y + triangle_size * 0.5f },
-                         Vector2{ triangle_x + triangle_size, triangle_y },
-                         selected_response_color);
-          }
-        }
-      }
-
-      {
-        const float quest_right_margin = 10.0f;
-        float quest_y                  = 10.0f;
-        for (const auto &[quest_name, quest] : game.quests)
-        {
-          if (!quest.is_accepted() || quest.is_reported())
-            continue;
-
-          const auto &quest_text =
-            TextFormat("%s: %i/%i", quest.description.c_str(), quest.progress(), quest.max_progress());
-          const float quest_x =
-            Game::width - MeasureTextEx(GAME.font, quest_text, font_size, 1.0f).x - quest_right_margin;
-          const Color color = quest.is_completed() ? LIME : WHITE;
-          DrawTextEx(GAME.font, quest_text, Vector2{ quest_x, quest_y }, font_size, 1.0f, color);
-          quest_y += font_size + 5.0f;
-        }
-      }
-    };
-
-  const float screen_width_float  = static_cast<float>(GetScreenWidth());
-  const float screen_height_float = static_cast<float>(GetScreenHeight());
+    ui_render_pass->render_func = [&game]() { game.gui->draw(); };
 
   float scale =
     std::max(std::min(screen_width_float / (float)(Game::width), screen_height_float / (float)(Game::height)), 1.0f);
@@ -298,6 +120,9 @@ int main(void)
       CloseWindow();
   }
 #endif
+
+  game_render_pass.reset();
+  ui_render_pass.reset();
 
   game.unload();
 

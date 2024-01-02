@@ -5,6 +5,8 @@
 #include <raylib.h>
 #include <raymath.h>
 
+#include "magic_enum/magic_enum.hpp"
+
 #include "asteroid.hpp"
 #include "bullet.hpp"
 #include "interactable.hpp"
@@ -143,79 +145,66 @@ void Game::schedule_action_conversation(DialogEntity &entity) noexcept
   action.on_start = [this, &entity](Action &action)
   {
     TraceLog(LOG_INFO, "Playing dialog %p(%s)", (void *)(&entity), entity.get_dialog_id().c_str());
-
     freeze_entities = true;
 
-    dialog = entity.dialog();
-    if (dialog->actor_name == Dialog::END_DIALOG_ID)
+    gui->set_dialog(entity.dialog());
+    if (gui->dialog->actor_name == Dialog::END_DIALOG_ID)
     {
       TraceLog(LOG_INFO, "Dialog ended");
       action.is_done = true;
       return;
     }
 
-    if (!dialog->responses.empty())
-      selected_dialog_response_index = 0;
+    if (!gui->dialog->responses.empty())
+      gui->selected_index = 0;
   };
 
   action.on_update = [this](Action &action)
   {
-    if (!dialog->responses.empty() && !selected_dialog_response_index.has_value())
-      selected_dialog_response_index.value() = 0;
+    if (!gui->dialog->responses.empty() && !gui->selected_index.has_value())
+      gui->selected_index.value() = 0;
 
-    if (selected_dialog_response_index.has_value())
+    if (gui->selected_index.has_value())
     {
-      size_t &response_index = selected_dialog_response_index.value();
+      gui->handle_selecting_index(gui->selected_index, gui->dialog->responses.size());
+      gui->handle_accepting_index(gui->selected_index,
+                                  [&](size_t index)
+                                  {
+                                    TraceLog(LOG_TRACE, "Selected dialog response: %zu", index);
+                                    const auto &response       = gui->dialog->responses[index];
+                                    const auto &next_dialog_id = response.next_dialog_id;
 
-      if (IsKeyPressed(KEY_DOWN))
-      {
-        response_index++;
-        if (response_index >= dialog->responses.size())
-          response_index = 0;
-      }
+                                    if (response.func)
+                                      response.func();
 
-      if (IsKeyPressed(KEY_UP))
-      {
-        if (response_index == 0)
-          response_index = dialog->responses.size() - 1;
-        else
-          response_index--;
-      }
+                                    if (next_dialog_id.starts_with('_'))
+                                    {
+                                      if (next_dialog_id == "_end")
+                                        TraceLog(LOG_INFO, "Dialog ended");
+                                      else if (next_dialog_id == "_shop")
+                                        schedule_action_shop(nullptr);
+                                      else
+                                        TraceLog(LOG_WARNING, "Unknown dialog id: %s", next_dialog_id.c_str());
+                                    }
+                                    else
+                                    {
+                                      action.data = DialogId{ next_dialog_id };
+                                    }
+
+                                    action.is_done = true;
+                                  });
     }
+  };
 
-    if (IsKeyPressed(KEY_SPACE) || IsKeyPressedRepeat(KEY_SPACE))
-    {
-      if (selected_dialog_response_index.has_value())
-      {
-        TraceLog(LOG_TRACE, "Selected dialog response: %zu", selected_dialog_response_index.value());
-        assert(selected_dialog_response_index.value() < dialog->responses.size());
-        const auto &response       = dialog->responses[selected_dialog_response_index.value()];
-        const auto &next_dialog_id = response.next_dialog_id;
-
-        if (response.func)
-          response.func();
-
-        if (next_dialog_id.starts_with('_'))
-        {
-          if (next_dialog_id == "_end")
-            TraceLog(LOG_INFO, "Dialog ended");
-          else
-            TraceLog(LOG_WARNING, "Unknown dialog id: %s", next_dialog_id.c_str());
-        }
-        else
-        {
-          action.data = DialogId{ next_dialog_id };
-        }
-      }
-
-      action.is_done = true;
-    }
+  action.on_draw = [this](const Action &action)
+  {
+    if (action.has_started)
+      gui->draw_dialog();
   };
 
   action.on_done = [this, &entity](Action &action)
   {
-    dialog.reset();
-    selected_dialog_response_index.reset();
+    gui->reset_dialog();
 
     if (std::holds_alternative<DialogId>(action.data))
     {
@@ -223,6 +212,86 @@ void Game::schedule_action_conversation(DialogEntity &entity) noexcept
       entity.set_dialog_id(next_dialog_id);
       schedule_action_conversation(entity);
     }
+    freeze_entities = false;
+  };
+
+  actions.push(std::move(action));
+}
+
+void Game::schedule_action_shop(const Interactable *interactable) noexcept
+{
+  TraceLog(LOG_INFO, "Playing shop %p", (void *)interactable);
+
+  std::shared_ptr<std::vector<ShopItem>> shop_items = std::make_shared<std::vector<ShopItem>>();
+
+  Action action;
+  action.on_start = [this, shop_items](Action &)
+  {
+    freeze_entities = true;
+
+    shop_items->push_back(ShopItem{ .name            = "Fast Gun",
+                                    .description     = "Shoots faster",
+                                    .price           = 10,
+                                    .on_accept       = [] { puts("Bought weapon 1!\n"); },
+                                    .on_has_item     = [](const ShopItem &) { return false; },
+                                    .on_is_available = [](const ShopItem &) { return true; } });
+    shop_items->push_back(ShopItem{ .name            = "Auto Gun",
+                                    .description     = "Auto-aims at enemies",
+                                    .price           = 60,
+                                    .on_accept       = [] { puts("Bought weapon 2!\n"); },
+                                    .on_has_item     = [](const ShopItem &) { return false; },
+                                    .on_is_available = [](const ShopItem &) { return true; } });
+    shop_items->push_back(ShopItem{ .name            = "Homing Gun",
+                                    .description     = "Follows enemies",
+                                    .price           = 120,
+                                    .on_accept       = [] { puts("Bought weapon 3!\n"); },
+                                    .on_has_item     = [](const ShopItem &) { return false; },
+                                    .on_is_available = [](const ShopItem &) { return true; } });
+
+    if (!shop_items->empty())
+      gui->selected_index = 0;
+  };
+  action.on_update = [this, shop_items](Action &action)
+  {
+    gui->handle_selecting_index(gui->selected_index, shop_items->size() + 1);
+    gui->handle_accepting_index(gui->selected_index,
+                                [shop_items, &action](size_t index)
+                                {
+                                  TraceLog(LOG_TRACE, "Selected shop item: %zu / %zu", index, shop_items->size());
+                                  if (index >= shop_items->size())
+                                  {
+                                    TraceLog(LOG_INFO, "Shop ended");
+                                    action.is_done = true;
+                                    return;
+                                  }
+
+                                  const auto &item = (*shop_items)[index];
+
+                                  if (auto availability = item.is_available();
+                                      availability == ShopItem::AvailabilityReason::Available)
+                                  {
+                                    TraceLog(LOG_INFO, "Buying shop item: %s", item.name.c_str());
+                                    if (item.on_accept)
+                                      item.on_accept();
+                                  }
+                                  else
+                                  {
+                                    TraceLog(LOG_INFO,
+                                             "Shop item not available: %s (%s)",
+                                             item.name.c_str(),
+                                             magic_enum::enum_name(availability).data());
+                                  }
+                                });
+  };
+  action.on_draw = [this, shop_items](const Action &)
+  {
+    const auto &items = *shop_items;
+    gui->draw_shop_items(items);
+  };
+
+  action.on_done = [this, shop_items](Action &)
+  {
+    gui->selected_index.reset();
     freeze_entities = false;
   };
 

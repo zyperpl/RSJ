@@ -5,6 +5,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <variant>
 #include <vector>
 
 struct Dialog;
@@ -18,6 +19,26 @@ struct DialogResponse
   DialogId next_dialog_id;
 
   std::function<void()> func;
+};
+
+struct ShopItem
+{
+  enum class AvailabilityReason
+  {
+    Available,
+    NotEnoughMoney,
+    AlreadyOwned,
+    NotAvailable,
+  };
+
+  std::string name;
+  std::string description;
+  size_t price;
+  std::function<void()> on_accept;
+  std::function<bool(const ShopItem &)> on_has_item;
+  std::function<bool(const ShopItem &)> on_is_available;
+
+  AvailabilityReason is_available() const;
 };
 
 struct Dialog

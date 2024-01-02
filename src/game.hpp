@@ -12,6 +12,7 @@
 #include <raymath.h>
 
 #include "dialog.hpp"
+#include "gui.hpp"
 #include "quest.hpp"
 #include "room.hpp"
 
@@ -123,6 +124,8 @@ public:
   void update();
   void draw() noexcept;
 
+  std::unique_ptr<GUI> gui;
+
   size_t crystals{ 0 };
   size_t score{ 0 };
   std::queue<Artifact> artifacts;
@@ -132,17 +135,11 @@ public:
   void schedule_action_change_level(const Level &, const Interactable *) noexcept;
   void schedule_action_change_room(const Room::Type &) noexcept;
   void schedule_action_conversation(DialogEntity &) noexcept;
+  void schedule_action_shop(const Interactable *) noexcept;
+
   void set_room(const Room::Type &) noexcept;
 
   bool freeze_entities{ false };
-
-  std::unique_ptr<Sprite> ui_crystal;
-
-  std::optional<Dialog> dialog;
-  std::optional<size_t> selected_dialog_response_index;
-
-  Font font;
-  Font dialog_font;
 
   std::unordered_map<std::string, Quest> quests;
 
@@ -169,4 +166,6 @@ private:
   void set_state(GameState new_state) noexcept;
 
   std::queue<Action> actions;
+
+  friend class GUI;
 };

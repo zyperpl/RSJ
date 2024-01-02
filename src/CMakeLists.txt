@@ -26,6 +26,7 @@ ADD_EXECUTABLE(${PROJECT_NAME}
   bullet.cpp
   dialog.cpp
   game.cpp
+  gui.cpp
   interactable.cpp
   main.cpp 
   mask.cpp
