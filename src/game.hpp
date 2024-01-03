@@ -150,6 +150,8 @@ public:
   void schedule_action_conversation(DialogEntity &) noexcept;
   void schedule_action_shop(const Interactable *) noexcept;
   void schedule_action_modify_ship(const Interactable *) noexcept;
+  void schedule_action_ship_control(const Interactable *) noexcept;
+  void schedule_action_mission_select(const Interactable *) noexcept;
 
   void set_room(const Room::Type &) noexcept;
 

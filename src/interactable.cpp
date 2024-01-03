@@ -50,7 +50,7 @@ DockedShip::DockedShip()
 
 void DockedShip::interact()
 {
-  GAME.schedule_action_change_level(Level::Asteroids, this);
+  GAME.schedule_action_ship_control(this);
 }
 
 DialogEntity::DialogEntity(const Vector2 &position, const std::string &name)

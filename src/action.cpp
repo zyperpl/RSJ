@@ -409,6 +409,134 @@ void Game::schedule_action_modify_ship(const Interactable *interactable) noexcep
   actions.push(std::move(action));
 }
 
+void Game::schedule_action_ship_control(const Interactable *interactable) noexcept
+{
+  TraceLog(LOG_INFO, "Playing ship control %p", (void *)interactable);
+
+  std::shared_ptr<std::vector<ShopItem>> ship_items = std::make_shared<std::vector<ShopItem>>();
+
+  Action action;
+  action.on_start = [this, ship_items, interactable](Action &)
+  {
+    freeze_entities = true;
+
+    ship_items->push_back(ShopItem{ .name        = "Mission Select",
+                                    .description = "",
+                                    .price       = 0,
+                                    .on_accept = [this, interactable] { schedule_action_mission_select(interactable); },
+                                    .on_has_item     = [](const ShopItem &) { return false; },
+                                    .on_is_available = [](const ShopItem &) { return true; } });
+
+    ship_items->push_back(ShopItem{ .name            = "Change Weapons",
+                                    .description     = "",
+                                    .price           = 0,
+                                    .on_accept       = [this] { schedule_action_modify_ship(nullptr); },
+                                    .on_has_item     = [](const ShopItem &) { return false; },
+                                    .on_is_available = [](const ShopItem &) { return true; } });
+
+    if (!ship_items->empty())
+      gui->selected_index = 0;
+  };
+  action.on_update = [this, ship_items](Action &action)
+  {
+    gui->handle_selecting_index(gui->selected_index, ship_items->size() + 1);
+    gui->handle_accepting_index(gui->selected_index,
+                                [ship_items, &action](size_t index)
+                                {
+                                  if (index >= ship_items->size())
+                                  {
+                                    action.is_done = true;
+                                    return;
+                                  }
+
+                                  const auto &item = (*ship_items)[index];
+
+                                  if (auto availability = item.is_available();
+                                      availability == ShopItem::AvailabilityReason::Available)
+                                  {
+                                    if (item.on_accept)
+                                      item.on_accept();
+
+                                    action.is_done = true;
+                                  }
+                                });
+  };
+  action.on_draw = [this, ship_items](const Action &)
+  {
+    const auto &items = *ship_items;
+    gui->draw_ship_control(items);
+  };
+
+  action.on_done = [this, ship_items](Action &)
+  {
+    gui->selected_index.reset();
+    freeze_entities = false;
+  };
+
+  actions.push(std::move(action));
+}
+
+void Game::schedule_action_mission_select(const Interactable *interactable) noexcept
+{
+  TraceLog(LOG_INFO, "Playing mission select action %p", (void *)interactable);
+
+  std::shared_ptr<std::vector<ShopItem>> ship_items = std::make_shared<std::vector<ShopItem>>();
+
+  Action action;
+  action.on_start = [this, ship_items, interactable](Action &)
+  {
+    freeze_entities = true;
+
+    ship_items->push_back(
+      ShopItem{ .name        = "Mission 1",
+                .description = "",
+                .price       = 0,
+                .on_accept   = [this, interactable] { schedule_action_change_level(Level::Asteroids, interactable); },
+                .on_has_item = [](const ShopItem &) { return false; },
+                .on_is_available = [](const ShopItem &) { return true; } });
+
+    if (!ship_items->empty())
+      gui->selected_index = 0;
+  };
+  action.on_update = [this, ship_items](Action &action)
+  {
+    gui->handle_selecting_index(gui->selected_index, ship_items->size() + 1);
+    gui->handle_accepting_index(gui->selected_index,
+                                [ship_items, &action](size_t index)
+                                {
+                                  if (index >= ship_items->size())
+                                  {
+                                    action.is_done = true;
+                                    return;
+                                  }
+
+                                  const auto &item = (*ship_items)[index];
+
+                                  if (auto availability = item.is_available();
+                                      availability == ShopItem::AvailabilityReason::Available)
+                                  {
+                                    if (item.on_accept)
+                                      item.on_accept();
+
+                                    action.is_done = true;
+                                  }
+                                });
+  };
+  action.on_draw = [this, ship_items](const Action &)
+  {
+    const auto &items = *ship_items;
+    gui->draw_ship_control(items);
+  };
+
+  action.on_done = [this, ship_items](Action &)
+  {
+    gui->selected_index.reset();
+    freeze_entities = false;
+  };
+
+  actions.push(std::move(action));
+}
+
 void Game::schedule_action_change_room(const Room::Type &room_type) noexcept
 {
   TraceLog(LOG_INFO, "Changing room to %i", static_cast<int>(room_type));

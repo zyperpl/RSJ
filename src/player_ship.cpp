@@ -145,6 +145,11 @@ void PlayerShip::shoot() noexcept
     game.bullets->push(Bullet::create_assisted(position, bullet_velocity));
   }
 
+  if (game.gun == GunType::Normal)
+    shoot_timer.set_max_time(FRAMES(30));
+  else
+    shoot_timer.set_max_time(FRAMES(20));
+
   shoot_timer.start();
 }
 

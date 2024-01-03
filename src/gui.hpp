@@ -27,6 +27,7 @@ public:
 
   void draw_shop_items(const std::vector<ShopItem> &items) const noexcept;
   void draw_ship_items(const std::vector<ShopItem> &items) const noexcept;
+  void draw_ship_control(const std::vector<ShopItem> &items) const noexcept;
 
   void handle_selecting_index(std::optional<size_t> &index, size_t max_index) const noexcept;
   void handle_accepting_index(std::optional<size_t> &index, std::function<void(size_t)> func) const noexcept;

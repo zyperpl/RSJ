@@ -275,6 +275,11 @@ void GUI::draw_ship_items(const std::vector<ShopItem> &items) const noexcept
   draw_selectable_items(header, items, buy_text_map);
 }
 
+void GUI::draw_ship_control(const std::vector<ShopItem> &items) const noexcept
+{
+  draw_selectable_items("", items, {});
+}
+
 void GUI::draw_selectable_items(
   const std::string &header,
   const std::vector<ShopItem> &items,
@@ -331,8 +336,12 @@ void GUI::draw_selectable_items(
              color);
 #endif
 
-    if (!buy_text_map.contains(availability) || buy_text_map.at(availability).empty())
-      continue;
+    // skip unavailable items if state explicitly defined as empty
+    if (!buy_text_map.empty())
+    {
+      if (!buy_text_map.contains(availability) || buy_text_map.at(availability).empty())
+        continue;
+    }
 
     if (availability != ShopItem::AvailabilityReason::Available)
       color = DARKGRAY;
@@ -371,43 +380,49 @@ void GUI::draw_selectable_items(
       color);
 
     // item description
-    DrawTextEx(dialog_font,
-               item.description.c_str(),
-               Vector2{ item_icon_x + item_icon_size + MARGIN * 0.5f, item_icon_y + item_icon_size * 0.5f },
-               font_size,
-               0.0f,
-               color);
+    if (!item.description.empty())
+    {
+      DrawTextEx(dialog_font,
+                 item.description.c_str(),
+                 Vector2{ item_icon_x + item_icon_size + MARGIN * 0.5f, item_icon_y + item_icon_size * 0.5f },
+                 font_size,
+                 0.0f,
+                 color);
+    }
 
     // buy button
-    const char *buy_text          = buy_text_map.contains(availability) ? buy_text_map.at(availability).c_str() : "";
-    const char *price_text        = TextFormat("%4zu", item.price);
-    const Vector2 buy_text_size   = MeasureTextEx(font, buy_text, font_size, 0.0f);
-    const Vector2 price_text_size = MeasureTextEx(font, price_text, font_size, 1.0f);
-    const float buy_button_w      = std::max(80.0f, buy_text_size.x + price_text_size.x + MARGIN * 3.0f);
-    const float buy_button_h      = 20.0f;
-    const float buy_button_x      = std::roundf(dialog_x + dialog_width - buy_button_w - MARGIN * 1.5f);
-    const float buy_button_y      = std::roundf(item_box_y + item_box_h * 0.5f - buy_button_h * 0.5f);
-    DrawRectangle(buy_button_x, buy_button_y, buy_button_w, buy_button_h, Color{ 16, 16, 32, 200 });
-    DrawRectangleLinesEx(
-      Rectangle{ buy_button_x, buy_button_y, buy_button_w, buy_button_h }, is_selected ? 2.0f : 1.0f, color);
-
-    const float buy_text_x = std::roundf(buy_button_x + MARGIN);
-    const float buy_text_y = std::roundf(buy_button_y + buy_button_h * 0.5f - buy_text_size.y * 0.5f);
-    DrawTextEx(font, buy_text, Vector2{ buy_text_x, buy_text_y }, font_size, 0.0f, color);
-
-    if (item.price > 0)
+    if (buy_text_map.contains(availability))
     {
-      const float price_text_x =
-        std::roundf(buy_button_x + buy_button_w - price_text_size.x - MARGIN - ui_crystal->get_width() * 0.4f);
-      const float price_text_y = std::roundf(buy_button_y + buy_button_h * 0.5f - price_text_size.y * 0.5f);
+      const char *buy_text          = buy_text_map.at(availability).c_str();
+      const char *price_text        = TextFormat("%4zu", item.price);
+      const Vector2 buy_text_size   = MeasureTextEx(font, buy_text, font_size, 0.0f);
+      const Vector2 price_text_size = MeasureTextEx(font, price_text, font_size, 1.0f);
+      const float buy_button_w      = std::max(80.0f, buy_text_size.x + price_text_size.x + MARGIN * 3.0f);
+      const float buy_button_h      = 20.0f;
+      const float buy_button_x      = std::roundf(dialog_x + dialog_width - buy_button_w - MARGIN * 1.5f);
+      const float buy_button_y      = std::roundf(item_box_y + item_box_h * 0.5f - buy_button_h * 0.5f);
+      DrawRectangle(buy_button_x, buy_button_y, buy_button_w, buy_button_h, Color{ 16, 16, 32, 200 });
+      DrawRectangleLinesEx(
+        Rectangle{ buy_button_x, buy_button_y, buy_button_w, buy_button_h }, is_selected ? 2.0f : 1.0f, color);
 
-      DrawTextEx(font, price_text, Vector2{ price_text_x, price_text_y }, font_size, 1.0f, color);
-      ui_crystal->set_frame(0);
-      ui_crystal->scale = Vector2{ 0.4f, 0.4f };
-      ui_crystal->set_centered();
-      ui_crystal->position.x = price_text_x + price_text_size.x + 4.0f;
-      ui_crystal->position.y = price_text_y + price_text_size.y * 0.5f;
-      ui_crystal->draw();
+      const float buy_text_x = std::roundf(buy_button_x + MARGIN);
+      const float buy_text_y = std::roundf(buy_button_y + buy_button_h * 0.5f - buy_text_size.y * 0.5f);
+      DrawTextEx(font, buy_text, Vector2{ buy_text_x, buy_text_y }, font_size, 0.0f, color);
+
+      if (item.price > 0)
+      {
+        const float price_text_x =
+          std::roundf(buy_button_x + buy_button_w - price_text_size.x - MARGIN - ui_crystal->get_width() * 0.4f);
+        const float price_text_y = std::roundf(buy_button_y + buy_button_h * 0.5f - price_text_size.y * 0.5f);
+
+        DrawTextEx(font, price_text, Vector2{ price_text_x, price_text_y }, font_size, 1.0f, color);
+        ui_crystal->set_frame(0);
+        ui_crystal->scale = Vector2{ 0.4f, 0.4f };
+        ui_crystal->set_centered();
+        ui_crystal->position.x = price_text_x + price_text_size.x + 4.0f;
+        ui_crystal->position.y = price_text_y + price_text_size.y * 0.5f;
+        ui_crystal->draw();
+      }
     }
 
     if (is_selected)
