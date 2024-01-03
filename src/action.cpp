@@ -397,6 +397,8 @@ void Game::schedule_action_modify_ship(const Interactable *interactable) noexcep
   action.on_draw = [this, ship_items](const Action &)
   {
     const auto &items = *ship_items;
+    if (items.empty())
+      return;
     gui->draw_ship_items(items);
   };
 
@@ -464,6 +466,8 @@ void Game::schedule_action_ship_control(const Interactable *interactable) noexce
   action.on_draw = [this, ship_items](const Action &)
   {
     const auto &items = *ship_items;
+    if (items.empty())
+      return;
     gui->draw_ship_control(items);
   };
 
@@ -525,6 +529,8 @@ void Game::schedule_action_mission_select(const Interactable *interactable) noex
   action.on_draw = [this, ship_items](const Action &)
   {
     const auto &items = *ship_items;
+    if (items.empty())
+      return;
     gui->draw_ship_control(items);
   };
 
