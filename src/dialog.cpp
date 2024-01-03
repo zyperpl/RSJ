@@ -11,11 +11,11 @@
 
 ShopItem::AvailabilityReason ShopItem::is_available() const
 {
-  if (GAME.crystals < price)
-    return AvailabilityReason::NotEnoughMoney;
-
   if (on_has_item && on_has_item(*this))
     return AvailabilityReason::AlreadyOwned;
+
+  if (GAME.crystals < price)
+    return AvailabilityReason::NotEnoughMoney;
 
   if (on_is_available && !on_is_available(*this))
     return AvailabilityReason::NotAvailable;
@@ -139,6 +139,7 @@ std::unordered_map<DialogId, Dialog> Dialog::load_dialogs(const std::string &nam
                                        "Hello, my name is Mechanic. Wanna buy something?",
                                        {
                                          { "Open shop", "_shop" },
+                                         { "Open ship modification", "_ship" },
                                          { "I'm busy, goodbye", "_end" },
                                        } });
 

@@ -26,6 +26,7 @@ public:
   void draw_dialog() const noexcept;
 
   void draw_shop_items(const std::vector<ShopItem> &items) const noexcept;
+  void draw_ship_items(const std::vector<ShopItem> &items) const noexcept;
 
   void handle_selecting_index(std::optional<size_t> &index, size_t max_index) const noexcept;
   void handle_accepting_index(std::optional<size_t> &index, std::function<void(size_t)> func) const noexcept;
@@ -40,6 +41,11 @@ private:
   Font dialog_font;
 
   const float font_size{ 10.0f };
+
+  void draw_selectable_items(
+    const std::string &header,
+    const std::vector<ShopItem> &items,
+    const std::unordered_map<ShopItem::AvailabilityReason, std::string> &buy_text_map) const noexcept;
 
   friend class Game;
 };

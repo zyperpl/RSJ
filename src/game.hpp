@@ -100,6 +100,14 @@ struct Artifact
   std::string description;
 };
 
+enum class GunType
+{
+  Normal,
+  Fast,
+  Assisted,
+  Homing
+};
+
 class Game
 {
 public:
@@ -129,6 +137,11 @@ public:
   size_t crystals{ 0 };
   size_t score{ 0 };
   std::queue<Artifact> artifacts;
+  std::unordered_map<GunType, bool> guns{ { GunType::Normal, true },
+                                          { GunType::Fast, false },
+                                          { GunType::Assisted, false },
+                                          { GunType::Homing, false } };
+  GunType gun{ GunType::Normal };
 
   GameState get_state() const noexcept { return state; }
 
@@ -136,6 +149,7 @@ public:
   void schedule_action_change_room(const Room::Type &) noexcept;
   void schedule_action_conversation(DialogEntity &) noexcept;
   void schedule_action_shop(const Interactable *) noexcept;
+  void schedule_action_modify_ship(const Interactable *) noexcept;
 
   void set_room(const Room::Type &) noexcept;
 

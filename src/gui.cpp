@@ -7,6 +7,8 @@
 #include <variant>
 #include <vector>
 
+#include "magic_enum/magic_enum.hpp"
+
 #include <raylib.h>
 #include <raymath.h>
 
@@ -247,32 +249,68 @@ bool GUI::is_active() const
 
 void GUI::draw_shop_items(const std::vector<ShopItem> &items) const noexcept
 {
-  const Color selected_color = selection_color();
-  const float MARGIN         = 10.0f;
+  std::unordered_map<ShopItem::AvailabilityReason, std::string> buy_text_map{
+    { ShopItem::AvailabilityReason::Available, "Buy" },
+    { ShopItem::AvailabilityReason::AlreadyOwned, "Owned" },
+    { ShopItem::AvailabilityReason::NotEnoughMoney, "Cannot afford" },
+    { ShopItem::AvailabilityReason::NotAvailable, "Sold out" },
+  };
 
-  // dialog background (box in the middle)
+  const std::string header = "Upgrade Ship";
+
+  draw_selectable_items(header, items, buy_text_map);
+}
+
+void GUI::draw_ship_items(const std::vector<ShopItem> &items) const noexcept
+{
+  std::unordered_map<ShopItem::AvailabilityReason, std::string> buy_text_map{
+    { ShopItem::AvailabilityReason::Available, "Equip" },
+    { ShopItem::AvailabilityReason::AlreadyOwned, "Equipped" },
+    { ShopItem::AvailabilityReason::NotEnoughMoney, "" },
+    { ShopItem::AvailabilityReason::NotAvailable, "" },
+  };
+
+  const std::string header = "Modify Ship";
+
+  draw_selectable_items(header, items, buy_text_map);
+}
+
+void GUI::draw_selectable_items(
+  const std::string &header,
+  const std::vector<ShopItem> &items,
+  const std::unordered_map<ShopItem::AvailabilityReason, std::string> &buy_text_map) const noexcept
+{
+  const float MARGIN         = 10.0f;
+  const Color selected_color = selection_color();
+
+  // dialog background
   const float dialog_width  = 300.0f;
-  const float dialog_height = 160.0f;
+  const float dialog_height = MARGIN * 5.0f + (font_size * 2.0f + MARGIN * 2.0f) * static_cast<float>(items.size());
   const float dialog_x      = std::roundf((Game::width - dialog_width) * 0.5f);
   const float dialog_y      = std::roundf((Game::height - dialog_height) * 0.5f - 20.0f);
   DrawRectangle(dialog_x, dialog_y, dialog_width, dialog_height, Color{ 16, 16, 32, 200 });
   DrawRectangleLinesEx(Rectangle{ dialog_x, dialog_y, dialog_width, dialog_height }, 1, Color{ 255, 224, 255, 255 });
 
   // header
-  const char *header_text      = "Upgrade Ship";
-  const Vector2 shop_text_size = MeasureTextEx(font, header_text, font_size, 1.0f);
-  DrawTextEx(font,
-             header_text,
-             Vector2{ dialog_x + std::roundf(dialog_width / 2.0f - shop_text_size.x / 2.0f), dialog_y + MARGIN },
-             font_size,
-             1.0f,
-             WHITE);
+  Vector2 header_text_size{ 0.0f, -MARGIN };
+  if (!header.empty())
+  {
+    const char *header_text = header.c_str();
+    header_text_size        = MeasureTextEx(font, header_text, font_size, 1.0f);
+    DrawTextEx(font,
+               header_text,
+               Vector2{ dialog_x + std::roundf(dialog_width / 2.0f - header_text_size.x / 2.0f), dialog_y + MARGIN },
+               font_size,
+               1.0f,
+               WHITE);
 
-  DrawLineV(Vector2{ dialog_x + MARGIN, dialog_y + MARGIN + shop_text_size.y + MARGIN },
-            Vector2{ dialog_x + dialog_width - MARGIN, dialog_y + MARGIN + shop_text_size.y + MARGIN },
-            WHITE);
+    DrawLineV(Vector2{ dialog_x + MARGIN, dialog_y + MARGIN + header_text_size.y + MARGIN },
+              Vector2{ dialog_x + dialog_width - MARGIN, dialog_y + MARGIN + header_text_size.y + MARGIN },
+              WHITE);
+  }
 
   // items
+  float drawn_count = 0.0f;
   for (size_t i = 0; i < items.size(); i++)
   {
     const bool is_selected = selected_index.has_value() && selected_index.value() == i;
@@ -283,14 +321,28 @@ void GUI::draw_shop_items(const std::vector<ShopItem> &items) const noexcept
     if (is_selected)
       color = selected_color;
 
-    if (item.is_available() != ShopItem::AvailabilityReason::Available)
+    const auto availability = item.is_available();
+
+#if defined(DEBUG_GUI_ITEM_AVAILABILITY)
+    DrawText(TextFormat("%s", magic_enum::enum_name(availability).data()),
+             dialog_x + dialog_width - 100.0f,
+             dialog_y + (MARGIN + 10.0f) * i,
+             10.0f,
+             color);
+#endif
+
+    if (!buy_text_map.contains(availability) || buy_text_map.at(availability).empty())
+      continue;
+
+    if (availability != ShopItem::AvailabilityReason::Available)
       color = DARKGRAY;
 
     // item box
     const float item_box_w = dialog_width - MARGIN * 2.0f;
     const float item_box_h = font_size + MARGIN * 2.0f;
     const float item_box_x = dialog_x + MARGIN;
-    const float item_box_y = dialog_y + MARGIN * 2.0f + shop_text_size.y + MARGIN + (item_box_h + MARGIN) * i;
+    const float item_box_y =
+      dialog_y + MARGIN * 2.0f + header_text_size.y + MARGIN + (item_box_h + MARGIN) * drawn_count;
 
     if (is_selected)
       DrawRectangle(item_box_x, item_box_y, item_box_w, item_box_h, Color{ 16, 16, 32, 200 });
@@ -327,14 +379,7 @@ void GUI::draw_shop_items(const std::vector<ShopItem> &items) const noexcept
                color);
 
     // buy button
-    const char *buy_text = "Buy";
-    if (item.is_available() == ShopItem::AvailabilityReason::AlreadyOwned)
-      buy_text = "Owned";
-    else if (item.is_available() == ShopItem::AvailabilityReason::NotEnoughMoney)
-      buy_text = "Cannot afford";
-    else if (item.is_available() == ShopItem::AvailabilityReason::NotAvailable)
-      buy_text = "Sold out";
-
+    const char *buy_text          = buy_text_map.contains(availability) ? buy_text_map.at(availability).c_str() : "";
     const char *price_text        = TextFormat("%4zu", item.price);
     const Vector2 buy_text_size   = MeasureTextEx(font, buy_text, font_size, 0.0f);
     const Vector2 price_text_size = MeasureTextEx(font, price_text, font_size, 1.0f);
@@ -348,21 +393,27 @@ void GUI::draw_shop_items(const std::vector<ShopItem> &items) const noexcept
 
     const float buy_text_x = std::roundf(buy_button_x + MARGIN);
     const float buy_text_y = std::roundf(buy_button_y + buy_button_h * 0.5f - buy_text_size.y * 0.5f);
-    const float price_text_x =
-      std::roundf(buy_button_x + buy_button_w - price_text_size.x - MARGIN - ui_crystal->get_width() * 0.4f);
-    const float price_text_y = std::roundf(buy_button_y + buy_button_h * 0.5f - price_text_size.y * 0.5f);
-
     DrawTextEx(font, buy_text, Vector2{ buy_text_x, buy_text_y }, font_size, 0.0f, color);
-    DrawTextEx(font, price_text, Vector2{ price_text_x, price_text_y }, font_size, 1.0f, color);
-    ui_crystal->set_frame(0);
-    ui_crystal->scale = Vector2{ 0.4f, 0.4f };
-    ui_crystal->set_centered();
-    ui_crystal->position.x = price_text_x + price_text_size.x + 4.0f;
-    ui_crystal->position.y = price_text_y + price_text_size.y * 0.5f;
-    ui_crystal->draw();
+
+    if (item.price > 0)
+    {
+      const float price_text_x =
+        std::roundf(buy_button_x + buy_button_w - price_text_size.x - MARGIN - ui_crystal->get_width() * 0.4f);
+      const float price_text_y = std::roundf(buy_button_y + buy_button_h * 0.5f - price_text_size.y * 0.5f);
+
+      DrawTextEx(font, price_text, Vector2{ price_text_x, price_text_y }, font_size, 1.0f, color);
+      ui_crystal->set_frame(0);
+      ui_crystal->scale = Vector2{ 0.4f, 0.4f };
+      ui_crystal->set_centered();
+      ui_crystal->position.x = price_text_x + price_text_size.x + 4.0f;
+      ui_crystal->position.y = price_text_y + price_text_size.y * 0.5f;
+      ui_crystal->draw();
+    }
 
     if (is_selected)
       DrawRectangleLinesEx(Rectangle{ item_box_x, item_box_y, item_box_w, item_box_h }, 1, color);
+
+    drawn_count += 1.0f;
   }
 
   // exit button

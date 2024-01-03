@@ -213,6 +213,11 @@ void Game::update_game()
       room++;
       set_room(static_cast<Room::Type>(room % static_cast<int>(Room::Type::Workshop)));
     }
+
+    if (IsKeyPressed(KEY_F6))
+    {
+      crystals += 10;
+    }
   }
 #endif
 }

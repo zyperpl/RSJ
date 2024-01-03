@@ -183,6 +183,8 @@ void Game::schedule_action_conversation(DialogEntity &entity) noexcept
                                         TraceLog(LOG_INFO, "Dialog ended");
                                       else if (next_dialog_id == "_shop")
                                         schedule_action_shop(nullptr);
+                                      else if (next_dialog_id == "_ship")
+                                        schedule_action_modify_ship(nullptr);
                                       else
                                         TraceLog(LOG_WARNING, "Unknown dialog id: %s", next_dialog_id.c_str());
                                     }
@@ -229,23 +231,38 @@ void Game::schedule_action_shop(const Interactable *interactable) noexcept
   {
     freeze_entities = true;
 
-    shop_items->push_back(ShopItem{ .name            = "Fast Gun",
-                                    .description     = "Shoots faster",
-                                    .price           = 10,
-                                    .on_accept       = [] { puts("Bought weapon 1!\n"); },
-                                    .on_has_item     = [](const ShopItem &) { return false; },
+    shop_items->push_back(ShopItem{ .name        = "Fast Gun",
+                                    .description = "Shoots faster",
+                                    .price       = 10,
+                                    .on_accept =
+                                      [this]
+                                    {
+                                      crystals -= 10;
+                                      guns[GunType::Fast] = true;
+                                    },
+                                    .on_has_item     = [this](const ShopItem &) { return guns[GunType::Fast]; },
                                     .on_is_available = [](const ShopItem &) { return true; } });
-    shop_items->push_back(ShopItem{ .name            = "Auto Gun",
-                                    .description     = "Auto-aims at enemies",
-                                    .price           = 60,
-                                    .on_accept       = [] { puts("Bought weapon 2!\n"); },
-                                    .on_has_item     = [](const ShopItem &) { return false; },
+    shop_items->push_back(ShopItem{ .name        = "Auto Gun",
+                                    .description = "Auto-aims at enemies",
+                                    .price       = 60,
+                                    .on_accept =
+                                      [this]
+                                    {
+                                      crystals -= 60;
+                                      guns[GunType::Assisted] = true;
+                                    },
+                                    .on_has_item     = [this](const ShopItem &) { return guns[GunType::Assisted]; },
                                     .on_is_available = [](const ShopItem &) { return true; } });
-    shop_items->push_back(ShopItem{ .name            = "Homing Gun",
-                                    .description     = "Follows enemies",
-                                    .price           = 120,
-                                    .on_accept       = [] { puts("Bought weapon 3!\n"); },
-                                    .on_has_item     = [](const ShopItem &) { return false; },
+    shop_items->push_back(ShopItem{ .name        = "Homing Gun",
+                                    .description = "Follows enemies",
+                                    .price       = 120,
+                                    .on_accept =
+                                      [this]
+                                    {
+                                      crystals -= 120;
+                                      guns[GunType::Homing] = true;
+                                    },
+                                    .on_has_item     = [this](const ShopItem &) { return guns[GunType::Homing]; },
                                     .on_is_available = [](const ShopItem &) { return true; } });
 
     if (!shop_items->empty())
@@ -290,6 +307,100 @@ void Game::schedule_action_shop(const Interactable *interactable) noexcept
   };
 
   action.on_done = [this, shop_items](Action &)
+  {
+    gui->selected_index.reset();
+    freeze_entities = false;
+  };
+
+  actions.push(std::move(action));
+}
+
+void Game::schedule_action_modify_ship(const Interactable *interactable) noexcept
+{
+  TraceLog(LOG_INFO, "Playing modify ship %p", (void *)interactable);
+
+  std::shared_ptr<std::vector<ShopItem>> ship_items = std::make_shared<std::vector<ShopItem>>();
+
+  Action action;
+  action.on_start = [this, ship_items](Action &)
+  {
+    freeze_entities = true;
+
+    if (guns[GunType::Normal])
+      ship_items->push_back(ShopItem{ .name            = "Normal Gun",
+                                      .description     = "Default weapon",
+                                      .price           = 0,
+                                      .on_accept       = [this] { gun = GunType::Normal; },
+                                      .on_has_item     = [this](const ShopItem &) { return gun == GunType::Normal; },
+                                      .on_is_available = [this](const ShopItem &) { return guns[GunType::Normal]; } });
+
+    if (guns[GunType::Fast])
+      ship_items->push_back(ShopItem{ .name            = "Fast Gun",
+                                      .description     = "Shoots faster",
+                                      .price           = 0,
+                                      .on_accept       = [this] { gun = GunType::Fast; },
+                                      .on_has_item     = [this](const ShopItem &) { return gun == GunType::Fast; },
+                                      .on_is_available = [this](const ShopItem &) { return guns[GunType::Fast]; } });
+
+    if (guns[GunType::Assisted])
+      ship_items->push_back(
+        ShopItem{ .name            = "Auto Gun",
+                  .description     = "Auto-aims at enemies",
+                  .price           = 0,
+                  .on_accept       = [this] { gun = GunType::Assisted; },
+                  .on_has_item     = [this](const ShopItem &) { return gun == GunType::Assisted; },
+                  .on_is_available = [this](const ShopItem &) { return guns[GunType::Assisted]; } });
+
+    if (guns[GunType::Homing])
+      ship_items->push_back(ShopItem{ .name            = "Homing Gun",
+                                      .description     = "Follows enemies",
+                                      .price           = 0,
+                                      .on_accept       = [this] { gun = GunType::Homing; },
+                                      .on_has_item     = [this](const ShopItem &) { return gun == GunType::Homing; },
+                                      .on_is_available = [this](const ShopItem &) { return guns[GunType::Homing]; } });
+
+    if (!ship_items->empty())
+      gui->selected_index = 0;
+  };
+  action.on_update = [this, ship_items](Action &action)
+  {
+    gui->handle_selecting_index(gui->selected_index, ship_items->size() + 1);
+    gui->handle_accepting_index(
+      gui->selected_index,
+      [ship_items, &action](size_t index)
+      {
+        TraceLog(LOG_TRACE, "Selected modify ship item: %zu / %zu", index, ship_items->size());
+        if (index >= ship_items->size())
+        {
+          TraceLog(LOG_INFO, "Modify ship ended");
+          action.is_done = true;
+          return;
+        }
+
+        const auto &item = (*ship_items)[index];
+
+        if (auto availability = item.is_available(); availability == ShopItem::AvailabilityReason::Available)
+        {
+          TraceLog(LOG_INFO, "Selected modify ship item: %s", item.name.c_str());
+          if (item.on_accept)
+            item.on_accept();
+        }
+        else
+        {
+          TraceLog(LOG_INFO,
+                   "Ship item not available: %s (%s)",
+                   item.name.c_str(),
+                   magic_enum::enum_name(availability).data());
+        }
+      });
+  };
+  action.on_draw = [this, ship_items](const Action &)
+  {
+    const auto &items = *ship_items;
+    gui->draw_ship_items(items);
+  };
+
+  action.on_done = [this, ship_items](Action &)
   {
     gui->selected_index.reset();
     freeze_entities = false;

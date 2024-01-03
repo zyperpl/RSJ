@@ -85,20 +85,40 @@ void PlayerShip::die()
   invincibility_timer.start();
 }
 
+BulletType bullet_type_from_gun(GunType gun) noexcept
+{
+  switch (gun)
+  {
+    case GunType::Normal:
+      return BulletType::Normal;
+    case GunType::Fast:
+      return BulletType::Normal;
+    case GunType::Assisted:
+      return BulletType::Assisted;
+    case GunType::Homing:
+      return BulletType::Homing;
+  }
+  return BulletType::Normal;
+}
+
 void PlayerShip::shoot() noexcept
 {
   auto &game = Game::get();
+
+  float bullet_speed = 3.0f;
+  if (game.gun == GunType::Fast)
+    bullet_speed = 6.0f;
 
   Vector2 bullet_position;
   Vector2 bullet_velocity;
   bullet_position.x = position.x - cos(sprite.rotation * DEG2RAD + M_PI / 2.0f) * 5.0f;
   bullet_position.y = position.y - sin(sprite.rotation * DEG2RAD + M_PI / 2.0f) * 5.0f;
-  bullet_velocity.x = cos(sprite.rotation * DEG2RAD + M_PI / 2.0f + M_PI) * 5.0f;
-  bullet_velocity.y = sin(sprite.rotation * DEG2RAD + M_PI / 2.0f + M_PI) * 5.0f;
+  bullet_velocity.x = cos(sprite.rotation * DEG2RAD + M_PI / 2.0f + M_PI) * bullet_speed;
+  bullet_velocity.y = sin(sprite.rotation * DEG2RAD + M_PI / 2.0f + M_PI) * bullet_speed;
   bullet_velocity.x += velocity.x * 0.5f;
   bullet_velocity.y += velocity.y * 0.5f;
 
-  BulletType bullet_type = BulletType::Assisted;
+  BulletType bullet_type = bullet_type_from_gun(game.gun);
 
   if (bullet_type == BulletType::Normal)
   {
