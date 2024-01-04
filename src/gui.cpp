@@ -285,14 +285,17 @@ void GUI::draw_selectable_items(
   const std::vector<ShopItem> &items,
   const std::unordered_map<ShopItem::AvailabilityReason, std::string> &buy_text_map) const noexcept
 {
-  const float MARGIN         = 10.0f;
+  const float MARGIN{ 10.0f };
   const Color selected_color = selection_color();
+  const Color scrollbar_color{ 255, 255, 255, 180 };
 
   // dialog background
-  const float dialog_width  = 300.0f;
-  const float dialog_height = MARGIN * 5.0f + (font_size * 2.0f + MARGIN * 2.0f) * static_cast<float>(items.size());
-  const float dialog_x      = std::roundf((Game::width - dialog_width) * 0.5f);
-  const float dialog_y      = std::roundf((Game::height - dialog_height) * 0.5f - 20.0f);
+  const float dialog_width = 300.0f;
+  float dialog_height      = MARGIN * 5.0f + (font_size * 2.0f + MARGIN * 2.0f) * static_cast<float>(items.size());
+  if (dialog_height > GAME.height * 0.8f)
+    dialog_height = GAME.height * 0.8f;
+  const float dialog_x = std::roundf((Game::width - dialog_width) * 0.5f);
+  const float dialog_y = std::roundf((Game::height - dialog_height) * 0.5f - 20.0f);
   DrawRectangle(dialog_x, dialog_y, dialog_width, dialog_height, Color{ 16, 16, 32, 200 });
   DrawRectangleLinesEx(Rectangle{ dialog_x, dialog_y, dialog_width, dialog_height }, 1, Color{ 255, 224, 255, 255 });
 
@@ -314,8 +317,17 @@ void GUI::draw_selectable_items(
               WHITE);
   }
 
+  BeginScissorMode(static_cast<int>(dialog_x),
+                   static_cast<int>(dialog_y + header_text_size.y + MARGIN * 2.0f),
+                   static_cast<int>(dialog_width),
+                   static_cast<int>(dialog_height - header_text_size.y - MARGIN * 3.0f + 2.0f));
+
   // items
-  float drawn_count = 0.0f;
+  float drawn_count                = 0.0f;
+  static float selected_index_draw = 0.0f;
+  const float selected_index_value = selected_index.has_value() ? selected_index.value() : 0.0f;
+  selected_index_draw              = Lerp(selected_index_draw, selected_index_value, 0.1f);
+
   for (size_t i = 0; i < items.size(); i++)
   {
     const bool is_selected = selected_index.has_value() && selected_index.value() == i;
@@ -349,9 +361,37 @@ void GUI::draw_selectable_items(
     // item box
     const float item_box_w = dialog_width - MARGIN * 2.0f;
     const float item_box_h = font_size + MARGIN * 2.0f;
+
+    float scroll_offset = 0.0f;
+
+    if (items.size() * item_box_h > dialog_height - header_text_size.y - MARGIN * 3.0f)
+    {
+      scroll_offset          = std::roundf((selected_index_draw - 1.0f) * item_box_h);
+      const float max_scroll = std::min((items.size() - 1.0f) * item_box_h, dialog_height);
+      scroll_offset          = std::clamp(scroll_offset, 0.0f, max_scroll);
+
+      // scroll bar
+      const float scroll_ratio  = scroll_offset / (font_size + MARGIN * 2.0f) / (items.size() - 2.0f);
+      const float scroll_height = dialog_height - header_text_size.y - MARGIN * 3.0f;
+      const float scroll_y      = dialog_y + header_text_size.y + MARGIN * 2.0f + scroll_height * scroll_ratio;
+      DrawRectangle(dialog_x + dialog_width - MARGIN,
+                    scroll_y,
+                    MARGIN * 0.25f,
+                    scroll_height / (items.size() - 1),
+                    scrollbar_color);
+
+      // items upper overflow line
+      if (scroll_offset > 0.0f)
+      {
+        DrawLineV(Vector2{ dialog_x + MARGIN * 2.0f, dialog_y + MARGIN + header_text_size.y + MARGIN },
+                  Vector2{ dialog_x + dialog_width - MARGIN * 2.0f, dialog_y + MARGIN + header_text_size.y + MARGIN },
+                  scrollbar_color);
+      }
+    }
+
     const float item_box_x = dialog_x + MARGIN;
     const float item_box_y =
-      dialog_y + MARGIN * 2.0f + header_text_size.y + MARGIN + (item_box_h + MARGIN) * drawn_count;
+      dialog_y + MARGIN * 2.0f + header_text_size.y + MARGIN + (item_box_h + MARGIN) * (drawn_count)-scroll_offset;
 
     if (is_selected)
       DrawRectangle(item_box_x, item_box_y, item_box_w, item_box_h, Color{ 16, 16, 32, 200 });
@@ -428,8 +468,18 @@ void GUI::draw_selectable_items(
     if (is_selected)
       DrawRectangleLinesEx(Rectangle{ item_box_x, item_box_y, item_box_w, item_box_h }, 1, color);
 
+    // items lower overflow line
+    if (item_box_y + item_box_h >= dialog_y + dialog_height)
+    {
+      DrawLineV(Vector2{ dialog_x + MARGIN * 2.0f, dialog_y + dialog_height - MARGIN + 1.0f },
+                Vector2{ dialog_x + dialog_width - MARGIN * 2.0f, dialog_y + dialog_height - MARGIN + 1.0f },
+                scrollbar_color);
+    }
+
     drawn_count += 1.0f;
   }
+
+  EndScissorMode();
 
   // exit button
   const bool selected_exit  = selected_index == items.size();

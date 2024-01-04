@@ -20,7 +20,7 @@
 
 static constexpr const float TRANSITION_SPEED{ 1.25f };
 
-void Game::schedule_action_change_level(const Level &level, const Interactable *obj) noexcept
+void Game::schedule_action_change_level(const Level &level, size_t mission, const Interactable *obj) noexcept
 {
   TraceLog(LOG_INFO, "Changing level to %i", static_cast<int>(level));
 
@@ -93,7 +93,7 @@ void Game::schedule_action_change_level(const Level &level, const Interactable *
       DrawPoly(Vector2{ width * 0.5f, height * 0.5f }, 16, size, data * 0.1f, BLACK);
     };
 
-    action.on_done = [this, level](Action &)
+    action.on_done = [this, level, mission](Action &)
     {
       switch (level)
       {
@@ -102,6 +102,7 @@ void Game::schedule_action_change_level(const Level &level, const Interactable *
           break;
         case Level::Asteroids:
           set_state(GameState::PLAYING_ASTEROIDS);
+          set_mission(mission);
           break;
         case Level::Station:
           set_state(GameState::PLAYING_STATION);
@@ -491,13 +492,16 @@ void Game::schedule_action_mission_select(const Interactable *interactable) noex
   {
     freeze_entities = true;
 
-    ship_items->push_back(
-      ShopItem{ .name        = "Mission 1",
-                .description = "",
-                .price       = 0,
-                .on_accept   = [this, interactable] { schedule_action_change_level(Level::Asteroids, interactable); },
-                .on_has_item = [](const ShopItem &) { return false; },
-                .on_is_available = [](const ShopItem &) { return true; } });
+    for (const auto &[mnumber, mparams] : missions)
+    {
+      ship_items->push_back(ShopItem{ .name        = mparams.name,
+                                      .description = mparams.description,
+                                      .price       = 0,
+                                      .on_accept   = [this, interactable, mnumber]
+                                      { schedule_action_change_level(Level::Asteroids, mnumber, interactable); },
+                                      .on_has_item     = [](const ShopItem &) { return false; },
+                                      .on_is_available = [](const ShopItem &) { return true; } });
+    }
 
     if (!ship_items->empty())
       gui->selected_index = 0;

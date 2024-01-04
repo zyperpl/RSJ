@@ -2,9 +2,11 @@
 
 #include <array>
 #include <functional>
+#include <map>
 #include <memory>
 #include <optional>
 #include <queue>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -107,6 +109,13 @@ enum class GunType
   Assisted,
   Homing
 };
+struct MissionParameters
+{
+  std::string name;
+  std::string description;
+  size_t number_of_asteroids;
+  size_t background_particles;
+};
 
 class Game
 {
@@ -145,7 +154,7 @@ public:
 
   GameState get_state() const noexcept { return state; }
 
-  void schedule_action_change_level(const Level &, const Interactable *) noexcept;
+  void schedule_action_change_level(const Level &, size_t mission, const Interactable *) noexcept;
   void schedule_action_change_room(const Room::Type &) noexcept;
   void schedule_action_conversation(DialogEntity &) noexcept;
   void schedule_action_shop(const Interactable *) noexcept;
@@ -154,10 +163,15 @@ public:
   void schedule_action_mission_select(const Interactable *) noexcept;
 
   void set_room(const Room::Type &) noexcept;
+  void set_mission(size_t mission) noexcept;
+
+  size_t current_mission{ 0 };
 
   bool freeze_entities{ false };
 
   std::unordered_map<std::string, Quest> quests;
+
+  std::map<size_t, MissionParameters> missions;
 
 private:
   [[nodiscard]] Game() noexcept = default;

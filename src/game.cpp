@@ -31,6 +31,14 @@ void Game::init()
 
   asteroid_bg_sprite = std::make_unique<Sprite>("resources/asteroid.aseprite");
 
+  missions = {
+    { 0, { "asteroids1", "Destroy all A", 6, 0 } },   { 1, { "asteroids2", "Destroy all asteroids", 8, 10 } },
+    { 2, { "asteroids3", "Destroy all C", 10, 0 } },  { 3, { "asteroids4", "Destroy all D", 12, 20 } },
+    { 4, { "asteroids5", "Destroy all E", 14, 0 } },  { 5, { "asteroids6", "Destroy all F", 16, 10 } },
+    { 6, { "asteroids7", "Destroy all G", 18, 10 } }, { 7, { "asteroids8", "Destroy all H", 20, 10 } },
+    { 8, { "asteroids9", "Destroy all I", 22, 10 } }, { 9, { "asteroids10", "Destroy all asteroids", 24, 0 } },
+  };
+
   Room::load();
   room = Room::get(Room::Type::DockingBay);
 
@@ -346,16 +354,24 @@ void Game::set_state(GameState new_state) noexcept
   switch (state)
   {
     case GameState::PLAYING_ASTEROIDS:
+    {
+      assert(!missions.empty());
+      assert(current_mission < missions.size());
+      if (current_mission >= missions.size())
+        current_mission = missions.size() - 1;
+
+      const auto &param = missions[current_mission];
+
       player = std::make_unique<PlayerShip>();
 
-      for (size_t i = 0; i < NUMBER_OF_ASTEROIDS; i++)
+      for (size_t i = 0; i < param.number_of_asteroids; i++)
       {
         const Vector2 position = { static_cast<float>(GetRandomValue(0, width)),
                                    static_cast<float>(GetRandomValue(0, height)) };
         asteroids->push(Asteroid::create(position, 2));
       }
 
-      for (size_t i = 0; i < 10; i++)
+      for (size_t i = 0; i < param.background_particles; i++)
       {
         Vector2 particle_position{ static_cast<float>(GetRandomValue(0, width)),
                                    static_cast<float>(GetRandomValue(0, height)) };
@@ -368,18 +384,12 @@ void Game::set_state(GameState new_state) noexcept
         particles->push(Particle::create(particle_position, particle_velocity, particle_color));
       }
 
-      for (size_t i = 0; i < 2; i++)
-      {
-        const Vector2 position{ static_cast<float>(GetRandomValue(0, width)),
-                                static_cast<float>(GetRandomValue(0, height)) };
-        pickables->push(Pickable::create_ore(position, Vector2Zero()));
-      }
-
-      room       = std::make_shared<Room>(); // XXX: Asteroids room is not loaded from file
+      room       = std::make_shared<Room>(); // NOTE: Asteroids room is not loaded from file
       room->rect = Rectangle{ 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height) };
       room->interactables.push_back(std::make_unique<Station>());
 
       break;
+    }
     case GameState::PLAYING_STATION:
       player = std::make_unique<PlayerCharacter>();
       break;
@@ -388,4 +398,9 @@ void Game::set_state(GameState new_state) noexcept
     default:
       break;
   }
+}
+
+void Game::set_mission(size_t mission) noexcept
+{
+  current_mission = mission;
 }

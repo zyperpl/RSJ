@@ -38,7 +38,7 @@ void Station::update()
 
 void Station::interact()
 {
-  GAME.schedule_action_change_level(Level::Station, this);
+  GAME.schedule_action_change_level(Level::Station, 0, this);
 }
 
 DockedShip::DockedShip()
