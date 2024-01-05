@@ -173,3 +173,17 @@ void DialogEntity::interact()
   set_dialog_id(Dialog::START_DIALOG_ID);
   GAME.schedule_action_conversation(*this);
 }
+
+void Blocker::update()
+{
+  if (condition_quest_name.empty() || sprite.position.x < 0.0f)
+    return;
+
+  const auto &quest = QUEST(condition_quest_name);
+  if (quest.is_completed())
+  {
+    sprite.scale      = Vector2Zero();
+    sprite.position.x = -1000.0f;
+    return;
+  }
+}

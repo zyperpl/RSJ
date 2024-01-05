@@ -52,6 +52,9 @@ T get_field(const std::vector<ldtk::FieldInstance> &fields, const std::string &n
 
   const ldtk::FieldInstance &field_instance = *field;
 
+  if (field_instance.value.is_null())
+    return T{};
+
   return field_instance.value.get<T>();
 }
 
@@ -80,7 +83,24 @@ static std::unordered_map<std::string, std::function<std::unique_ptr<Interactabl
         auto entity                   = std::make_unique<DockedShip>();
         entity->get_sprite().position = Vector2{ entity_x + entity_w / 2.0f, entity_y + entity_h / 2.0f };
         return entity;
-      } }
+      } },
+    { "Blocker",
+      [](const ldtk::EntityInstance &ldtk_entity) -> std::unique_ptr<Interactable>
+      {
+        const float entity_x = static_cast<float>(ldtk_entity.px[0]);
+        const float entity_y = static_cast<float>(ldtk_entity.px[1]);
+        const float entity_w = static_cast<float>(ldtk_entity.width);
+        const float entity_h = static_cast<float>(ldtk_entity.height);
+
+        auto entity          = std::make_unique<Blocker>();
+        const auto condition = get_field<std::string>(ldtk_entity.field_instances, "Condition");
+        if (!condition.empty())
+          entity->condition_quest_name = condition;
+        entity->get_sprite()          = Sprite{ "resources/blocker.aseprite" };
+        entity->get_sprite().position = Vector2{ entity_x + entity_w / 2.0f, entity_y + entity_h / 2.0f };
+        entity->get_sprite().set_centered();
+        return entity;
+      } },
   };
 
 void Room::load()

@@ -86,3 +86,14 @@ private:
   Timer wander_timer{ 1.0f };
   Direction direction{ Direction::Down };
 };
+
+class Blocker : public Interactable
+{
+public:
+  void interact() override {}
+  void update() override;
+
+  [[nodiscard]] bool is_interactable() const override { return false; }
+
+  std::string condition_quest_name{ "" };
+};
