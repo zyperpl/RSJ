@@ -43,7 +43,7 @@ void Station::interact()
 
 DockedShip::DockedShip()
 {
-  sprite = Sprite{ "resources/ship.aseprite", "idle" };
+  sprite = Sprite{ "resources/docked_ship.aseprite" };
   sprite.set_centered();
   sprite.position = Vector2{ Game::width * 0.5f, Game::height * 0.25f };
 }

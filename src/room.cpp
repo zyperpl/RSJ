@@ -79,8 +79,6 @@ static std::unordered_map<std::string, std::function<std::unique_ptr<Interactabl
 
         auto entity                   = std::make_unique<DockedShip>();
         entity->get_sprite().position = Vector2{ entity_x + entity_w / 2.0f, entity_y + entity_h / 2.0f };
-        entity->get_sprite().scale.x  = entity_w / entity->get_sprite().get_width();
-        entity->get_sprite().scale.y  = entity_h / entity->get_sprite().get_height();
         return entity;
       } }
   };
