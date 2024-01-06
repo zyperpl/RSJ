@@ -55,5 +55,8 @@ struct Dialog
 
   static const Dialog END_DIALOG;
 
+  static std::unordered_map<std::string, bool> introduced;
+  [[nodiscard]] static bool is_introduced(const std::string &name);
+
 private:
 };

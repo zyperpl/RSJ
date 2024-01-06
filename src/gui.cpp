@@ -153,6 +153,12 @@ void GUI::draw_dialog() const noexcept
     SetTextLineSpacing(line_spacing);
     const std::string &t = dialog->text;
 
+    const std::unordered_map<char, Color> font_colors{
+      { '0', WHITE },
+      { '1', CRYSTAL_COLOR },
+      { '2', GOLD },
+    };
+
     if (t.find('$') != std::string::npos)
     {
       const float text_x = dialog_x + 10.0f;
@@ -166,15 +172,10 @@ void GUI::draw_dialog() const noexcept
         const char c = t[i];
         if (c == '$' && i + 1 < t.size())
         {
-          if (t[i + 1] == '1')
+          const char &next = t[i + 1];
+          if (font_colors.contains(next))
           {
-            color = CRYSTAL_COLOR;
-            i++;
-            continue;
-          }
-          else if (t[i + 1] == '0')
-          {
-            color = WHITE;
+            color = font_colors.at(next);
             i++;
             continue;
           }

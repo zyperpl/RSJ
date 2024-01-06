@@ -47,8 +47,8 @@ void Game::init()
   camera.zoom     = 1.0f;
   camera.rotation = 0.0f;
 
-  set_state(GameState::PLAYING_STATION);
-  set_room(Room::Type::DockingBay);
+  set_mission(0);
+  set_state(GameState::PLAYING_ASTEROIDS);
 
   TraceLog(LOG_TRACE, "Size of Asteroid buffer: %zukB", sizeof(Asteroid) * asteroids->capacity / 1024);
   TraceLog(LOG_TRACE, "Size of Bullet buffer: %zukB", sizeof(Bullet) * bullets->capacity / 1024);
@@ -65,11 +65,11 @@ void Game::init()
                         .max_progress = []() { return 10; },
                         .on_report    = []() { GAME.crystals -= 10; } });
 
-  quests.emplace("archeologist1",
-                 Quest{ .description  = "Collect ancient artifact",
-                        .progress     = []() { return GAME.artifacts.size(); },
-                        .max_progress = []() { return 1; },
-                        .on_report    = []() { GAME.artifacts.pop(); } });
+  quests.emplace("meet_captain",
+                 Quest{ .description  = "Meet the captain",
+                        .progress     = []() { return Dialog::is_introduced("Captain"); },
+                        .max_progress = []() { return true; },
+                        .on_report    = []() { GAME.score += 100; } });
 
   TraceLog(LOG_TRACE, "Game initialized");
 }

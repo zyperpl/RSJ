@@ -28,9 +28,9 @@ const std::string Dialog::END_DIALOG_ID   = "_end";
 
 const Dialog Dialog::END_DIALOG{ Dialog::END_DIALOG_ID, "End of the conversation", {} };
 
-static std::unordered_map<std::string, bool> introduced;
+std::unordered_map<std::string, bool> Dialog::introduced;
 
-[[nodiscard]] bool is_introduced(const std::string &name)
+bool Dialog::is_introduced(const std::string &name)
 {
   if (!introduced.contains(name))
     return false;
@@ -70,8 +70,13 @@ std::unordered_map<DialogId, Dialog> Dialog::load_dialogs(const std::string &nam
                                       },
                                       []() -> std::optional<DialogId>
                                       {
+                                        if (!QUEST("meet_captain").is_reported())
+                                          QUEST("meet_captain").report();
+
                                         if (QUEST("captain1").is_accepted())
+                                        {
                                           return "help2";
+                                        }
                                         return std::nullopt;
                                       } });
 
@@ -137,6 +142,54 @@ std::unordered_map<DialogId, Dialog> Dialog::load_dialogs(const std::string &nam
       mechanic_dialogs.emplace(START_DIALOG_ID,
                                Dialog{ "Mechanic",
                                        "Hello, my name is Mechanic. Wanna buy something?",
+                                       {
+                                         { "Open shop", "_shop" },
+                                         { "Open ship modification", "_ship" },
+                                         { "I'm busy, goodbye", "_end" },
+                                       },
+                                       []() -> std::optional<DialogId>
+                                       {
+                                         introduced.insert_or_assign("Mechanic", true);
+
+                                         if (!is_introduced("Captain"))
+                                           return "about_captain";
+
+                                         if (QUEST("meet_captain").is_reported())
+                                           return "about_shop";
+
+                                         if (is_introduced("Mechanic"))
+                                           return "about_shop";
+
+                                         return std::nullopt;
+                                       } });
+
+      mechanic_dialogs.emplace("about_captain",
+                               Dialog{ "Mechanic",
+                                       "Thanks for saving us. You need to talk to $2The Captain$0.",
+                                       { { "Where is he?", "where_captain", []() { QUEST("meet_captain").accept(); } },
+                                         { "Okay", "_end", []() { QUEST("meet_captain").accept(); } } },
+                                       []() -> std::optional<DialogId>
+                                       {
+                                         if (QUEST("meet_captain").is_accepted())
+                                           return "where_captain";
+                                         return std::nullopt;
+                                       } });
+
+      mechanic_dialogs.emplace("where_captain",
+                               Dialog{ "Mechanic",
+                                       "$2The Captain$0 is on the bridge in the northern part \n"
+                                       "of the ship. He is waiting for you. Go find him!",
+                                       { { "Okay", "_end", []() { QUEST("meet_captain").accept(); } } },
+                                       []() -> std::optional<DialogId>
+                                       {
+                                         if (QUEST("meet_captain").is_completed())
+                                           return "about_shop";
+                                         return std::nullopt;
+                                       } });
+
+      mechanic_dialogs.emplace("about_shop",
+                               Dialog{ "Mechanic",
+                                       "I have some items for sale.\nYou can buy them with crystals.",
                                        {
                                          { "Open shop", "_shop" },
                                          { "Open ship modification", "_ship" },
