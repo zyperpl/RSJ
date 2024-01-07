@@ -260,7 +260,7 @@ std::unordered_map<DialogId, Dialog> Dialog::load_dialogs(const std::string &nam
                                        "I have some items for sale.\nYou can buy them with crystals.",
                                        {
                                          { "I want to buy", "_shop" },
-                                         { "I want to modify change my ship's weapons", "_ship" },
+                                         { "I want to change my ship's weapons", "_ship" },
                                          { "I'm busy, goodbye", "_end" },
                                        } });
 
