@@ -30,6 +30,9 @@ void Station::update()
   if (!GAME.asteroids->empty())
     return;
 
+  if (!sound_warp.is_playing() && sprite.scale.x <= 0.02f)
+    sound_warp.play();
+
   const auto &frame = GAME.frame;
   sprite.position   = Vector2{ GAME.width / 2.0f, GAME.height / 2.0f + sin(frame * 0.001f) * 10.0f };
   if (sprite.scale.x < 1.0f)
@@ -38,6 +41,7 @@ void Station::update()
 
 void Station::interact()
 {
+  sound_warp.play();
   if (GAME.current_mission == 0)
   {
     QUEST("tutorial").accept();

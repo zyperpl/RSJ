@@ -5,6 +5,7 @@
 
 #include "mask.hpp"
 #include "object_circular_buffer.hpp"
+#include "sound_manager.hpp"
 #include "utils.hpp"
 
 class Asteroid

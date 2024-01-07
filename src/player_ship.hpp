@@ -8,6 +8,7 @@
 #include <raymath.h>
 
 #include "mask.hpp"
+#include "sound_manager.hpp"
 #include "sprite.hpp"
 #include "timer.hpp"
 #include "utils.hpp"
@@ -49,4 +50,8 @@ private:
 
   bool can_shoot() const noexcept;
   bool can_interact() const noexcept;
+
+  SMSound sound_shoot{ SoundManager::get("resources/shoot.wav") };
+  SMSound sound_engine{ SoundManager::copy("resources/engine.wav") };
+  SMSound sound_explode{ SoundManager::copy("resources/explosion.wav") };
 };

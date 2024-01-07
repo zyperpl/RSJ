@@ -57,6 +57,9 @@ void PlayerShip::draw() const noexcept
 void PlayerShip::die()
 {
   auto &game = Game::get();
+
+  sound_explode.play();
+
   for (int i = 0; i < 10; ++i)
   {
     const Vector2 pos{ position.x + static_cast<float>(GetRandomValue(-20, 20)),
@@ -87,6 +90,9 @@ void PlayerShip::die()
 
   if (lives <= 0)
   {
+    sound_shoot.play();
+    sound_engine.stop();
+
     if (game.score > 10000)
       game.score -= 10000;
 
@@ -128,6 +134,8 @@ BulletType bullet_type_from_gun(GunType gun) noexcept
 void PlayerShip::shoot() noexcept
 {
   auto &game = Game::get();
+
+  sound_shoot.play();
 
   float bullet_speed = 3.0f;
   if (game.gun == GunType::Fast)
@@ -206,6 +214,12 @@ void PlayerShip::handle_input()
     velocity.x -= cos(sprite.rotation * DEG2RAD + M_PI / 2.0f) * acceleration_speed;
     velocity.y -= sin(sprite.rotation * DEG2RAD + M_PI / 2.0f) * acceleration_speed;
 
+    if (!sound_engine.is_playing())
+      sound_engine.play();
+
+    if (sound_engine.volume.value_or(0.0f) < 0.5f)
+      sound_engine.set_volume(Lerp(sound_engine.volume.value_or(0.0f), 0.5f, 0.1f));
+
     sprite.set_tag("fly");
 
     for (int i = 0; i < 1; ++i)
@@ -229,6 +243,18 @@ void PlayerShip::handle_input()
   }
   else
   {
+    if (sound_engine.is_playing())
+    {
+      if (sound_engine.volume)
+        sound_engine.set_volume(Lerp(sound_engine.volume.value(), 0.0f, 0.1f));
+
+      if (sound_engine.volume < 0.01f)
+      {
+        sound_engine.stop();
+        sound_engine.set_volume(0.0f);
+      }
+    }
+
     sprite.set_tag("idle");
   }
 
@@ -244,6 +270,10 @@ void PlayerShip::handle_input()
 
   if (action_key && can_interact() && interactable)
   {
+    sound_shoot.stop();
+    sound_engine.stop();
+    sound_explode.stop();
+
     interactable->interact();
   }
 }

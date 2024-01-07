@@ -1,0 +1,8 @@
+Engine and game code made by Kacper Zybała
+
+Graphics made by Kacper Zybała
+Additional graphics from ansimuz @ https://opengameart.org/content/warped-top-down-tech-lab-2
+
+Sound effects:
+Generated with https://sfxr.me/ by Eric Fredricksen
+https://freesound.org/people/qubodup/sounds/146770/

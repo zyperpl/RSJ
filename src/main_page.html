@@ -44,6 +44,12 @@
         function window_load()
         {
           window.addEventListener("resize", check_canvas_size)
+
+          document.addEventListener("keydown", function(e) {
+              if (e.code == 'Space') {
+                  e.preventDefault()
+              }
+          })
         }
 
         window.addEventListener("load", window_load);

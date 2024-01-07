@@ -2,6 +2,7 @@
 
 #include "dialog.hpp"
 #include "mask.hpp"
+#include "sound_manager.hpp"
 #include "sprite.hpp"
 #include "timer.hpp"
 #include "utils.hpp"
@@ -30,6 +31,9 @@ public:
   Station();
   void update() override;
   void interact() override;
+
+private:
+  SMSound sound_warp = SoundManager::copy("resources/warp.wav");
 };
 
 class DockedShip final : public Interactable

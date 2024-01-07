@@ -75,9 +75,13 @@ bool Pickable::update()
   }
   else
   {
+    static SMSound sound = SoundManager::get("resources/pickup.wav");
+
     const float player_distance = Vector2Distance(position, player->position);
     if (player_distance < 8.0f)
     {
+      sound.play();
+
       if (func)
         func();
 

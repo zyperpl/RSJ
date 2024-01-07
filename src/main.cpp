@@ -125,6 +125,7 @@ int main(void)
   ui_render_pass.reset();
 
   game.unload();
+  SoundManager::clear();
 
   if (IsAudioDeviceReady())
     CloseAudioDevice();

@@ -119,7 +119,19 @@ bool Asteroid::update()
 
 void Asteroid::die()
 {
+  static SMSound sound1 = SoundManager::get("resources/explosion_asteroid1.wav");
+  static SMSound sound2 = SoundManager::get("resources/explosion_asteroid2.wav");
+  static SMSound sound3 = SoundManager::get("resources/explosion_asteroid3.wav");
+
   const uint8_t type_int = static_cast<uint8_t>(type);
+
+  if (type_int <= 0)
+    sound1.play();
+  else if (type_int == 1)
+    sound2.play();
+  else
+    sound3.play();
+
   if (type == Type::Size2 || type == Type::Size3)
   {
     for (size_t i = 0; i < ASTEROID_SPLIT_COUNT; i++)
