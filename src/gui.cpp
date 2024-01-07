@@ -89,8 +89,16 @@ void GUI::draw() const noexcept
     float quest_y                  = 10.0f;
     for (const auto &[quest_name, quest] : game.quests)
     {
+#if !defined(DEBUG_QUESTS)
       if (!quest.is_accepted() || quest.is_reported())
         continue;
+#else
+      DrawText(TextFormat("%i/%i", quest.progress(), quest.max_progress()),
+               Game::width - quest_right_margin - 50.0f,
+               quest_y + 5.0f,
+               font_size,
+               WHITE);
+#endif
 
       const auto &quest_text =
         TextFormat("%s: %i/%i", quest.description.c_str(), quest.progress(), quest.max_progress());
@@ -98,6 +106,39 @@ void GUI::draw() const noexcept
       const Color color   = quest.is_completed() ? LIME : WHITE;
       DrawTextEx(font, quest_text, Vector2{ quest_x, quest_y }, font_size, 1.0f, color);
       quest_y += font_size + 5.0f;
+    }
+  }
+
+  if (!message.empty())
+  {
+    if (!message_timer.is_done())
+    {
+      const float letter_spacing = 0.0f;
+      const Color color          = selection_color();
+
+      const Vector2 text_size = MeasureTextEx(font, message.c_str(), font_size, letter_spacing);
+      const float message_x   = std::roundf(Game::width * 0.5f - text_size.x * 0.5f);
+      const float r           = message_timer.get_ratio() * PI;
+      const float y_offset    = std::clamp(std::sin(r), 0.0f, 0.8f) * 1.25f;
+      const float message_y   = std::roundf(-text_size.y - 8.0f + y_offset * Game::height * 0.16f);
+
+      const float margin_w = 6.0f;
+      const float margin_h = 4.0f;
+      const Rectangle bg_rectangle{ message_x - margin_w,
+                                    message_y - margin_h,
+                                    text_size.x + margin_w * 2.0f,
+                                    text_size.y + margin_h * 2.0f };
+      DrawRectangleRounded(bg_rectangle, 0.5f, 12, Color{ 16, 16, 32, 220 });
+      DrawRectangleRoundedLines(bg_rectangle, 0.5f, 12, 2.0f, Color{ 16, 16, color.g, 250 });
+
+      for (int y = -1; y <= 1; y++)
+      {
+        for (int x = -1; x <= 1; x++)
+        {
+          DrawTextEx(font, message.c_str(), Vector2{ message_x + x, message_y + y }, font_size, letter_spacing, BLACK);
+        }
+      }
+      DrawTextEx(font, message.c_str(), Vector2{ message_x, message_y }, font_size, letter_spacing, color);
     }
   }
 }
@@ -149,7 +190,8 @@ void GUI::draw_dialog() const noexcept
 
   // text
   {
-    const float line_spacing = font_size - 2.0f;
+    const float letter_spacing = 0.0f;
+    const float line_spacing   = font_size - 2.0f;
     SetTextLineSpacing(line_spacing);
     const std::string &t = dialog->text;
 
@@ -189,7 +231,7 @@ void GUI::draw_dialog() const noexcept
 
         const auto text = TextFormat("%c", c);
         DrawTextEx(dialog_font, text, Vector2{ x, y }, font_size, 0.0f, color);
-        x += MeasureTextEx(dialog_font, text, font_size, 0.0f).x + 1.0f;
+        x += MeasureTextEx(dialog_font, text, font_size, 0.0f).x + letter_spacing;
         if (x > dialog_x + dialog_width - 10.0f)
         {
           x = text_x;
@@ -203,7 +245,7 @@ void GUI::draw_dialog() const noexcept
                  t.c_str(),
                  Vector2{ dialog_x + 10.0f, dialog_y + 10.0f + font_size + 5.0f },
                  font_size,
-                 1.0f,
+                 letter_spacing,
                  WHITE);
     }
   }
@@ -365,20 +407,21 @@ void GUI::draw_selectable_items(
 
     float scroll_offset = 0.0f;
 
-    if (items.size() * item_box_h > dialog_height - header_text_size.y - MARGIN * 3.0f)
+    const float entries_count = items.size() - 1.0f;
+    if (entries_count * item_box_h > dialog_height - header_text_size.y - MARGIN * 3.0f)
     {
       scroll_offset          = std::roundf((selected_index_draw - 1.0f) * item_box_h);
-      const float max_scroll = std::min((items.size() - 1.0f) * item_box_h, dialog_height);
+      const float max_scroll = std::min((entries_count - 2.0f) * item_box_h - MARGIN, dialog_height);
       scroll_offset          = std::clamp(scroll_offset, 0.0f, max_scroll);
 
       // scroll bar
-      const float scroll_ratio  = scroll_offset / (font_size + MARGIN * 2.0f) / (items.size() - 2.0f);
+      const float scroll_ratio  = scroll_offset / (font_size + MARGIN * 2.0f) / (entries_count - 1.5f);
       const float scroll_height = dialog_height - header_text_size.y - MARGIN * 3.0f;
       const float scroll_y      = dialog_y + header_text_size.y + MARGIN * 2.0f + scroll_height * scroll_ratio;
       DrawRectangle(dialog_x + dialog_width - MARGIN,
                     scroll_y,
                     MARGIN * 0.25f,
-                    scroll_height / (items.size() - 1),
+                    scroll_height / (entries_count - 1.0f),
                     scrollbar_color);
 
       // items upper overflow line
@@ -532,4 +575,18 @@ void GUI::handle_accepting_index(std::optional<size_t> &index, std::function<voi
 
   if (IsKeyPressed(KEY_SPACE) || IsKeyPressedRepeat(KEY_SPACE))
     func(index.value());
+}
+
+void GUI::show_message(const std::string &new_message)
+{
+  if (!message_timer.is_done())
+  {
+    message = message + "\n" + new_message;
+    TraceLog(LOG_WARNING, "GUI::show_message: message is already shown, appending new message");
+  }
+  else
+  {
+    message = new_message;
+    message_timer.start();
+  }
 }

@@ -16,6 +16,12 @@
 #include "room.hpp"
 #include "utils.hpp"
 
+void MissionParameters::unlock() noexcept
+{
+  unlocked = true;
+  GAME.gui->show_message("Mission unlocked: " + name);
+}
+
 Config Game::config{};
 uint64_t Game::frame{ 0 };
 
@@ -32,11 +38,16 @@ void Game::init()
   asteroid_bg_sprite = std::make_unique<Sprite>("resources/asteroid.aseprite");
 
   missions = {
-    { 0, { "asteroids1", "Destroy all A", 6, 0 } },   { 1, { "asteroids2", "Destroy all asteroids", 8, 10 } },
-    { 2, { "asteroids3", "Destroy all C", 10, 0 } },  { 3, { "asteroids4", "Destroy all D", 12, 20 } },
-    { 4, { "asteroids5", "Destroy all E", 14, 0 } },  { 5, { "asteroids6", "Destroy all F", 16, 10 } },
-    { 6, { "asteroids7", "Destroy all G", 18, 10 } }, { 7, { "asteroids8", "Destroy all H", 20, 10 } },
-    { 8, { "asteroids9", "Destroy all I", 22, 10 } }, { 9, { "asteroids10", "Destroy all asteroids", 24, 0 } },
+    { 0, { "_tutorial", "Ship tutorial", 3, 0 } },
+    { 1, { "Orbital Perimeter", "Destroy all asteroids", 8, 10 } },
+    { 2, { "Nearfield Zone", "Retrieve the crystals", 10, 0 } },
+    { 3, { "Inner asteroid belt", "Survive asteroids", 12, 20 } },
+    { 4, { "Close Quarters Space", "Find artifact", 14, 0 } },
+    { 5, { "Outer asteroid belt", "Destroy all asteroids", 16, 10 } },
+    { 6, { "Trans-Neptunian Region", "Destroy all enemies", 18, 10 } },
+    { 7, { "Interstellar Space", "Survive enemy attack", 20, 10 } },
+    { 8, { "Galactic Core", "Destroy all asteroids and enemies", 22, 10 } },
+    { 9, { "Intergalactic Space", "Survive", 24, 0 } },
   };
 
   Room::load();
@@ -124,6 +135,13 @@ void Game::update()
   }
 
   update_game();
+
+  if (gui && !gui->message_timer.is_done())
+  {
+    gui->message_timer.update();
+    if (gui->message_timer.is_done())
+      gui->message.clear();
+  }
 
   frame++;
 }
@@ -224,7 +242,9 @@ void Game::update_game()
 
     if (IsKeyPressed(KEY_F6))
     {
-      crystals += 10;
+      const int N = 10;
+      crystals += N;
+      gui->show_message(std::to_string(N) + " crystals added");
     }
   }
 #endif

@@ -115,6 +115,11 @@ struct MissionParameters
   std::string description;
   size_t number_of_asteroids;
   size_t background_particles;
+
+  void unlock() noexcept;
+  [[nodiscard]] bool is_unlocked() const noexcept { return unlocked; }
+
+  bool unlocked{ false };
 };
 
 class Game

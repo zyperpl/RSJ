@@ -7,6 +7,7 @@
 #include <raymath.h>
 
 #include "dialog.hpp"
+#include "timer.hpp"
 
 class Sprite;
 
@@ -32,6 +33,8 @@ public:
   void handle_selecting_index(std::optional<size_t> &index, size_t max_index) const noexcept;
   void handle_accepting_index(std::optional<size_t> &index, std::function<void(size_t)> func) const noexcept;
 
+  void show_message(const std::string &message);
+
 private:
   std::unique_ptr<Sprite> ui_crystal;
 
@@ -47,6 +50,9 @@ private:
     const std::string &header,
     const std::vector<ShopItem> &items,
     const std::unordered_map<ShopItem::AvailabilityReason, std::string> &buy_text_map) const noexcept;
+
+  std::string message{};
+  Timer message_timer{ FRAMES(240), 0.0f };
 
   friend class Game;
 };
