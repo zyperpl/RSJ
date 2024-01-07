@@ -47,9 +47,10 @@ std::unordered_map<DialogId, Dialog> Dialog::load_dialogs(const std::string &nam
       captain_dialogs.emplace(
         START_DIALOG_ID,
         Dialog{ "Captain",
-                "Hello, my name is Captain. What is your name?",
+                "Greetings, I am the Captain. I've been expecting you.\n"
+                "Do you have a moment to discuss?",
                 {
-                  { "My name is James", "name", []() { introduced.insert_or_assign("Captain", true); } },
+                  { "Yes, let's talk", "name", []() { introduced.insert_or_assign("Captain", true); } },
                   { "I'm busy, goodbye", "_end" },
                 },
                 []() -> std::optional<DialogId>
@@ -61,12 +62,11 @@ std::unordered_map<DialogId, Dialog> Dialog::load_dialogs(const std::string &nam
 
       captain_dialogs.emplace("name",
                               Dialog{ "Captain",
-                                      "Nice to meet you, James. I'm glad to see you.\n"
-                                      "We have a problem. Our ship is damaged and we\n"
-                                      "need to repair it. Can you help us?",
+                                      "We are facing a critical issue. Our station is damaged \n"
+                                      "and we need to repair it. \nAre you able to assist us in this matter?",
                                       {
-                                        { "Yes", "help", []() { QUEST("captain1").accept(); } },
-                                        { "No", "no_help" },
+                                        { "Yes, I'm ready to help", "help", []() { QUEST("captain1").accept(); } },
+                                        { "Nope, bye", "no_help" },
                                       },
                                       []() -> std::optional<DialogId>
                                       {
@@ -82,12 +82,13 @@ std::unordered_map<DialogId, Dialog> Dialog::load_dialogs(const std::string &nam
 
       captain_dialogs.emplace("help",
                               Dialog{ "Captain",
-                                      "Thank you, James. I'm glad to hear that.\n"
-                                      "We need to $1collect 10 crystals$0 to repair the station.\n"
-                                      "You can find them in the asteroids.\n"
+                                      "Thank you. I'm glad to hear that.\n"
+                                      "Our immediate objective is to $1collect 10 crystals$0.\n"
+                                      "We need them to repair the station.\n"
+                                      "These crystals can be found within the asteroids.\n"
                                       "Be careful, there are many dangers in space.",
                                       {
-                                        { "Okay", "help_ok" },
+                                        { "Understood", "help_ok" },
                                       } });
 
       captain_dialogs.emplace("help2",
@@ -107,7 +108,7 @@ std::unordered_map<DialogId, Dialog> Dialog::load_dialogs(const std::string &nam
 
       captain_dialogs.emplace("help_ok",
                               Dialog{ "Captain",
-                                      "Good luck, James. I'll be waiting for you on the station.",
+                                      "Good luck, Pilot. I'll be waiting for you here on the station.",
                                       {
                                         { "Goodbye!", "_end" },
                                       } });
@@ -163,23 +164,26 @@ std::unordered_map<DialogId, Dialog> Dialog::load_dialogs(const std::string &nam
                                          return std::nullopt;
                                        } });
 
-      mechanic_dialogs.emplace("about_captain",
-                               Dialog{ "Mechanic",
-                                       "Thanks for saving us. You need to talk to $2The Captain$0.",
-                                       { { "Where is he?", "where_captain", []() { QUEST("meet_captain").accept(); } },
-                                         { "Okay", "_end", []() { QUEST("meet_captain").accept(); } } },
-                                       []() -> std::optional<DialogId>
-                                       {
-                                         if (QUEST("meet_captain").is_accepted())
-                                           return "where_captain";
-                                         return std::nullopt;
-                                       } });
+      mechanic_dialogs.emplace(
+        "about_captain",
+        Dialog{ "Mechanic",
+                "Thanks for saving us. You need to talk to $2The Captain$0.\n"
+                "He's expecting you on the station.",
+                { { "Where can I find him?", "where_captain", []() { QUEST("meet_captain").accept(); } },
+                  { "Understood", "_end", []() { QUEST("meet_captain").accept(); } } },
+                []() -> std::optional<DialogId>
+                {
+                  if (QUEST("meet_captain").is_accepted())
+                    return "where_captain";
+                  return std::nullopt;
+                } });
 
       mechanic_dialogs.emplace("where_captain",
                                Dialog{ "Mechanic",
-                                       "$2The Captain$0 is on the bridge in the northern part \n"
-                                       "of the ship. He is waiting for you. Go find him!",
-                                       { { "Okay", "_end", []() { QUEST("meet_captain").accept(); } } },
+                                       "$2The Captain$0 is currently on the bridge.\n"
+                                       "You can find it on the $1northern part of the station$0.\n"
+                                       "He awaits you there.",
+                                       { { "Understood", "_end", []() { QUEST("meet_captain").accept(); } } },
                                        []() -> std::optional<DialogId>
                                        {
                                          if (QUEST("meet_captain").is_completed())
@@ -197,6 +201,61 @@ std::unordered_map<DialogId, Dialog> Dialog::load_dialogs(const std::string &nam
                                        } });
 
       dialogs.emplace("Mechanic", mechanic_dialogs);
+    }
+
+    {
+      DialogMap navigator_dialogs;
+      navigator_dialogs.emplace(START_DIALOG_ID,
+                                Dialog{ "Navigator",
+                                        "Greetings Pilot!\n"
+                                        "We've detected a cluster of asteroids that are a danger to us.\n"
+                                        "Would you require a detailed briefing on how to destroy them?",
+                                        {
+                                          { "Yes please!", "tutorial" },
+                                          { "No, I know this", "_end" },
+                                        },
+                                        []() -> std::optional<DialogId>
+                                        {
+                                          if (QUEST("tutorial").is_reported())
+                                            return "normal_talk";
+
+                                          return std::nullopt;
+                                        } });
+
+      navigator_dialogs.emplace("tutorial",
+                                Dialog{ "Navigator",
+                                        "Use the $1arrow$0 keys to accelerate and rotate the ship.\n"
+                                        "Navigate carefully to avoid colliding with asteroids.",
+                                        {
+                                          { "Okay", "tutorial2" },
+                                        } });
+
+      navigator_dialogs.emplace("tutorial2",
+                                Dialog{ "Navigator",
+                                        "Use the $1space$0 key to fire at asteroids.\n"
+                                        "Some asteroids will drop crystals. Collect them by flying close.\n"
+                                        "Be cautious, as asteroids will fragment into smaller pieces!",
+                                        {
+                                          { "Next", "tutorial3" },
+                                        } });
+
+      navigator_dialogs.emplace("tutorial3",
+                                Dialog{ "Navigator",
+                                        "Your mission ends upon the elimination of all asteroids.\n"
+                                        "Good luck, Pilot!",
+                                        {
+                                          { "Thank you", "_end" },
+                                        } });
+
+      navigator_dialogs.emplace("normal_talk",
+                                Dialog{ "Navigator",
+                                        "Hello Pilot! How are you?",
+                                        {
+                                          { "I'm fine, thanks", "_end" },
+                                          { "I'm busy, goodbye", "_end" },
+                                        } });
+
+      dialogs.emplace("Navigator", navigator_dialogs);
     }
   }
 

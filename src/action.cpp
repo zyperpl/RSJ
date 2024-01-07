@@ -22,7 +22,7 @@ static constexpr const float TRANSITION_SPEED{ 1.25f };
 
 void Game::schedule_action_change_level(const Level &level, size_t mission, const Interactable *obj) noexcept
 {
-  TraceLog(LOG_INFO, "Changing level to %i", static_cast<int>(level));
+  TraceLog(LOG_INFO, "Changing level to %i (mission: %i)", static_cast<int>(level), mission);
 
   // player animation
   {
@@ -101,8 +101,8 @@ void Game::schedule_action_change_level(const Level &level, size_t mission, cons
           assert(false);
           break;
         case Level::Asteroids:
-          set_state(GameState::PLAYING_ASTEROIDS);
           set_mission(mission);
+          set_state(GameState::PLAYING_ASTEROIDS);
           break;
         case Level::Station:
           set_state(GameState::PLAYING_STATION);
@@ -494,6 +494,12 @@ void Game::schedule_action_mission_select(const Interactable *interactable) noex
 
     for (const auto &[mnumber, mparams] : missions)
     {
+      if (mparams.name.starts_with("_"))
+      {
+        TraceLog(LOG_INFO, "Skipping mission %s", mparams.name.c_str());
+        continue;
+      }
+
       ship_items->push_back(ShopItem{ .name        = mparams.name,
                                       .description = mparams.description,
                                       .price       = 0,

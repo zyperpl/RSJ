@@ -80,7 +80,13 @@ void Game::init()
                  Quest{ .description  = "Meet the captain",
                         .progress     = []() { return Dialog::is_introduced("Captain"); },
                         .max_progress = []() { return true; },
-                        .on_report    = []() { GAME.score += 100; } });
+                        .on_report    = []() { GAME.score += 1000; } });
+
+  quests.emplace("tutorial",
+                 Quest{ .description  = "Destroy all asteroids",
+                        .progress     = []() { return static_cast<int>(GAME.asteroids->empty()); },
+                        .max_progress = []() { return 1; },
+                        .on_report    = []() { GAME.score += 2000; } });
 
   TraceLog(LOG_TRACE, "Game initialized");
 }
@@ -407,6 +413,14 @@ void Game::set_state(GameState new_state) noexcept
       room       = std::make_shared<Room>(); // NOTE: Asteroids room is not loaded from file
       room->rect = Rectangle{ 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height) };
       room->interactables.push_back(std::make_unique<Station>());
+
+      if (current_mission == 0)
+      {
+        room->interactables.push_back(
+          std::make_unique<DialogEntity>(Vector2{ width * 10.0f, height * 10.0f }, "Navigator"));
+        DialogEntity *navigator = static_cast<DialogEntity *>(room->interactables.back().get());
+        schedule_action_conversation(*navigator);
+      }
 
       break;
     }

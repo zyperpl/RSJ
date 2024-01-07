@@ -38,6 +38,11 @@ void Station::update()
 
 void Station::interact()
 {
+  if (GAME.current_mission == 0)
+  {
+    QUEST("tutorial").accept();
+    QUEST("tutorial").report();
+  }
   GAME.schedule_action_change_level(Level::Station, 0, this);
 }
 
