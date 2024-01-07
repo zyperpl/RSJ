@@ -82,6 +82,8 @@ void PlayerShip::die()
   velocity.x = 0.0f;
   velocity.y = 0.0f;
 
+  game.score -= 1000;
+
   invincibility_timer.start();
 }
 

@@ -85,6 +85,7 @@ private:
   Vector2 start_position{ 0.0f, 0.0f };
   Timer wander_timer{ 1.0f };
   Direction direction{ Direction::Down };
+  std::string name{};
 };
 
 class Blocker : public Interactable

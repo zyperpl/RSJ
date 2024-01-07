@@ -18,8 +18,13 @@
 
 void MissionParameters::unlock() noexcept
 {
+  if (unlocked)
+    return;
+
   unlocked = true;
-  GAME.gui->show_message("Mission unlocked: " + name);
+
+  if (!name.starts_with('_'))
+    GAME.gui->show_message("Mission unlocked: " + name);
 }
 
 Config Game::config{};
@@ -37,54 +42,57 @@ void Game::init()
 
   asteroid_bg_sprite = std::make_unique<Sprite>("resources/asteroid.aseprite");
 
-  missions = {
-    { 0, { .name = "_tutorial", .description = "Ship tutorial", .number_of_asteroids = 3 } },
-    { 1, { .name = "Orbital Perimeter", .description = "Destroy all asteroids", .number_of_asteroids = 8 } },
-    { 2,
-      { .name                        = "Nearfield Zone",
-        .description                 = "Retrieve the crystals",
-        .number_of_asteroids         = 1,
-        .number_of_asteroid_crystals = 5 } },
-    { 3,
-      {
-        .name                        = "Inner asteroid belt",
-        .description                 = "Survive asteroids",
-        .number_of_asteroids         = 12,
-        .number_of_asteroid_crystals = 1,
-      } },
-    { 4,
-      {
-        .name                = "Close Quarters Space",
-        .description         = "Find artifact",
-        .number_of_asteroids = 14,
-      } },
-    { 5,
-      {
-        .name                        = "Outer asteroid belt",
-        .description                 = "Destroy all asteroids",
-        .number_of_asteroids         = 16,
-        .number_of_asteroid_crystals = 1,
-      } },
-    { 6,
-      {
-        .name                = "Trans-Neptunian Region",
-        .description         = "Destroy all enemies",
-        .number_of_asteroids = 18,
-      } },
-    { 7,
-      {
-        .name                = "Interstellar Space",
-        .description         = "Survive enemy attack",
-        .number_of_asteroids = 20,
-      } },
-    { 8,
-      {
-        .name                = "Galactic Core",
-        .description         = "Destroy all asteroids and enemies",
-        .number_of_asteroids = 22,
-      } },
-    { 9, { .name = "Intergalactic Space", .description = "Survive", .number_of_asteroids = 24 } },
-  };
+  missions = { { 0, { .name = "_tutorial", .description = "Ship tutorial", .number_of_asteroids = 3 } },
+               { 1,
+                 { .name                = "Orbital Perimeter",
+                   .description         = "Destroy all asteroids",
+                   .number_of_asteroids = 4,
+                   .unlocked            = true } },
+               { 2,
+                 { .name                        = "Nearfield Zone",
+                   .description                 = "Retrieve the crystals",
+                   .number_of_asteroids         = 1,
+                   .number_of_asteroid_crystals = 5 } },
+               { 3,
+                 {
+                   .name                        = "Inner asteroid belt",
+                   .description                 = "Survive asteroids",
+                   .number_of_asteroids         = 12,
+                   .number_of_asteroid_crystals = 1,
+                 } },
+               { 4,
+                 {
+                   .name                = "Close Quarters Space",
+                   .description         = "Find artifact",
+                   .number_of_asteroids = 12,
+                 } },
+               { 5,
+                 {
+                   .name                        = "Outer asteroid belt",
+                   .description                 = "Destroy all asteroids",
+                   .number_of_asteroids         = 13,
+                   .number_of_asteroid_crystals = 1,
+                 } },
+               { 6,
+                 {
+                   .name                = "Trans-Neptunian Region",
+                   .description         = "Destroy all enemies",
+                   .number_of_asteroids = 18,
+                 } },
+               { 7,
+                 {
+                   .name                = "Interstellar Space",
+                   .description         = "Survive enemy attack",
+                   .number_of_asteroids = 20,
+                 } },
+               { 8,
+                 {
+                   .name                = "Galactic Core",
+                   .description         = "Destroy all asteroids and enemies",
+                   .number_of_asteroids = 22,
+                 } },
+               { 9, { .name = "Intergalactic Space", .description = "Survive", .number_of_asteroids = 24 } },
+               { 10, { .name = "_the_end", .description = "The End", .number_of_asteroids = 0 } } };
 
   Room::load();
   room = Room::get(Room::Type::DockingBay);
@@ -110,7 +118,12 @@ void Game::init()
                  Quest{ .description  = "Collect 10 crystals",
                         .progress     = []() { return GAME.crystals; },
                         .max_progress = []() { return 10; },
-                        .on_report    = []() { GAME.crystals -= 10; } });
+                        .on_report =
+                          []()
+                        {
+                          GAME.crystals -= 10;
+                          MISSION(3).unlock();
+                        } });
 
   quests.emplace("meet_captain",
                  Quest{ .description  = "Meet the captain",
@@ -123,6 +136,24 @@ void Game::init()
                         .progress     = []() { return static_cast<int>(GAME.asteroids->empty()); },
                         .max_progress = []() { return 1; },
                         .on_report    = []() { GAME.score += 2000; } });
+
+  quests.emplace("scientist1",
+                 Quest{ .description  = "Find an alien artifact",
+                        .progress     = []() { return GAME.artifacts.size(); },
+                        .max_progress = []() { return 1; },
+                        .on_report    = []() { GAME.score += 1000; } });
+
+  quests.emplace("meet_captain2",
+                 Quest{ .description  = "Talk to the captain",
+                        .progress     = []() { return MISSION(6).is_unlocked(); },
+                        .max_progress = []() { return true; },
+                        .on_report    = []() { GAME.score += 1000; } });
+
+  quests.emplace("all_missions",
+                 Quest{ .description  = "Complete all missions",
+                        .progress     = []() { return MISSION(10).is_unlocked(); },
+                        .max_progress = []() { return true; },
+                        .on_report    = []() { GAME.score += 90000; } });
 
   TraceLog(LOG_TRACE, "Game initialized");
 }
@@ -178,11 +209,13 @@ void Game::update()
 
   update_game();
 
-  if (gui && !gui->message_timer.is_done())
+  if (gui)
   {
-    gui->message_timer.update();
-    if (gui->message_timer.is_done())
-      gui->message.clear();
+    for (auto &message : gui->messages)
+      message.timer.update();
+
+    while (!gui->messages.empty() && gui->messages.front().timer.is_done())
+      gui->messages.pop_front();
   }
 
   frame++;

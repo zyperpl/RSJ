@@ -11,4 +11,6 @@ void Quest::report() noexcept
     on_report();
 
   reported = true;
+
+  GAME.gui->show_message("Quest completed!");
 }

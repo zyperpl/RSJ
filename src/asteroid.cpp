@@ -146,6 +146,26 @@ void Asteroid::die()
         GAME.pickables->push(Pickable::create_ore(pos, Vector2Scale(velocity, 0.5f)));
       }
     }
+
+    if (GAME.current_mission == 4 && QUEST("scientist1").is_accepted() && GAME.artifacts.empty())
+    {
+      if (GetRandomValue(0, 100) < 10)
+      {
+        bool found = false;
+        GAME.pickables->for_each(
+          [&](Pickable &pickable)
+          {
+            if (pickable.type == Pickable::Type::Artifact)
+            {
+              found = true;
+              return;
+            }
+          });
+
+        if (!found)
+          GAME.pickables->push(Pickable::create_artifact(position, Vector2Scale(velocity, 0.9f)));
+      }
+    }
   }
   else if (type == Type::Crystal)
   {

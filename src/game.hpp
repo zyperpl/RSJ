@@ -18,9 +18,10 @@
 #include "quest.hpp"
 #include "room.hpp"
 
-#define CONFIG(Option)    Game::config.Option
-#define GAME              Game::get()
-#define QUEST(quest_name) Game::get().quests.at(quest_name)
+#define CONFIG(Option)       Game::config.Option
+#define GAME                 Game::get()
+#define QUEST(quest_name)    Game::get().quests.at(quest_name)
+#define MISSION(mission_num) Game::get().missions.at(mission_num)
 
 class Sprite;
 class Player;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <list>
 #include <memory>
 #include <optional>
 
@@ -51,8 +52,12 @@ private:
     const std::vector<ShopItem> &items,
     const std::unordered_map<ShopItem::AvailabilityReason, std::string> &buy_text_map) const noexcept;
 
-  std::string message{};
-  Timer message_timer{ FRAMES(240), 0.0f };
+  struct Message
+  {
+    std::string text;
+    Timer timer{ FRAMES(240), 0.0f };
+  };
+  std::list<Message> messages;
 
   friend class Game;
 };

@@ -83,6 +83,14 @@ void GUI::draw() const noexcept
   ui_crystal->position.y = text_position.y + text_size.y * 0.5f;
   ui_crystal->draw();
 
+  text_position.y += font_size + 5.0f;
+
+  if (!game.artifacts.empty())
+  {
+    const char *artifacts_text = TextFormat("Artifacts: %i", game.artifacts.size());
+    DrawTextEx(font, artifacts_text, text_position, font_size, 1.0f, WHITE);
+  }
+
   // draw quests
   {
     const float quest_right_margin = 10.0f;
@@ -109,35 +117,42 @@ void GUI::draw() const noexcept
     }
   }
 
-  if (!message.empty())
+  if (!messages.empty())
   {
-    if (!message_timer.is_done())
+    float total_y = Game::height * 0.1f;
+    for (const auto &message : messages)
     {
-      const float letter_spacing = 0.0f;
-      const Color color          = selection_color();
-
-      const Vector2 text_size = MeasureTextEx(font, message.c_str(), font_size, letter_spacing);
-      const float message_x   = std::roundf(Game::width * 0.5f - text_size.x * 0.5f);
-      const float r           = message_timer.get_ratio() * PI;
-      const float y_offset    = std::clamp(std::sin(r), 0.0f, 0.8f) * 1.25f;
-      const float message_y   = std::roundf(-text_size.y - 8.0f + y_offset * Game::height * 0.16f);
-
-      const float margin_w = 6.0f;
-      const float margin_h = 4.0f;
-      const Rectangle bg_rectangle{
-        message_x - margin_w, message_y - margin_h, text_size.x + margin_w * 2.0f, text_size.y + margin_h * 2.0f
-      };
-      DrawRectangleRounded(bg_rectangle, 0.5f, 12, Color{ 16, 16, 32, 220 });
-      DrawRectangleRoundedLines(bg_rectangle, 0.5f, 12, 2.0f, Color{ 16, 16, color.g, 250 });
-
-      for (int y = -1; y <= 1; y++)
+      if (!message.timer.is_done())
       {
-        for (int x = -1; x <= 1; x++)
+        const float letter_spacing = 0.0f;
+        const Color color          = selection_color();
+
+        const Vector2 text_size = MeasureTextEx(font, message.text.c_str(), font_size, letter_spacing);
+        const float message_x   = std::roundf(Game::width * 0.5f - text_size.x * 0.5f);
+        const float r           = message.timer.get_ratio() * PI;
+        const float y_offset    = std::clamp(std::sin(r), 0.0f, 0.8f) * 1.25f;
+        const float message_y   = std::roundf(-text_size.y - 8.0f + y_offset * total_y);
+
+        const float margin_w = 6.0f;
+        const float margin_h = 4.0f;
+        const Rectangle bg_rectangle{
+          message_x - margin_w, message_y - margin_h, text_size.x + margin_w * 2.0f, text_size.y + margin_h * 2.0f
+        };
+        DrawRectangleRounded(bg_rectangle, 0.5f, 12, Color{ 16, 16, 32, 220 });
+        DrawRectangleRoundedLines(bg_rectangle, 0.5f, 12, 2.0f, Color{ 16, 16, color.g, 250 });
+
+        for (int y = -1; y <= 1; y++)
         {
-          DrawTextEx(font, message.c_str(), Vector2{ message_x + x, message_y + y }, font_size, letter_spacing, BLACK);
+          for (int x = -1; x <= 1; x++)
+          {
+            DrawTextEx(
+              font, message.text.c_str(), Vector2{ message_x + x, message_y + y }, font_size, letter_spacing, BLACK);
+          }
         }
+        DrawTextEx(font, message.text.c_str(), Vector2{ message_x, message_y }, font_size, letter_spacing, color);
+
+        total_y += text_size.y * 2.0f;
       }
-      DrawTextEx(font, message.c_str(), Vector2{ message_x, message_y }, font_size, letter_spacing, color);
     }
   }
 }
@@ -200,7 +215,8 @@ void GUI::draw_dialog() const noexcept
       { '2', GOLD },
     };
 
-    if (t.find('$') != std::string::npos)
+    const bool advanced_text = t.find('$') != std::string::npos || t.find('&') != std::string::npos;
+    if (advanced_text)
     {
       const float text_x = dialog_x + 10.0f;
       const float text_y = dialog_y + 10.0f + font_size + 5.0f;
@@ -221,7 +237,25 @@ void GUI::draw_dialog() const noexcept
             continue;
           }
         }
-        if (c == '\n')
+        else if (c == '&' && i + 1 < t.size())
+        {
+          const char &next = t[i + 1];
+          if (next == 'U')
+          {
+            const float triangle_size = 8.0f;
+            const float triangle_x    = x;
+            const float triangle_y    = y + triangle_size * 0.1f;
+            DrawTriangle(Vector2{ triangle_x + triangle_size, triangle_y + triangle_size },
+                         Vector2{ triangle_x + triangle_size * 0.5f, triangle_y },
+                         Vector2{ triangle_x, triangle_y + triangle_size },
+                         color);
+
+            x += triangle_size + letter_spacing + 1.0f;
+            i++;
+            continue;
+          }
+        }
+        else if (c == '\n')
         {
           x = text_x;
           y += line_spacing;
@@ -578,14 +612,7 @@ void GUI::handle_accepting_index(std::optional<size_t> &index, std::function<voi
 
 void GUI::show_message(const std::string &new_message)
 {
-  if (!message_timer.is_done())
-  {
-    message = message + "\n" + new_message;
-    TraceLog(LOG_WARNING, "GUI::show_message: message is already shown, appending new message");
-  }
-  else
-  {
-    message = new_message;
-    message_timer.start();
-  }
+  Message message{ new_message };
+  message.timer.start();
+  messages.push_back(message);
 }

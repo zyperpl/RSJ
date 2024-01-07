@@ -27,7 +27,20 @@ void ore_func()
 
 Pickable Pickable::create_ore(const Vector2 &position, const Vector2 &velocity)
 {
-  return create(position, velocity, ore_func);
+  auto pickable = create(position, velocity, ore_func);
+  pickable.type = Type::Ore;
+  return pickable;
+}
+
+Pickable Pickable::create_artifact(const Vector2 &position, const Vector2 &velocity)
+{
+  // TODO: better string building
+  auto pickable =
+    create(position,
+           velocity,
+           []() { GAME.artifacts.push(Artifact{ std::string("Artifact ") + std::to_string(GAME.current_mission) }); });
+  pickable.type = Type::Artifact;
+  return pickable;
 }
 
 Pickable::Pickable(const Vector2 &position, const std::function<void()> &func)
@@ -85,22 +98,54 @@ bool Pickable::update()
     position.y += dir.y * 0.5f;
   }
 
+  if (type == Type::Artifact)
+  {
+    if (GAME.frame % 2 == 0)
+    {
+      GAME.particles->push(Particle::create(position, Vector2{ 0.0f, 0.0f }, Color{ 10, 255, 255, 200 }));
+
+      velocity.x += static_cast<float>(GetRandomValue(-10, 10)) / 1000.0f;
+      velocity.y += static_cast<float>(GetRandomValue(-10, 10)) / 1000.0f;
+    }
+  }
+
   return true;
 }
 
 void Pickable::draw() const
 {
-  if (player_id != -1)
-    ORE_SPRITE->scale = Vector2{ 0.86f, 0.86f };
-  else
-    ORE_SPRITE->scale = Vector2{ 1.0f, 1.0f };
+  if (type == Type::Ore)
+  {
+    if (player_id != -1)
+      ORE_SPRITE->scale = Vector2{ 0.86f, 0.86f };
+    else
+      ORE_SPRITE->scale = Vector2{ 1.0f, 1.0f };
 
-  ORE_SPRITE->set_centered();
-  ORE_SPRITE->position = position;
-  draw_wrapped(ORE_SPRITE->get_destination_rect(),
-               [&](const Vector2 &position)
-               {
-                 ORE_SPRITE->position = position;
-                 ORE_SPRITE->draw();
-               });
+    ORE_SPRITE->set_centered();
+    ORE_SPRITE->position = position;
+    draw_wrapped(ORE_SPRITE->get_destination_rect(),
+                 [&](const Vector2 &position)
+                 {
+                   ORE_SPRITE->position = position;
+                   ORE_SPRITE->draw();
+                 });
+  }
+  else if (type == Type::Artifact)
+  {
+    Vector2 pos = position;
+    if (GAME.frame % 5 == 0)
+    {
+      pos.x += static_cast<float>(GetRandomValue(-2, 2));
+      pos.y += static_cast<float>(GetRandomValue(-2, 2));
+    }
+
+    draw_wrapped(Rectangle{ pos.x - 2.0f, pos.y - 2.0f, 4.0f, 4.0f },
+                 [&](const Vector2 &position)
+                 {
+                   DrawPixelV(position, WHITE);
+                   DrawRectangle(static_cast<int>(position.x), static_cast<int>(position.y), 4, 4, LIME);
+                   DrawCircle(static_cast<int>(position.x), static_cast<int>(position.y), 2, SKYBLUE);
+                   DrawText("?", static_cast<int>(position.x - 2.0f), static_cast<int>(position.y - 2.0f), 10, WHITE);
+                 });
+  }
 }

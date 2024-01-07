@@ -43,6 +43,30 @@ void Station::interact()
     QUEST("tutorial").accept();
     QUEST("tutorial").report();
   }
+
+  if (GAME.current_mission == 3)
+  {
+    MISSION(5).unlock();
+  }
+
+  if (GAME.current_mission == 6)
+  {
+    MISSION(7).unlock();
+    MISSION(8).unlock();
+    MISSION(9).unlock();
+  }
+
+  if (GAME.current_mission == 7)
+  {
+    MISSION(8).unlock();
+    MISSION(9).unlock();
+  }
+  if (GAME.current_mission == 9)
+  {
+    MISSION(10).unlock();
+    GAME.gui->show_message("You have completed the game!");
+  }
+
   GAME.schedule_action_change_level(Level::Station, 0, this);
 }
 
@@ -61,6 +85,7 @@ void DockedShip::interact()
 DialogEntity::DialogEntity(const Vector2 &position, const std::string &name)
   : Interactable{}
   , dialogs{ Dialog::load_dialogs(name) }
+  , name{ name }
 {
   sprite = Sprite{ "resources/npc.aseprite", "idle_down" };
   sprite.set_centered();
@@ -152,6 +177,15 @@ void DialogEntity::update()
     sprite.set_animation(idle_tag_from_direction(direction));
 
   sprite.animate();
+
+  if (name == "Scientist" && GAME.room->type == Room::Type::MainHall)
+  {
+    if (QUEST("captain1").is_reported())
+    {
+      sprite.scale      = Vector2Zero();
+      sprite.position.x = -1000.0f;
+    }
+  }
 }
 
 void DialogEntity::interact()
@@ -185,7 +219,7 @@ void Blocker::update()
     return;
 
   const auto &quest = QUEST(condition_quest_name);
-  if (quest.is_completed())
+  if (quest.is_completed() && quest.is_reported())
   {
     sprite.scale      = Vector2Zero();
     sprite.position.x = -1000.0f;

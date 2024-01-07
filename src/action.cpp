@@ -500,13 +500,14 @@ void Game::schedule_action_mission_select(const Interactable *interactable) noex
         continue;
       }
 
-      ship_items->push_back(ShopItem{ .name        = mparams.name,
-                                      .description = mparams.description,
-                                      .price       = 0,
-                                      .on_accept   = [this, interactable, mnumber]
-                                      { schedule_action_change_level(Level::Asteroids, mnumber, interactable); },
-                                      .on_has_item     = [](const ShopItem &) { return false; },
-                                      .on_is_available = [](const ShopItem &) { return true; } });
+      ship_items->push_back(
+        ShopItem{ .name        = mparams.name,
+                  .description = mparams.description,
+                  .price       = 0,
+                  .on_accept   = [this, interactable, mnumber]
+                  { schedule_action_change_level(Level::Asteroids, mnumber, interactable); },
+                  .on_has_item     = [](const ShopItem &) { return false; },
+                  .on_is_available = [unlocked = mparams.is_unlocked()](const ShopItem &) { return unlocked; } });
     }
 
     if (!ship_items->empty())
