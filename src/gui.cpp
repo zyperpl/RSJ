@@ -124,10 +124,9 @@ void GUI::draw() const noexcept
 
       const float margin_w = 6.0f;
       const float margin_h = 4.0f;
-      const Rectangle bg_rectangle{ message_x - margin_w,
-                                    message_y - margin_h,
-                                    text_size.x + margin_w * 2.0f,
-                                    text_size.y + margin_h * 2.0f };
+      const Rectangle bg_rectangle{
+        message_x - margin_w, message_y - margin_h, text_size.x + margin_w * 2.0f, text_size.y + margin_h * 2.0f
+      };
       DrawRectangleRounded(bg_rectangle, 0.5f, 12, Color{ 16, 16, 32, 220 });
       DrawRectangleRoundedLines(bg_rectangle, 0.5f, 12, 2.0f, Color{ 16, 16, color.g, 250 });
 

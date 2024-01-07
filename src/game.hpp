@@ -111,10 +111,10 @@ enum class GunType
 };
 struct MissionParameters
 {
-  std::string name;
-  std::string description;
-  size_t number_of_asteroids;
-  size_t background_particles;
+  std::string name{ "Mission" };
+  std::string description{};
+  size_t number_of_asteroids{ 1 };
+  size_t number_of_asteroid_crystals{ 0 };
 
   void unlock() noexcept;
   [[nodiscard]] bool is_unlocked() const noexcept { return unlocked; }

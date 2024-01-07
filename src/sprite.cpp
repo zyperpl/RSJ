@@ -307,6 +307,13 @@ void Sprite::set_tag(const std::string &tag_name)
         reset_animation();
       }
     }
+    else
+    {
+#if defined(DEBUG)
+      TraceLog(LOG_ERROR, "Sprite(%s) has no tag named \"%s\"", path.data(), tag_name.data());
+      assert(tags_iterator != tags.end());
+#endif
+    }
   }
   else
   {

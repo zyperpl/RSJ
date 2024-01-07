@@ -38,16 +38,52 @@ void Game::init()
   asteroid_bg_sprite = std::make_unique<Sprite>("resources/asteroid.aseprite");
 
   missions = {
-    { 0, { "_tutorial", "Ship tutorial", 3, 0 } },
-    { 1, { "Orbital Perimeter", "Destroy all asteroids", 8, 10 } },
-    { 2, { "Nearfield Zone", "Retrieve the crystals", 10, 0 } },
-    { 3, { "Inner asteroid belt", "Survive asteroids", 12, 20 } },
-    { 4, { "Close Quarters Space", "Find artifact", 14, 0 } },
-    { 5, { "Outer asteroid belt", "Destroy all asteroids", 16, 10 } },
-    { 6, { "Trans-Neptunian Region", "Destroy all enemies", 18, 10 } },
-    { 7, { "Interstellar Space", "Survive enemy attack", 20, 10 } },
-    { 8, { "Galactic Core", "Destroy all asteroids and enemies", 22, 10 } },
-    { 9, { "Intergalactic Space", "Survive", 24, 0 } },
+    { 0, { .name = "_tutorial", .description = "Ship tutorial", .number_of_asteroids = 3 } },
+    { 1, { .name = "Orbital Perimeter", .description = "Destroy all asteroids", .number_of_asteroids = 8 } },
+    { 2,
+      { .name                        = "Nearfield Zone",
+        .description                 = "Retrieve the crystals",
+        .number_of_asteroids         = 1,
+        .number_of_asteroid_crystals = 5 } },
+    { 3,
+      {
+        .name                        = "Inner asteroid belt",
+        .description                 = "Survive asteroids",
+        .number_of_asteroids         = 12,
+        .number_of_asteroid_crystals = 1,
+      } },
+    { 4,
+      {
+        .name                = "Close Quarters Space",
+        .description         = "Find artifact",
+        .number_of_asteroids = 14,
+      } },
+    { 5,
+      {
+        .name                        = "Outer asteroid belt",
+        .description                 = "Destroy all asteroids",
+        .number_of_asteroids         = 16,
+        .number_of_asteroid_crystals = 1,
+      } },
+    { 6,
+      {
+        .name                = "Trans-Neptunian Region",
+        .description         = "Destroy all enemies",
+        .number_of_asteroids = 18,
+      } },
+    { 7,
+      {
+        .name                = "Interstellar Space",
+        .description         = "Survive enemy attack",
+        .number_of_asteroids = 20,
+      } },
+    { 8,
+      {
+        .name                = "Galactic Core",
+        .description         = "Destroy all asteroids and enemies",
+        .number_of_asteroids = 22,
+      } },
+    { 9, { .name = "Intergalactic Space", .description = "Survive", .number_of_asteroids = 24 } },
   };
 
   Room::load();
@@ -214,7 +250,7 @@ void Game::update_game()
       {
         const Vector2 position = { static_cast<float>(GetRandomValue(0, width)),
                                    static_cast<float>(GetRandomValue(0, height)) };
-        asteroids->push(Asteroid::create(position, 2));
+        asteroids->push(Asteroid::create_normal(position, 2));
       }
     }
 
@@ -390,14 +426,21 @@ void Game::set_state(GameState new_state) noexcept
 
       player = std::make_unique<PlayerShip>();
 
-      for (size_t i = 0; i < param.number_of_asteroids; i++)
+      for (size_t i = 0; i < param.number_of_asteroids; ++i)
       {
         const Vector2 position = { static_cast<float>(GetRandomValue(0, width)),
                                    static_cast<float>(GetRandomValue(0, height)) };
-        asteroids->push(Asteroid::create(position, 2));
+        asteroids->push(Asteroid::create_normal(position, 2));
       }
 
-      for (size_t i = 0; i < param.background_particles; i++)
+      for (size_t i = 0; i < param.number_of_asteroid_crystals; ++i)
+      {
+        const Vector2 position = { static_cast<float>(GetRandomValue(0, width)),
+                                   static_cast<float>(GetRandomValue(0, height)) };
+        asteroids->push(Asteroid::create_crystal(position));
+      }
+
+      for (size_t i = 0; i < current_mission * 3; ++i)
       {
         Vector2 particle_position{ static_cast<float>(GetRandomValue(0, width)),
                                    static_cast<float>(GetRandomValue(0, height)) };

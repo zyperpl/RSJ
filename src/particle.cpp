@@ -47,8 +47,7 @@ bool Particle::update() noexcept
           if (distance_sqr < 25.0f)
             return true;
 
-          assert(asteroid.size < 3);
-          if (distance_sqr < asteroid_size_threshold[asteroid.size])
+          if (distance_sqr < asteroid_size_threshold[asteroid.size()])
           {
             const float factor = 0.1f / sqrt(distance_sqr);
             velocity.x += x_diff * factor;
