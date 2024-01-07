@@ -38,6 +38,7 @@ struct ObjectCircularBuffer;
 
 struct Config
 {
+  bool show_fps{ false };
   bool show_debug{ false };
   bool show_masks{ false };
   bool show_velocity{ false };

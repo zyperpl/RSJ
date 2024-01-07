@@ -501,7 +501,8 @@ void Game::set_state(GameState new_state) noexcept
       break;
     }
     case GameState::PLAYING_STATION:
-      player = std::make_unique<PlayerCharacter>();
+      player           = std::make_unique<PlayerCharacter>();
+      player->position = Vector2{ 200.0f, 90.0f };
       break;
     case GameState::GAME_OVER:
       break;

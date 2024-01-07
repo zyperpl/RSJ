@@ -82,9 +82,31 @@ void PlayerShip::die()
   velocity.x = 0.0f;
   velocity.y = 0.0f;
 
-  game.score -= 1000;
+  if (game.score > 1000)
+    game.score -= 1000;
+
+  if (lives <= 0)
+  {
+    if (game.score > 10000)
+      game.score -= 10000;
+
+    const size_t r = static_cast<size_t>(GetRandomValue(1, 5));
+
+    if (game.crystals >= r)
+    {
+      game.crystals -= r;
+      game.gui->show_message("You have died! You lost " + std::to_string(r) + " crystals.");
+    }
+    else
+    {
+      game.gui->show_message("You have died!");
+    }
+
+    lives = max_lives;
+  }
 
   invincibility_timer.start();
+  invincibility_timer.update();
 }
 
 BulletType bullet_type_from_gun(GunType gun) noexcept

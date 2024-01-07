@@ -49,17 +49,26 @@ void GUI::draw() const noexcept
   const Game &game = Game::get();
 
   Vector2 text_position{ 10.0f, 10.0f };
-  DrawTextEx(font, TextFormat("FPS: %i", GetFPS()), text_position, font_size, 1.0f, WHITE);
+  if (CONFIG(show_fps))
+  {
+    DrawTextEx(font, TextFormat("FPS: %i", GetFPS()), text_position, font_size, 1.0f, WHITE);
+    text_position.y += font_size + 5.0f;
+  }
 
-  text_position.y += font_size + 5.0f;
   const char *lives_text = "Lives: ";
   DrawTextEx(font, lives_text, text_position, font_size, 1.0f, WHITE);
   Vector2 text_size = MeasureTextEx(font, lives_text, font_size, 1.0f);
   float x           = text_position.x + text_size.x + 5.0f;
   float y           = text_position.y + text_size.y * 0.5f;
-  for (int i = 0; i < game.player->lives; i++)
+  for (int i = 0; i < game.player->max_lives; i++)
   {
-    DrawCircle(x + i * 20, y, 5, RED);
+    if (i <= game.player->lives - 1)
+    {
+      DrawCircleV(Vector2{ x + i * 11.0f, y }, 5.0f, BEIGE);
+      DrawCircleLinesV(Vector2{ x + i * 11.0f, y }, 5.0f, ColorBrightness(BEIGE, -0.3f));
+    }
+    else
+      DrawCircleLinesV(Vector2{ x + i * 11.0f, y }, 5.0f, ColorAlpha(RED, 0.5f));
   }
 
   text_position.y += font_size + 5.0f;

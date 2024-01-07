@@ -21,7 +21,8 @@ public:
   Vector2 velocity{ 0.0f, 0.0f };
   Mask mask{};
 
-  int lives{ 3 };
+  int max_lives{ 3 };
+  int lives{ max_lives };
 
   virtual void handle_input()        = 0;
   virtual void update()              = 0;
