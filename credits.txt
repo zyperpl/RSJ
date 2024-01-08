@@ -6,3 +6,6 @@ Additional graphics from ansimuz @ https://opengameart.org/content/warped-top-do
 Sound effects:
 Generated with https://sfxr.me/ by Eric Fredricksen
 https://freesound.org/people/qubodup/sounds/146770/
+
+Music:
+SuloSounds @ https://sulosounds.itch.io/100-songs
