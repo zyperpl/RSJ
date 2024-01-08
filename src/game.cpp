@@ -44,7 +44,6 @@ void Game::init()
 
   asteroid_bg_sprite = std::make_unique<Sprite>("resources/asteroid.aseprite");
 
-  station_music.push_back(LoadMusicStream("resources/music/electric-chill-pop.mp3"));
   station_music.push_back(LoadMusicStream("resources/music/galactic-cafe-ambient-loop.mp3"));
   station_music.push_back(LoadMusicStream("resources/music/space-elevator-background-loop.mp3"));
 
@@ -263,9 +262,6 @@ void Game::update()
 
 void Game::update_game()
 {
-  if (IsMusicReady(current_music) && IsMusicStreamPlaying(current_music))
-    UpdateMusicStream(current_music);
-
   assert(room);
 
   if (!gui->is_active())

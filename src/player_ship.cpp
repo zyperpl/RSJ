@@ -275,7 +275,7 @@ void PlayerShip::handle_input()
     sound_explode.stop();
 
     interactable->interact();
-    interactable = nullptr;
+    interactable   = nullptr;
     is_interacting = true;
   }
 }

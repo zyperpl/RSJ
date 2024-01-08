@@ -186,7 +186,8 @@ public:
 
   std::map<size_t, MissionParameters> missions;
 
-  float survive_time { 0.0f };
+  float survive_time{ 0.0f };
+
 private:
   [[nodiscard]] Game() noexcept = default;
 

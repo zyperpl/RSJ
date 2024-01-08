@@ -41,7 +41,7 @@ private:
 
   Timer shoot_timer{ FRAMES(20) };
   Timer invincibility_timer{ FRAMES(250) };
-  bool is_interacting { false };
+  bool is_interacting{ false };
 
   [[nodiscard]] bool is_invincible() const noexcept { return !invincibility_timer.is_done(); }
 
