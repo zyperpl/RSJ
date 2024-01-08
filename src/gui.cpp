@@ -596,6 +596,7 @@ void GUI::handle_selecting_index(std::optional<size_t> &index, size_t max_index)
 
   if (IsKeyPressed(KEY_DOWN))
   {
+    sound_select.play();
     index.value()++;
     if (index >= max_index)
       index = 0;
@@ -603,6 +604,7 @@ void GUI::handle_selecting_index(std::optional<size_t> &index, size_t max_index)
 
   if (IsKeyPressed(KEY_UP))
   {
+    sound_select.play();
     if (index == 0)
       index = max_index - 1;
     else
@@ -616,7 +618,10 @@ void GUI::handle_accepting_index(std::optional<size_t> &index, std::function<voi
     return;
 
   if (IsKeyPressed(KEY_SPACE) || IsKeyPressedRepeat(KEY_SPACE))
+  {
+    sound_accept.play();
     func(index.value());
+  }
 }
 
 void GUI::show_message(const std::string &new_message)

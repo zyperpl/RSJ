@@ -3,6 +3,8 @@
 #include <functional>
 #include <string>
 
+#include "sound_manager.hpp"
+
 struct Quest
 {
   std::string description{};
@@ -22,4 +24,6 @@ struct Quest
   bool reported{ false };
 
   size_t score{ 12000 };
+
+  static SMSound sound_complete;
 };

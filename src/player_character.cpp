@@ -92,7 +92,14 @@ void PlayerCharacter::animate()
     direction = Direction::Down;
 
   if (fabs(velocity.x) > 0.0f || fabs(velocity.y) > 0.0f)
+  {
+    if (!sound_step.is_playing())
+    {
+      sound_step.set_volume(GetRandomValue(10, 100) / 100.0f);
+      sound_step.play();
+    }
     sprite.set_animation(walk_tag_from_direction(direction));
+  }
   else
     sprite.set_animation(idle_tag_from_direction(direction));
   sprite.animate();

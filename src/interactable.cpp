@@ -214,6 +214,7 @@ void DialogEntity::interact()
   }
 
   set_dialog_id(Dialog::START_DIALOG_ID);
+  GAME.gui->sound_accept.play();
   GAME.schedule_action_conversation(*this);
 }
 

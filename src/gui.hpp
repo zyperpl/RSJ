@@ -9,6 +9,7 @@
 
 #include "dialog.hpp"
 #include "timer.hpp"
+#include "sound_manager.hpp"
 
 class Sprite;
 
@@ -35,6 +36,9 @@ public:
   void handle_accepting_index(std::optional<size_t> &index, std::function<void(size_t)> func) const noexcept;
 
   void show_message(const std::string &message);
+
+  SMSound sound_select = SoundManager::get("resources/select.wav");
+  SMSound sound_accept = SoundManager::get("resources/accept.wav");
 
 private:
   std::unique_ptr<Sprite> ui_crystal;

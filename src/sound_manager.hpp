@@ -35,7 +35,7 @@ public:
 
     Sound &operator=(Sound &&other) = delete;
 
-    void play()
+    void play() const
     {
       if (!IsSoundReady(ray_sound))
         return;
@@ -48,7 +48,7 @@ public:
       PlaySound(ray_sound);
     }
 
-    void stop()
+    void stop() const
     {
       if (!IsSoundPlaying(ray_sound))
         return;
@@ -64,8 +64,10 @@ public:
 
     bool is_playing() const { return IsSoundPlaying(ray_sound); }
 
+    bool is_loaded() const { return IsSoundReady(ray_sound); }
+
     std::optional<float> volume;
-    ::Sound ray_sound;
+    mutable ::Sound ray_sound;
   };
 
   static SoundManager::Sound &get(std::string name)

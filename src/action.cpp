@@ -421,6 +421,8 @@ void Game::schedule_action_ship_control(const Interactable *interactable) noexce
   Action action;
   action.on_start = [this, ship_items, interactable](Action &)
   {
+    gui->sound_accept.play();
+
     freeze_entities = true;
 
     ship_items->push_back(ShopItem{ .name        = "Mission Select",

@@ -21,6 +21,8 @@ void MissionParameters::unlock() noexcept
   if (unlocked)
     return;
 
+  Quest::sound_complete.play();
+
   unlocked = true;
 
   if (!name.starts_with('_'))

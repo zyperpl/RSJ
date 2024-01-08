@@ -8,11 +8,11 @@
 #include <raymath.h>
 
 #include "mask.hpp"
+#include "player.hpp"
+#include "sound_manager.hpp"
 #include "sprite.hpp"
 #include "timer.hpp"
 #include "utils.hpp"
-
-#include "player.hpp"
 
 class Interactable;
 
@@ -37,4 +37,6 @@ private:
   Interactable *interactable{ nullptr };
 
   constexpr static float PLAYER_SPEED = 2.0f;
+
+  SMSound sound_step = SoundManager::copy("resources/step.wav");
 };
