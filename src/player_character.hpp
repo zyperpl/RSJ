@@ -34,8 +34,6 @@ public:
 private:
   Direction direction{ Direction::Down };
 
-  Interactable *interactable{ nullptr };
-
   constexpr static float PLAYER_SPEED = 2.0f;
 
   SMSound sound_step = SoundManager::copy("resources/step.wav");

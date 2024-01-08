@@ -14,7 +14,8 @@ public:
 
   virtual void update(){};
   virtual void draw() const;
-  virtual void interact() = 0;
+  virtual void interact()                                = 0;
+  virtual std::string get_interact_text() const noexcept = 0;
 
   Sprite &get_sprite() noexcept { return sprite; }
   [[nodiscard]] const Sprite &get_sprite() const noexcept { return sprite; }
@@ -32,6 +33,8 @@ public:
   void update() override;
   void interact() override;
 
+  [[nodiscard]] std::string get_interact_text() const noexcept override { return "dock"; }
+
 private:
   SMSound sound_warp = SoundManager::copy("resources/warp.wav");
 };
@@ -41,6 +44,8 @@ class DockedShip final : public Interactable
 public:
   DockedShip();
   void interact() override;
+
+  [[nodiscard]] std::string get_interact_text() const noexcept override { return "enter"; }
 };
 
 class DialogEntity final : public Interactable
@@ -48,6 +53,7 @@ class DialogEntity final : public Interactable
 public:
   DialogEntity(const Vector2 &position, const std::string &name);
   void update() override;
+  void draw() const noexcept override;
   void interact() override;
 
   [[nodiscard]] const Dialog &dialog() const { return get_dialog(dialog_id); }
@@ -58,6 +64,8 @@ public:
   void reset_animation() { sprite.set_animation(default_animation_tag); }
 
   [[nodiscard]] bool is_interactable() const override { return !dialogs.empty(); }
+
+  [[nodiscard]] std::string get_interact_text() const noexcept override { return "talk"; }
 
   bool wander{ false };
 
@@ -99,6 +107,8 @@ public:
   void update() override;
 
   [[nodiscard]] bool is_interactable() const override { return false; }
+
+  [[nodiscard]] std::string get_interact_text() const noexcept override { return ""; }
 
   std::string condition_quest_name{ "" };
 };

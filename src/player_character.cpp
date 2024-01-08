@@ -55,8 +55,7 @@ void PlayerCharacter::handle_input()
 
   velocity = Vector2Scale(Vector2Normalize(velocity), PLAYER_SPEED);
 
-  const bool can_interact = interactable;
-  if (IsKeyPressed(KEY_SPACE) && can_interact)
+  if (IsKeyPressed(KEY_SPACE) && can_interact())
   {
     TraceLog(LOG_TRACE, "Interacting with %p", (void *)interactable);
     interactable->interact();

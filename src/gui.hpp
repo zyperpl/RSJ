@@ -8,8 +8,8 @@
 #include <raymath.h>
 
 #include "dialog.hpp"
-#include "timer.hpp"
 #include "sound_manager.hpp"
+#include "timer.hpp"
 
 class Sprite;
 

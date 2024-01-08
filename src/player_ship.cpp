@@ -192,7 +192,7 @@ bool PlayerShip::can_shoot() const noexcept
 
 bool PlayerShip::can_interact() const noexcept
 {
-  return interactive_found_timer.is_done() && !is_invincible() && interactable;
+  return !is_interacting && interactable;
 }
 
 void PlayerShip::handle_input()
@@ -264,7 +264,7 @@ void PlayerShip::handle_input()
     velocity.y += sin(sprite.rotation * DEG2RAD + M_PI / 2.0f) * acceleration_speed * 0.005f;
   }
 
-  const bool action_key = IsKeyDown(KEY_SPACE) || IsMouseButtonDown(MOUSE_LEFT_BUTTON);
+  const bool action_key = IsKeyDown(KEY_SPACE);
   if (action_key && can_shoot())
     shoot();
 
@@ -275,6 +275,8 @@ void PlayerShip::handle_input()
     sound_explode.stop();
 
     interactable->interact();
+    interactable = nullptr;
+    is_interacting = true;
   }
 }
 
@@ -287,7 +289,6 @@ void PlayerShip::update()
   // timers
   invincibility_timer.update();
   shoot_timer.update();
-  interactive_found_timer.update();
 
   // movement
   handle_input();
@@ -341,11 +342,12 @@ void PlayerShip::find_nearest_interactive() noexcept
     Interactable *interactable_ptr = obj.get();
     if (distance < min_distance && no_asteroids && dynamic_cast<Station *>(interactable_ptr))
     {
-      interactable = interactable_ptr;
-      if (interactive_found_timer.is_done())
-        interactive_found_timer.start();
-
-      break;
+      // HACK: hack to make the station interactable only when big enough
+      if (!is_interacting && interactable_ptr->get_sprite().scale.x > 0.6f)
+      {
+        interactable = interactable_ptr;
+        break;
+      }
     }
   }
 }

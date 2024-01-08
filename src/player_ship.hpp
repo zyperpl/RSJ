@@ -30,6 +30,8 @@ public:
   void draw() const noexcept override;
   void die() override;
 
+  bool can_interact() const noexcept override;
+
 private:
   enum class InteractiveType
   {
@@ -39,17 +41,15 @@ private:
 
   Timer shoot_timer{ FRAMES(20) };
   Timer invincibility_timer{ FRAMES(250) };
+  bool is_interacting { false };
 
   [[nodiscard]] bool is_invincible() const noexcept { return !invincibility_timer.is_done(); }
 
   void find_nearest_interactive() noexcept;
-  Interactable *interactable{ nullptr };
-  Timer interactive_found_timer{ FRAMES(4) };
 
   void shoot() noexcept;
 
   bool can_shoot() const noexcept;
-  bool can_interact() const noexcept;
 
   SMSound sound_shoot{ SoundManager::get("resources/shoot.wav") };
   SMSound sound_engine{ SoundManager::copy("resources/engine.wav") };

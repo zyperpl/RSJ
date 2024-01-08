@@ -51,6 +51,9 @@ GUI::GUI()
   name_icon_map.emplace("Fast Gun", Sprite{ "resources/weapon_2.aseprite" });
   name_icon_map.emplace("Auto Gun", Sprite{ "resources/weapon_3.aseprite" });
   name_icon_map.emplace("Homing Gun", Sprite{ "resources/weapon_4.aseprite" });
+
+  name_icon_map.emplace("Mission Select", Sprite{ "resources/mission_select.aseprite" });
+  name_icon_map.emplace("Change Weapons", Sprite{ "resources/change_weapons.aseprite" });
 }
 
 GUI::~GUI()
@@ -71,6 +74,7 @@ void GUI::draw() const noexcept
   }
 
   const char *lives_text = "Lives: ";
+  DrawTextEx(font, lives_text, Vector2Add(text_position, Vector2{ 0.0f, 1.0f }), font_size, 1.0f, BLACK);
   DrawTextEx(font, lives_text, text_position, font_size, 1.0f, WHITE);
   Vector2 text_size = MeasureTextEx(font, lives_text, font_size, 1.0f);
   float x           = text_position.x + text_size.x + 5.0f;
@@ -93,10 +97,17 @@ void GUI::draw() const noexcept
     draw_score += score_step;
   if (draw_score > game.score)
     draw_score = game.score;
+  DrawTextEx(font,
+             TextFormat("Score: %i", draw_score),
+             Vector2Add(text_position, Vector2{ 0.0f, 1.0f }),
+             font_size,
+             1.0f,
+             BLACK);
   DrawTextEx(font, TextFormat("Score: %i", draw_score), text_position, font_size, 1.0f, WHITE);
 
   text_position.y += font_size + 5.0f;
   const char *crystals_text = TextFormat("Crystals: %i", game.crystals);
+  DrawTextEx(font, crystals_text, Vector2Add(text_position, Vector2{ 0.0f, 1.0f }), font_size, 1.0f, BLACK);
   DrawTextEx(font, crystals_text, text_position, font_size, 1.0f, WHITE);
   text_size = MeasureTextEx(font, crystals_text, font_size, 1.0f);
   assert(ui_crystal);
@@ -112,6 +123,7 @@ void GUI::draw() const noexcept
   if (!game.artifacts.empty())
   {
     const char *artifacts_text = TextFormat("Artifacts: %i", game.artifacts.size());
+    DrawTextEx(font, artifacts_text, Vector2Add(text_position, Vector2{ 0.0f, 1.0f }), font_size, 1.0f, BLACK);
     DrawTextEx(font, artifacts_text, text_position, font_size, 1.0f, WHITE);
   }
 
@@ -136,6 +148,7 @@ void GUI::draw() const noexcept
         TextFormat("%s: %i/%i", quest.description.c_str(), quest.progress(), quest.max_progress());
       const float quest_x = Game::width - MeasureTextEx(font, quest_text, font_size, 1.0f).x - quest_right_margin;
       const Color color   = quest.is_completed() ? LIME : WHITE;
+      DrawTextEx(font, quest_text, Vector2{ quest_x, quest_y + 1.0f }, font_size, 1.0f, BLACK);
       DrawTextEx(font, quest_text, Vector2{ quest_x, quest_y }, font_size, 1.0f, color);
       quest_y += font_size + 5.0f;
     }
@@ -176,6 +189,58 @@ void GUI::draw() const noexcept
         DrawTextEx(font, message.text.c_str(), Vector2{ message_x, message_y }, font_size, letter_spacing, color);
 
         total_y += text_size.y * 2.0f;
+      }
+    }
+  }
+
+  if (game.player && !dialog.has_value() && !GAME.freeze_entities && game.player->can_interact())
+  {
+    if (auto entity = game.player->get_interactable(); entity)
+    {
+      const std::string &interact_text = entity->get_interact_text();
+      if (entity->is_interactable() && !interact_text.empty())
+      {
+        const std::string text_a   = "Press ";
+        const std::string text     = text_a + "SPACE to " + interact_text;
+        const float letter_spacing = 0.0f;
+        const Color color          = WHITE;
+        const float margin_w       = 4.0f;
+        const float margin_h       = 2.0f;
+
+        const Vector2 pos =
+          Vector2Subtract(entity->get_sprite().position, Vector2Subtract(GAME.camera.target, GAME.camera.offset));
+        const Vector2 text_a_size = MeasureTextEx(font, text_a.c_str(), font_size, letter_spacing);
+        const Vector2 text_size   = MeasureTextEx(font, text.c_str(), font_size, letter_spacing);
+        float message_x           = std::roundf(pos.x - text_size.x * 0.5f);
+        if (message_x < margin_w)
+          message_x = margin_w;
+        else if (message_x + text_size.x > Game::width - margin_w)
+          message_x = Game::width - text_size.x - margin_w;
+
+        float message_y = std::roundf(pos.y - entity->get_sprite().get_height() * 0.5f - text_size.y - 8.0f);
+        if (message_y < margin_h)
+          message_y = margin_h;
+        else if (message_y + text_size.y > Game::height - margin_h)
+          message_y = Game::height - text_size.y - margin_h;
+
+        const Rectangle bg_rectangle{
+          message_x - margin_w, message_y - margin_h, text_size.x + margin_w * 2.0f, text_size.y + margin_h * 2.0f
+        };
+        DrawRectangleRounded(bg_rectangle, 0.5f, 12, Color{ 16, 16, 32, 220 });
+
+        for (int y = -1; y <= 1; y++)
+        {
+          for (int x = -1; x <= 1; x++)
+          {
+            DrawTextEx(font, text.c_str(), Vector2{ message_x + x, message_y + y }, font_size, letter_spacing, BLACK);
+          }
+        }
+        DrawTextEx(font, text.c_str(), Vector2{ message_x, message_y }, font_size, letter_spacing, color);
+
+        const Color special_color = selection_color();
+        const float special_x     = message_x + text_a_size.x;
+        const float special_y     = message_y;
+        DrawTextEx(font, "SPACE", Vector2{ special_x, special_y }, font_size, letter_spacing, special_color);
       }
     }
   }

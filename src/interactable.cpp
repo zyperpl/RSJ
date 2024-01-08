@@ -96,6 +96,9 @@ DialogEntity::DialogEntity(const Vector2 &position, const std::string &name)
   sprite.position = position;
 
   start_position = position;
+
+  if (name == "Scientist" || name == "Navigator")
+    direction = Direction::Up;
 }
 
 void DialogEntity::update()
@@ -190,6 +193,21 @@ void DialogEntity::update()
       sprite.position.x = -1000.0f;
     }
   }
+}
+
+void DialogEntity::draw() const noexcept
+{
+  sprite.tint = WHITE;
+
+  if (name == "Captain")
+    sprite.tint = ColorBrightness(BLUE, 0.7f);
+  else if (name == "Scientist")
+    sprite.tint = ColorBrightness(GREEN, 0.8f);
+  else if (name == "Mechanic")
+    sprite.tint = ColorBrightness(RED, 0.7f);
+  else if (name == "Navigator")
+    sprite.tint = ColorBrightness(YELLOW, 0.4f);
+  Interactable::draw();
 }
 
 void DialogEntity::interact()
