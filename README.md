@@ -1,21 +1,16 @@
-## $(Game Title)
+## Space Something - Asteroids RPG game
 
-![$(Game Title)](screenshots/screenshot000.png "$(Game Title)")
+![Space Something](screenshot.png "$(Space Something)")
 
 ### Description
 
-$(Your Game Description)
+RPG game prototype made for Raylib Slo-Jam 2023 in C++20.
 
 ### Controls
 
 Keyboard:
- - $(Game Control 01)
- - $(Game Control 02)
- - $(Game Control 03)
-
-### Screenshots
-
-_TODO: Show your game to the world, animated GIFs recommended!._
+    - Arrows to move
+    - Spacebar to shoot and interact
 
 ### License
 

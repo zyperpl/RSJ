@@ -178,6 +178,9 @@ void Game::init()
                         .max_progress = []() { return true; },
                         .on_report    = []() { GAME.score += 90000; } });
 
+  gui->show_message("Welcome to the \"Space Something\" game!");
+  gui->show_message("Click on the screen to focus the game");
+
   TraceLog(LOG_TRACE, "Game initialized");
 }
 
