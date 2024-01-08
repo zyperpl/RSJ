@@ -117,6 +117,7 @@ struct MissionParameters
   std::string description{};
   size_t number_of_asteroids{ 1 };
   size_t number_of_asteroid_crystals{ 0 };
+  float survive_time_seconds{ 0 };
 
   void unlock() noexcept;
   [[nodiscard]] bool is_unlocked() const noexcept { return unlocked; }
@@ -180,6 +181,7 @@ public:
 
   std::map<size_t, MissionParameters> missions;
 
+  float survive_time { 0.0f };
 private:
   [[nodiscard]] Game() noexcept = default;
 

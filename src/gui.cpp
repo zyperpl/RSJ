@@ -34,6 +34,7 @@ GUI::GUI()
 {
   font        = LoadFontEx("resources/Kenney Mini Square.ttf", 10, nullptr, 0);
   dialog_font = LoadFontEx("resources/Kenney Mini.ttf", 10, nullptr, 0);
+  mono_font   = LoadFontEx("resources/Kenney Mini Square Mono.ttf", 10, nullptr, 0);
 
   ui_crystal = std::make_unique<Sprite>("resources/ore.aseprite");
 
@@ -64,7 +65,8 @@ GUI::~GUI()
 
 void GUI::draw() const noexcept
 {
-  const Game &game = Game::get();
+  const Color special_color = selection_color();
+  const Game &game          = Game::get();
 
   Vector2 text_position{ 10.0f, 10.0f };
   if (CONFIG(show_fps))
@@ -162,7 +164,6 @@ void GUI::draw() const noexcept
       if (!message.timer.is_done())
       {
         const float letter_spacing = 0.0f;
-        const Color color          = selection_color();
 
         const Vector2 text_size = MeasureTextEx(font, message.text.c_str(), font_size, letter_spacing);
         const float message_x   = std::roundf(Game::width * 0.5f - text_size.x * 0.5f);
@@ -176,7 +177,7 @@ void GUI::draw() const noexcept
           message_x - margin_w, message_y - margin_h, text_size.x + margin_w * 2.0f, text_size.y + margin_h * 2.0f
         };
         DrawRectangleRounded(bg_rectangle, 0.5f, 12, Color{ 16, 16, 32, 220 });
-        DrawRectangleRoundedLines(bg_rectangle, 0.5f, 12, 2.0f, Color{ 16, 16, color.g, 250 });
+        DrawRectangleRoundedLines(bg_rectangle, 0.5f, 12, 2.0f, Color{ 16, 16, special_color.g, 250 });
 
         for (int y = -1; y <= 1; y++)
         {
@@ -186,7 +187,8 @@ void GUI::draw() const noexcept
               font, message.text.c_str(), Vector2{ message_x + x, message_y + y }, font_size, letter_spacing, BLACK);
           }
         }
-        DrawTextEx(font, message.text.c_str(), Vector2{ message_x, message_y }, font_size, letter_spacing, color);
+        DrawTextEx(
+          font, message.text.c_str(), Vector2{ message_x, message_y }, font_size, letter_spacing, special_color);
 
         total_y += text_size.y * 2.0f;
       }
@@ -237,11 +239,33 @@ void GUI::draw() const noexcept
         }
         DrawTextEx(font, text.c_str(), Vector2{ message_x, message_y }, font_size, letter_spacing, color);
 
-        const Color special_color = selection_color();
-        const float special_x     = message_x + text_a_size.x;
-        const float special_y     = message_y;
+        const float special_x = message_x + text_a_size.x;
+        const float special_y = message_y;
         DrawTextEx(font, "SPACE", Vector2{ special_x, special_y }, font_size, letter_spacing, special_color);
       }
+    }
+  }
+
+  if (game.state == GameState::PLAYING_ASTEROIDS)
+  {
+    if (game.survive_time > 0.0f)
+    {
+      Color color                = WHITE;
+      const float survive_time   = game.survive_time;
+      const float seconds        = std::floor(std::fmod(survive_time, 60.0f));
+      const float milliseconds   = std::floor(std::fmod(survive_time, 1.0f) * 100.0f);
+      const std::string text     = TextFormat("Survive: %02.0f:%02.0f", seconds, milliseconds);
+      const float letter_spacing = 0.0f;
+      const Vector2 text_size    = MeasureTextEx(mono_font, text.c_str(), font_size, letter_spacing);
+      if (seconds < 10.0f)
+        color = special_color;
+
+      DrawTextEx(mono_font,
+                 text.c_str(),
+                 Vector2{ Game::width * 0.5f - text_size.x * 0.5f, font_size + 10.0f },
+                 font_size,
+                 letter_spacing,
+                 color);
     }
   }
 }

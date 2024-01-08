@@ -58,9 +58,10 @@ void Game::init()
                { 3,
                  {
                    .name                        = "Inner asteroid belt",
-                   .description                 = "Survive asteroids",
-                   .number_of_asteroids         = 12,
+                   .description                 = "Survive asteroids storm",
+                   .number_of_asteroids         = 5,
                    .number_of_asteroid_crystals = 1,
+                   .survive_time_seconds        = 30.0f,
                  } },
                { 4,
                  {
@@ -83,9 +84,10 @@ void Game::init()
                  } },
                { 7,
                  {
-                   .name                = "Interstellar Space",
-                   .description         = "Survive enemy attack",
-                   .number_of_asteroids = 20,
+                   .name                 = "Interstellar Space",
+                   .description          = "Survive enemy attack",
+                   .number_of_asteroids  = 20,
+                   .survive_time_seconds = 60.0f,
                  } },
                { 8,
                  {
@@ -93,7 +95,11 @@ void Game::init()
                    .description         = "Destroy all asteroids and enemies",
                    .number_of_asteroids = 22,
                  } },
-               { 9, { .name = "Intergalactic Space", .description = "Survive", .number_of_asteroids = 24 } },
+               { 9,
+                 { .name                 = "Intergalactic Space",
+                   .description          = "Survive",
+                   .number_of_asteroids  = 24,
+                   .survive_time_seconds = 120.0f } },
                { 10, { .name = "_the_end", .description = "The End", .number_of_asteroids = 0 } } };
 
   Room::load();
@@ -245,6 +251,26 @@ void Game::update_game()
       particles->for_each(std::bind(&Particle::update, std::placeholders::_1));
 
       update_background();
+
+      const auto &mission = missions[current_mission];
+      if (survive_time > 0.0f)
+      {
+        survive_time -= GetFrameTime();
+        if (asteroids->size() < mission.number_of_asteroids)
+        {
+          const Vector2 position = { static_cast<float>(GetRandomValue(0, width)),
+                                     static_cast<float>(GetRandomValue(0, height)) };
+          if (Vector2Distance(position, player->position) < 120.0f)
+            return;
+
+          asteroids->push(Asteroid::create_normal(position, 2));
+        }
+      }
+      if (mission.survive_time_seconds > 0.0f && survive_time <= 0.0f)
+      {
+        if (asteroids->size() > 0)
+          asteroids->for_each([](Asteroid &asteroid) { asteroid.life = 0; });
+      }
     }
 
     if (state == GameState::PLAYING_STATION)
@@ -322,6 +348,11 @@ void Game::update_game()
       const int N = 10;
       crystals += N;
       gui->show_message(std::to_string(N) + " crystals added");
+    }
+    if (IsKeyPressed(KEY_F7))
+    {
+      for (auto &[id, mission] : missions)
+        mission.unlock();
     }
   }
 #endif
@@ -443,10 +474,11 @@ void Game::set_state(GameState new_state) noexcept
 {
   state = new_state;
 
-  bullets   = std::make_unique<ObjectCircularBuffer<Bullet, 128>>();
-  asteroids = std::make_unique<ObjectCircularBuffer<Asteroid, 2048>>();
-  particles = std::make_unique<ObjectCircularBuffer<Particle, 4096>>();
-  pickables = std::make_unique<ObjectCircularBuffer<Pickable, 1024>>();
+  bullets      = std::make_unique<ObjectCircularBuffer<Bullet, 128>>();
+  asteroids    = std::make_unique<ObjectCircularBuffer<Asteroid, 2048>>();
+  particles    = std::make_unique<ObjectCircularBuffer<Particle, 4096>>();
+  pickables    = std::make_unique<ObjectCircularBuffer<Pickable, 1024>>();
+  survive_time = 0.0f;
 
   switch (state)
   {
@@ -499,6 +531,8 @@ void Game::set_state(GameState new_state) noexcept
         DialogEntity *navigator = static_cast<DialogEntity *>(room->interactables.back().get());
         schedule_action_conversation(*navigator);
       }
+
+      survive_time = param.survive_time_seconds;
 
       break;
     }

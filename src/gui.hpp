@@ -48,6 +48,7 @@ private:
 
   Font font;
   Font dialog_font;
+  Font mono_font;
 
   const float font_size{ 10.0f };
 
