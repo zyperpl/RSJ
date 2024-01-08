@@ -44,6 +44,14 @@ void Game::init()
 
   asteroid_bg_sprite = std::make_unique<Sprite>("resources/asteroid.aseprite");
 
+  station_music.push_back(LoadMusicStream("resources/music/electric-chill-pop.mp3"));
+  station_music.push_back(LoadMusicStream("resources/music/galactic-cafe-ambient-loop.mp3"));
+  station_music.push_back(LoadMusicStream("resources/music/space-elevator-background-loop.mp3"));
+
+  asteroid_music.push_back(LoadMusicStream("resources/music/ambient-pop.mp3"));
+  asteroid_music.push_back(LoadMusicStream("resources/music/ocean-space-ambient.mp3"));
+  asteroid_music.push_back(LoadMusicStream("resources/music/electric-chill-pop.mp3"));
+
   missions = { { 0, { .name = "_tutorial", .description = "Ship tutorial", .number_of_asteroids = 3 } },
                { 1,
                  { .name                = "Orbital Perimeter",
@@ -189,6 +197,20 @@ void Game::unload() noexcept
   artifacts = std::queue<Artifact>{};
   Pickable::ORE_SPRITE.reset();
   Asteroid::ASTEROID_SPRITE.reset();
+
+  for (auto &music : station_music)
+  {
+    StopMusicStream(music);
+    UnloadMusicStream(music);
+  }
+  station_music.clear();
+
+  for (auto &music : asteroid_music)
+  {
+    StopMusicStream(music);
+    UnloadMusicStream(music);
+  }
+  asteroid_music.clear();
 }
 
 Game::~Game() noexcept
@@ -238,6 +260,9 @@ void Game::update()
 
 void Game::update_game()
 {
+  if (IsMusicReady(current_music) && IsMusicStreamPlaying(current_music))
+    UpdateMusicStream(current_music);
+
   assert(room);
 
   if (!gui->is_active())
@@ -383,6 +408,9 @@ void Game::update_background() noexcept
 
 void Game::draw() noexcept
 {
+  if (IsMusicReady(current_music) && IsMusicStreamPlaying(current_music))
+    UpdateMusicStream(current_music);
+
   BeginMode2D(camera);
 
   draw_background();
@@ -491,6 +519,9 @@ void Game::set_state(GameState new_state) noexcept
   {
     case GameState::PLAYING_ASTEROIDS:
     {
+      current_music = asteroid_music[GetRandomValue(0, asteroid_music.size() - 1)];
+      PlayMusicStream(current_music);
+
       assert(!missions.empty());
       assert(current_mission < missions.size());
       if (current_mission >= missions.size())
@@ -551,6 +582,8 @@ void Game::set_state(GameState new_state) noexcept
       break;
     }
     case GameState::PLAYING_STATION:
+      // Music is changed in specific room // current_music    = station_music[GetRandomValue(0, station_music.size() -
+      // 1)];
       player           = std::make_unique<PlayerCharacter>();
       player->position = Vector2{ 200.0f, 90.0f };
       break;

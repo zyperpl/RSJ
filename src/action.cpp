@@ -22,6 +22,8 @@ static constexpr const float TRANSITION_SPEED{ 1.25f };
 
 void Game::schedule_action_change_level(const Level &level, size_t mission, const Interactable *obj) noexcept
 {
+  StopMusicStream(current_music);
+
   TraceLog(LOG_INFO, "Changing level to %i (mission: %i)", static_cast<int>(level), mission);
 
   // player animation
@@ -245,22 +247,22 @@ void Game::schedule_action_shop(const Interactable *interactable) noexcept
                                     .on_is_available = [](const ShopItem &) { return true; } });
     shop_items->push_back(ShopItem{ .name        = "Auto Gun",
                                     .description = "Auto-aims at enemies",
-                                    .price       = 60,
+                                    .price       = 40,
                                     .on_accept =
                                       [this]
                                     {
-                                      crystals -= 60;
+                                      crystals -= 40;
                                       guns[GunType::Assisted] = true;
                                     },
                                     .on_has_item     = [this](const ShopItem &) { return guns[GunType::Assisted]; },
                                     .on_is_available = [](const ShopItem &) { return true; } });
     shop_items->push_back(ShopItem{ .name        = "Homing Gun",
                                     .description = "Follows enemies",
-                                    .price       = 120,
+                                    .price       = 90,
                                     .on_accept =
                                       [this]
                                     {
-                                      crystals -= 120;
+                                      crystals -= 90;
                                       guns[GunType::Homing] = true;
                                     },
                                     .on_has_item     = [this](const ShopItem &) { return guns[GunType::Homing]; },
@@ -626,6 +628,12 @@ void Game::schedule_action_change_room(const Room::Type &room_type) noexcept
 
 void Game::set_room(const Room::Type &room_type) noexcept
 {
+  if (!IsMusicStreamPlaying(current_music) && room_type == Room::Type::MainHall)
+  {
+    current_music = station_music[GetRandomValue(0, station_music.size() - 1)];
+    PlayMusicStream(current_music);
+  }
+
   room = Room::get(room_type);
 
   if (!room->tileset_name.empty() && (!tileset_sprite || tileset_sprite->get_path() != room->tileset_name))

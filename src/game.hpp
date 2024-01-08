@@ -139,6 +139,10 @@ public:
   std::unique_ptr<ObjectCircularBuffer<Particle, 4096>> particles;
   std::unique_ptr<ObjectCircularBuffer<Pickable, 1024>> pickables;
 
+  std::vector<Music> station_music;
+  std::vector<Music> asteroid_music;
+  Music current_music;
+
   static constexpr int width               = 480;
   static constexpr int height              = 270;
   static constexpr int NUMBER_OF_ASTEROIDS = 6;
