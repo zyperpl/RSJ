@@ -67,14 +67,14 @@ void Game::init()
                  {
                    .name                = "Close Quarters Space",
                    .description         = "Find artifact",
-                   .number_of_asteroids = 12,
+                   .number_of_asteroids = 4,
                    .number_of_aliens    = 1,
                  } },
                { 5,
                  {
                    .name                        = "Outer asteroid belt",
                    .description                 = "Destroy all asteroids",
-                   .number_of_asteroids         = 13,
+                   .number_of_asteroids         = 5,
                    .number_of_asteroid_crystals = 1,
                  } },
                { 6,
@@ -96,13 +96,13 @@ void Game::init()
                  {
                    .name                = "Galactic Core",
                    .description         = "Destroy all asteroids and enemies",
-                   .number_of_asteroids = 10,
+                   .number_of_asteroids = 4,
                    .number_of_aliens    = 5,
                  } },
                { 9,
                  { .name                 = "Intergalactic Space",
                    .description          = "Survive",
-                   .number_of_asteroids  = 20,
+                   .number_of_asteroids  = 8,
                    .survive_time_seconds = 120.0f,
                    .number_of_aliens     = 1
 

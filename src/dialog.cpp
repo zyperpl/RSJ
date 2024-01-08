@@ -272,7 +272,8 @@ std::unordered_map<DialogId, Dialog> Dialog::load_dialogs(const std::string &nam
                                 Dialog{ "Navigator",
                                         "Greetings Pilot!\n"
                                         "We've detected a cluster of asteroids that are a danger to us.\n"
-                                        "Would you require a detailed briefing on how to destroy them?",
+                                        "Would you require a detailed briefing on how to destroy them?\n"
+                                        "* use $1arrow keys$0 and $2spacebar$0 to select dialogue options *",
                                         {
                                           { "Yes please!", "tutorial" },
                                           { "No, I know this", "_end" },
