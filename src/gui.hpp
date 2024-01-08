@@ -63,5 +63,7 @@ private:
   };
   std::list<Message> messages;
 
+  mutable std::unordered_map<std::string, Sprite> name_icon_map;
+
   friend class Game;
 };

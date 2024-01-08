@@ -36,6 +36,21 @@ GUI::GUI()
   dialog_font = LoadFontEx("resources/Kenney Mini.ttf", 10, nullptr, 0);
 
   ui_crystal = std::make_unique<Sprite>("resources/ore.aseprite");
+
+  name_icon_map.emplace("Orbital Perimeter", Sprite{ "resources/mission_1.aseprite" });
+  name_icon_map.emplace("Nearfield Zone", Sprite{ "resources/mission_2.aseprite" });
+  name_icon_map.emplace("Inner asteroid belt", Sprite{ "resources/mission_3.aseprite" });
+  name_icon_map.emplace("Close Quarters Space", Sprite{ "resources/mission_4.aseprite" });
+  name_icon_map.emplace("Outer asteroid belt", Sprite{ "resources/mission_5.aseprite" });
+  name_icon_map.emplace("Trans-Neptunian Region", Sprite{ "resources/mission_6.aseprite" });
+  name_icon_map.emplace("Interstellar Space", Sprite{ "resources/mission_7.aseprite" });
+  name_icon_map.emplace("Galactic Core", Sprite{ "resources/mission_8.aseprite" });
+  name_icon_map.emplace("Intergalactic Space", Sprite{ "resources/mission_9.aseprite" });
+
+  name_icon_map.emplace("Normal Gun", Sprite{ "resources/weapon_1.aseprite" });
+  name_icon_map.emplace("Fast Gun", Sprite{ "resources/weapon_2.aseprite" });
+  name_icon_map.emplace("Auto Gun", Sprite{ "resources/weapon_3.aseprite" });
+  name_icon_map.emplace("Homing Gun", Sprite{ "resources/weapon_4.aseprite" });
 }
 
 GUI::~GUI()
@@ -482,7 +497,7 @@ void GUI::draw_selectable_items(
     if (is_selected)
       DrawRectangle(item_box_x, item_box_y, item_box_w, item_box_h, Color{ 16, 16, 32, 200 });
 
-    // item icon
+    // item icon background
     const float item_icon_size = item_box_h;
     const float item_icon_x    = item_box_x;
     const float item_icon_y    = item_box_y;
@@ -553,6 +568,15 @@ void GUI::draw_selectable_items(
 
     if (is_selected)
       DrawRectangleLinesEx(Rectangle{ item_box_x, item_box_y, item_box_w, item_box_h }, 1, color);
+
+    // item icon
+    if (name_icon_map.contains(item.name))
+    {
+      auto &icon      = name_icon_map.at(item.name);
+      icon.position.x = item_icon_x;
+      icon.position.y = item_icon_y;
+      icon.draw();
+    }
 
     // items lower overflow line
     if (item_box_y + item_box_h >= dialog_y + dialog_height)
