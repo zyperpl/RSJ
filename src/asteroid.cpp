@@ -6,6 +6,8 @@
 #include "game.hpp"
 #include "particle.hpp"
 #include "pickable.hpp"
+#include "player.hpp"
+#include "player_ship.hpp"
 #include "utils.hpp"
 
 #include "magic_enum/magic_enum.hpp"
@@ -14,6 +16,7 @@ static constexpr const float ASTEROIDS_SIZE[]{ 8.0f, 16.0f, 32.0f };
 static constexpr const int ASTEROID_SPLIT_COUNT{ 2 };
 
 std::unique_ptr<Sprite> Asteroid::ASTEROID_SPRITE{ nullptr };
+std::unique_ptr<Sprite> Asteroid::ALIEN_SHIP_SPRITE{ nullptr };
 
 Particle create_asteroid_particle(const Vector2 &position, unsigned char alpha = 255)
 {
@@ -77,6 +80,34 @@ static std::unordered_map<Asteroid::Type, std::string> type_tag_map{ { Asteroid:
   return asteroid;
 }
 
+[[nodiscard]] Asteroid Asteroid::create_alien_ship(const Vector2 &position)
+{
+  if (!ALIEN_SHIP_SPRITE)
+    ALIEN_SHIP_SPRITE = std::make_unique<Sprite>("resources/alien_ship.aseprite");
+
+  Asteroid asteroid;
+  asteroid.position   = position;
+  asteroid.velocity.x = 1.0f;
+  asteroid.velocity.y = 0.0f;
+  asteroid.type       = Asteroid::Type::AlienShip;
+  asteroid.mask.shapes.push_back(Circle{ Vector2{ 0.0f, 0.0f }, 16.0f });
+  return asteroid;
+}
+
+[[nodiscard]] Asteroid Asteroid::create_alien_bullet(const Vector2 &position, const Vector2 &direction)
+{
+  if (!ALIEN_SHIP_SPRITE)
+    ALIEN_SHIP_SPRITE = std::make_unique<Sprite>("resources/alien_ship.aseprite");
+
+  Asteroid asteroid;
+  asteroid.position   = position;
+  asteroid.velocity.x = direction.x * 2.0f;
+  asteroid.velocity.y = direction.y * 2.0f;
+  asteroid.type       = Asteroid::Type::AlienBullet;
+  asteroid.mask.shapes.push_back(Circle{ Vector2{ 0.0f, 0.0f }, 4.0f });
+  return asteroid;
+}
+
 bool Asteroid::update()
 {
   position.x += velocity.x;
@@ -114,11 +145,53 @@ bool Asteroid::update()
     return false;
   }
 
+  if (type == Type::AlienShip)
+  {
+    if (GAME.player)
+    {
+      if (GAME.frame % 240 == 0)
+      {
+        if (GetRandomValue(0, 1) == 0)
+        {
+          const Vector2 direction = Vector2Normalize(Vector2Subtract(GAME.player->position, position));
+          GAME.asteroids->push(Asteroid::create_alien_bullet(position, direction));
+        }
+      }
+    }
+    velocity.y = sin(static_cast<float>(GAME.frame) / 100.0f) * 0.5f;
+  }
+  if (type == Type::AlienBullet)
+  {
+    if (GAME.frame % 10 == 0)
+    {
+      for (int i = 0; i < 10; i++)
+        GAME.particles->push(Particle::create(position, Vector2Scale(velocity, 0.5f), ColorAlpha(RED, 0.9f)));
+    }
+    const int r = GetRandomValue(0, 60);
+    if (GAME.frame % (180 + r) == 0)
+    {
+      life--;
+    }
+  }
+
   return true;
 }
 
 void Asteroid::die()
 {
+  if (type == Type::AlienShip)
+  {
+    GAME.score += 1000;
+    for (int i = 0; i < 100; i++)
+      GAME.particles->push(Particle::create(
+        position,
+        Vector2{ static_cast<float>(GetRandomValue(-1, 1)), static_cast<float>(GetRandomValue(-1, 1)) },
+        Color{ 200, 255, 55, 250 }));
+  }
+
+  if (type == Type::AlienBullet)
+    return;
+
   static SMSound sound1 = SoundManager::get("resources/explosion_asteroid1.wav");
   static SMSound sound2 = SoundManager::get("resources/explosion_asteroid2.wav");
   static SMSound sound3 = SoundManager::get("resources/explosion_asteroid3.wav");
@@ -202,29 +275,51 @@ void Asteroid::die()
 
 void Asteroid::draw() const noexcept
 {
-  Color color = DARKPURPLE;
+  if (type == Type::AlienShip)
+  {
+    assert(ALIEN_SHIP_SPRITE);
+    ALIEN_SHIP_SPRITE->set_centered();
+    ALIEN_SHIP_SPRITE->position = position;
 
-  assert(ASTEROID_SPRITE);
-  assert(type_tag_map.find(type) != type_tag_map.end());
-
-  ASTEROID_SPRITE->set_centered();
-  ASTEROID_SPRITE->set_tag(type_tag_map[type]);
-  ASTEROID_SPRITE->tint = ColorBrightness(color, 0.5f + static_cast<float>(life) / static_cast<float>(max_life) * 0.5f);
-  ASTEROID_SPRITE->position = position;
-
-  draw_wrapped(ASTEROID_SPRITE->get_destination_rect(),
-               [&](const Vector2 &P)
-               {
-                 ASTEROID_SPRITE->position = P;
-                 ASTEROID_SPRITE->draw();
-
-                 if (CONFIG(show_masks))
+    draw_wrapped(ALIEN_SHIP_SPRITE->get_destination_rect(),
+                 [&](const Vector2 &P)
                  {
-                   Mask mask_copy     = mask;
-                   mask_copy.position = P;
-                   mask_copy.draw();
-                 }
-               });
+                   ALIEN_SHIP_SPRITE->position = P;
+                   ALIEN_SHIP_SPRITE->draw();
+                 });
+  }
+  else if (type == Type::AlienBullet)
+  {
+    draw_wrapped(Rectangle{ position.x - 2.0f, position.y - 2.0f, 4.0f, 4.0f },
+                 [&](const Vector2 &P) { DrawCircleV(P, 3.0f, RED); });
+  }
+  else
+  {
+
+    Color color = DARKPURPLE;
+    assert(ASTEROID_SPRITE);
+    assert(type_tag_map.find(type) != type_tag_map.end());
+
+    ASTEROID_SPRITE->set_centered();
+    ASTEROID_SPRITE->set_tag(type_tag_map[type]);
+    ASTEROID_SPRITE->tint =
+      ColorBrightness(color, 0.5f + static_cast<float>(life) / static_cast<float>(max_life) * 0.5f);
+    ASTEROID_SPRITE->position = position;
+
+    draw_wrapped(ASTEROID_SPRITE->get_destination_rect(),
+                 [&](const Vector2 &P)
+                 {
+                   ASTEROID_SPRITE->position = P;
+                   ASTEROID_SPRITE->draw();
+
+                   if (CONFIG(show_masks))
+                   {
+                     Mask mask_copy     = mask;
+                     mask_copy.position = P;
+                     mask_copy.draw();
+                   }
+                 });
+  }
 
   if (CONFIG(show_debug))
   {

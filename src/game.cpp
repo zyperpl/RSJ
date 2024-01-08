@@ -68,6 +68,7 @@ void Game::init()
                    .name                = "Close Quarters Space",
                    .description         = "Find artifact",
                    .number_of_asteroids = 12,
+                   .number_of_aliens    = 1,
                  } },
                { 5,
                  {
@@ -80,26 +81,32 @@ void Game::init()
                  {
                    .name                = "Trans-Neptunian Region",
                    .description         = "Destroy all enemies",
-                   .number_of_asteroids = 18,
+                   .number_of_asteroids = 2,
+                   .number_of_aliens    = 3,
                  } },
                { 7,
                  {
                    .name                 = "Interstellar Space",
                    .description          = "Survive enemy attack",
-                   .number_of_asteroids  = 20,
+                   .number_of_asteroids  = 5,
                    .survive_time_seconds = 60.0f,
+                   .number_of_aliens     = 4,
                  } },
                { 8,
                  {
                    .name                = "Galactic Core",
                    .description         = "Destroy all asteroids and enemies",
-                   .number_of_asteroids = 22,
+                   .number_of_asteroids = 10,
+                   .number_of_aliens    = 5,
                  } },
                { 9,
                  { .name                 = "Intergalactic Space",
                    .description          = "Survive",
-                   .number_of_asteroids  = 24,
-                   .survive_time_seconds = 120.0f } },
+                   .number_of_asteroids  = 20,
+                   .survive_time_seconds = 120.0f,
+                   .number_of_aliens     = 1
+
+                 } },
                { 10, { .name = "_the_end", .description = "The End", .number_of_asteroids = 0 } } };
 
   Room::load();
@@ -518,6 +525,13 @@ void Game::set_state(GameState new_state) noexcept
                               static_cast<unsigned char>(GetRandomValue(0, 255)),
                               static_cast<unsigned char>(GetRandomValue(0, 255)) };
         particles->push(Particle::create(particle_position, particle_velocity, particle_color));
+      }
+
+      for (size_t i = 0; i < param.number_of_aliens; ++i)
+      {
+        const Vector2 position = { static_cast<float>(GetRandomValue(0, width)),
+                                   static_cast<float>(GetRandomValue(0, height)) };
+        asteroids->push(Asteroid::create_alien_ship(position));
       }
 
       room       = std::make_shared<Room>(); // NOTE: Asteroids room is not loaded from file

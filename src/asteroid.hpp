@@ -16,7 +16,9 @@ public:
     Size1 = 0,
     Size2,
     Size3,
-    Crystal
+    Crystal,
+    AlienShip,
+    AlienBullet
   };
 
   Vector2 position{};
@@ -28,6 +30,8 @@ public:
 
   [[nodiscard]] static Asteroid create_normal(const Vector2 &position, uint8_t size);
   [[nodiscard]] static Asteroid create_crystal(const Vector2 &position);
+  [[nodiscard]] static Asteroid create_alien_ship(const Vector2 &position);
+  [[nodiscard]] static Asteroid create_alien_bullet(const Vector2 &position, const Vector2 &direction);
 
   bool update();
 
@@ -42,6 +46,7 @@ private:
   DECLARE_FRIEND_OBJECT_CIRCULAR_BUFFER()
 
   static std::unique_ptr<Sprite> ASTEROID_SPRITE;
+  static std::unique_ptr<Sprite> ALIEN_SHIP_SPRITE;
 
   friend class Game;
 };

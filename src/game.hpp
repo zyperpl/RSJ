@@ -118,6 +118,7 @@ struct MissionParameters
   size_t number_of_asteroids{ 1 };
   size_t number_of_asteroid_crystals{ 0 };
   float survive_time_seconds{ 0 };
+  float number_of_aliens{ 0 };
 
   void unlock() noexcept;
   [[nodiscard]] bool is_unlocked() const noexcept { return unlocked; }

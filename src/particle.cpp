@@ -38,14 +38,17 @@ bool Particle::update() noexcept
     if ((GAME.frame % 2 == 0 && object_id % 2 == 0) || (GAME.frame % 2 == 1 && object_id % 2 == 1))
     {
       GAME.asteroids->for_each(
-        [&](Asteroid &asteroid) -> bool
+        [&](Asteroid &asteroid)
         {
+          if (asteroid.size() >= 3)
+            return;
+
           const Vector2 &asteroid_position = asteroid.position;
           const float x_diff               = position.x - asteroid_position.x;
           const float y_diff               = position.y - asteroid_position.y;
           const float distance_sqr         = x_diff * x_diff + y_diff * y_diff;
           if (distance_sqr < 25.0f)
-            return true;
+            return;
 
           if (distance_sqr < asteroid_size_threshold[asteroid.size()])
           {
@@ -53,8 +56,6 @@ bool Particle::update() noexcept
             velocity.x += x_diff * factor;
             velocity.y += y_diff * factor;
           }
-
-          return true;
         });
     }
   }
