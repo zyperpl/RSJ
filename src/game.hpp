@@ -134,10 +134,10 @@ public:
   std::unique_ptr<Player> player;
   std::shared_ptr<Room> room;
   std::unique_ptr<Sprite> tileset_sprite;
-  std::unique_ptr<ObjectCircularBuffer<Bullet, 128>> bullets;
-  std::unique_ptr<ObjectCircularBuffer<Asteroid, 2048>> asteroids;
+  std::unique_ptr<ObjectCircularBuffer<Bullet, 64>> bullets;
+  std::unique_ptr<ObjectCircularBuffer<Asteroid, 1024>> asteroids;
   std::unique_ptr<ObjectCircularBuffer<Particle, 4096>> particles;
-  std::unique_ptr<ObjectCircularBuffer<Pickable, 1024>> pickables;
+  std::unique_ptr<ObjectCircularBuffer<Pickable, 512>> pickables;
 
   std::vector<Music> station_music;
   std::vector<Music> asteroid_music;
@@ -145,8 +145,8 @@ public:
 
   static constexpr int width               = 480;
   static constexpr int height              = 270;
-  static constexpr int NUMBER_OF_ASTEROIDS = 6;
   static Config config;
+  float music_volume { 0.7f };
   static uint64_t frame;
 
   void init();

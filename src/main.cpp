@@ -16,12 +16,13 @@
 #include "render_pass.hpp"
 #include "utils.hpp"
 
-const int AUDIO_BUFFER_SIZE = (4096 * 12);
+const constexpr int AUDIO_BUFFER_SIZE = (4096 * 12);
+const constexpr size_t MAX_UPDATE_STEPS = 5;
 
-const int window_width  = Game::width * 2;
-const int window_height = Game::height * 2;
+const constexpr int window_width  = Game::width * 2;
+const constexpr int window_height = Game::height * 2;
 
-const bool integer_scaling = false;
+const constexpr bool integer_scaling = false;
 
 static std::unique_ptr<RenderPass> game_render_pass;
 static std::unique_ptr<RenderPass> ui_render_pass;
@@ -44,13 +45,12 @@ void update_draw_frame()
   render_destination.height = Game::height * scale;
 
   const float interval = DELTA_TIME;
-  size_t steps         = 6;
   const float dt       = GetFrameTime();
 
   static float accumulator = 0.0f;
   accumulator += dt;
 
-  while (accumulator >= interval)
+  for (size_t steps = 0; accumulator >= interval && steps < MAX_UPDATE_STEPS; ++steps)
   {
     accumulator -= interval;
 

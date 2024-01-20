@@ -632,6 +632,7 @@ void Game::set_room(const Room::Type &room_type) noexcept
   {
     current_music = station_music[GetRandomValue(0, station_music.size() - 1)];
     PlayMusicStream(current_music);
+    SetMusicVolume(current_music, music_volume);
   }
 
   room = Room::get(room_type);

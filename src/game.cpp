@@ -260,6 +260,30 @@ void Game::update()
       gui->messages.pop_front();
   }
 
+  if (IsKeyPressed(KEY_M))
+  {
+    static bool music_enabled          = true;
+    static float previous_music_volume = music_volume;
+    static float previous_sound_volume = SoundManager::volume;
+
+    music_enabled = !music_enabled;
+    if (music_enabled)
+    {
+      music_volume         = previous_music_volume;
+      SoundManager::volume = previous_sound_volume;
+    }
+    else
+    {
+      previous_music_volume = music_volume;
+      music_volume          = 0.0f;
+
+      previous_sound_volume = SoundManager::volume;
+      SoundManager::volume  = 0.0f;
+    }
+
+    SetMusicVolume(current_music, music_volume);
+  }
+
   frame++;
 }
 
@@ -341,7 +365,7 @@ void Game::update_game()
   {
     if (IsKeyPressed(KEY_F1) && asteroids)
     {
-      for (size_t i = 0; i < NUMBER_OF_ASTEROIDS; i++)
+      for (size_t i = 0; i < 10; i++)
       {
         const Vector2 position = { static_cast<float>(GetRandomValue(0, width)),
                                    static_cast<float>(GetRandomValue(0, height)) };
@@ -508,10 +532,10 @@ void Game::set_state(GameState new_state) noexcept
 {
   state = new_state;
 
-  bullets      = std::make_unique<ObjectCircularBuffer<Bullet, 128>>();
-  asteroids    = std::make_unique<ObjectCircularBuffer<Asteroid, 2048>>();
+  bullets      = std::make_unique<ObjectCircularBuffer<Bullet, 64>>();
+  asteroids    = std::make_unique<ObjectCircularBuffer<Asteroid, 1024>>();
   particles    = std::make_unique<ObjectCircularBuffer<Particle, 4096>>();
-  pickables    = std::make_unique<ObjectCircularBuffer<Pickable, 1024>>();
+  pickables    = std::make_unique<ObjectCircularBuffer<Pickable, 512>>();
   survive_time = 0.0f;
 
   switch (state)
@@ -520,6 +544,7 @@ void Game::set_state(GameState new_state) noexcept
     {
       current_music = asteroid_music[GetRandomValue(0, asteroid_music.size() - 1)];
       PlayMusicStream(current_music);
+      SetMusicVolume(current_music, music_volume);
 
       assert(!missions.empty());
       assert(current_mission < missions.size());
