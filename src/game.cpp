@@ -223,6 +223,9 @@ Game::~Game() noexcept
 
 void Game::update()
 {
+  if (IsMusicReady(current_music) && IsMusicStreamPlaying(current_music))
+    UpdateMusicStream(current_music);
+
   if (!actions.empty())
   {
     {
@@ -407,9 +410,6 @@ void Game::update_background() noexcept
 
 void Game::draw() noexcept
 {
-  if (IsMusicReady(current_music) && IsMusicStreamPlaying(current_music))
-    UpdateMusicStream(current_music);
-
   BeginMode2D(camera);
 
   draw_background();

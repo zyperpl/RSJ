@@ -3,7 +3,6 @@
 #include <functional>
 #include <memory>
 
-#include <GLFW/glfw3.h> // for glFinish
 #include <raylib.h>
 #include <raymath.h>
 #include <rlgl.h>
@@ -12,15 +11,12 @@
 #include <emscripten/emscripten.h>
 #endif
 
-#include "asteroid.hpp"
-#include "bullet.hpp"
 #include "game.hpp"
-#include "gui.hpp"
-#include "object_circular_buffer.hpp"
-#include "particle.hpp"
 #include "player.hpp"
 #include "render_pass.hpp"
 #include "utils.hpp"
+
+const int AUDIO_BUFFER_SIZE = (4096 * 12);
 
 const int window_width  = Game::width * 2;
 const int window_height = Game::height * 2;
@@ -32,25 +28,12 @@ static std::unique_ptr<RenderPass> ui_render_pass;
 
 void update_draw_frame()
 {
-  const int screen_width          = GetScreenWidth();
-  const int screen_height         = GetScreenHeight();
-  const float screen_width_float  = static_cast<float>(screen_width);
-  const float screen_height_float = static_cast<float>(screen_height);
+  const float screen_width_float  = static_cast<float>(GetScreenWidth());
+  const float screen_height_float = static_cast<float>(GetScreenHeight());
 
   Game &game = Game::get();
 
-  if (!game_render_pass->render_func)
-    game_render_pass->render_func = [&game]()
-    {
-      ClearBackground(BLACK);
-      game.draw();
-    };
-
-  if (!ui_render_pass->render_func)
-    ui_render_pass->render_func = [&game]() { game.gui->draw(); };
-
-  float scale =
-    std::max(std::min(screen_width_float / (float)(Game::width), screen_height_float / (float)(Game::height)), 1.0f);
+  float scale = std::min(screen_width_float / (float)(Game::width), screen_height_float / (float)(Game::height));
   if (integer_scaling)
     scale = std::floor(scale);
 
@@ -67,17 +50,14 @@ void update_draw_frame()
   static float accumulator = 0.0f;
   accumulator += dt;
 
-  auto update = [&]() { game.update(); };
-
   while (accumulator >= interval)
   {
     accumulator -= interval;
 
-    update();
+    game.update();
 
-    steps--;
-    if (steps == 0)
-      accumulator = 0;
+    if (--steps == 0)
+      break;
   }
 
   BeginDrawing();
@@ -88,26 +68,41 @@ void update_draw_frame()
     ClearBackground(BLACK);
     game_render_pass->draw(render_destination);
     ui_render_pass->draw(render_destination);
+
+#if defined(DEBUG)
+    DrawText(TextFormat("FPS: %i", GetFPS()), 40, 20, 10, GOLD);
+#endif
   }
   EndDrawing();
-  glFinish();
 }
 
 int main(void)
 {
   SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-  InitWindow(window_width, window_height, "SPACE III");
+  InitWindow(window_width, window_height, "SPACE SOMETHING");
   SetExitKey(KEY_NULL);
+
+  SetAudioStreamBufferSizeDefault(AUDIO_BUFFER_SIZE);
   InitAudioDevice();
   SetTargetFPS(60);
 
+#if defined(DEBUG)
   SetTraceLogLevel(LOG_TRACE);
+#endif
 
   Game &game = Game::get();
   game.init();
 
   game_render_pass = std::make_unique<RenderPass>(Game::width, Game::height);
   ui_render_pass   = std::make_unique<RenderPass>(Game::width, Game::height);
+
+  game_render_pass->render_func = [&game]()
+  {
+    ClearBackground(BLACK);
+    game.draw();
+  };
+
+  ui_render_pass->render_func = [&game]() { game.gui->draw(); };
 
 #if defined(EMSCRIPTEN)
   emscripten_set_main_loop(update_draw_frame, 0, 1);

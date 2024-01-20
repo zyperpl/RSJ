@@ -173,6 +173,7 @@ typedef struct tagBITMAPINFOHEADER {
 
 #define MINIAUDIO_IMPLEMENTATION
 //#define MA_DEBUG_OUTPUT
+//#define MA_ENABLE_AUDIO_WORKLETS
 #include "external/miniaudio.h"         // Audio device initialization and management
 #undef PlaySound                        // Win32 API: windows.h > mmsystem.h defines PlaySound macro
 
@@ -277,6 +278,9 @@ typedef struct tagBITMAPINFOHEADER {
     #define JAR_MOD_IMPLEMENTATION
     #include "external/jar_mod.h"       // MOD loading functions
 #endif
+
+// define by Zyper
+#define AUDIO_DEVICE_SAMPLE_RATE 22050
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
