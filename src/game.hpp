@@ -15,6 +15,7 @@
 
 #include "dialog.hpp"
 #include "gui.hpp"
+#include "input.hpp"
 #include "quest.hpp"
 #include "room.hpp"
 
@@ -143,10 +144,10 @@ public:
   std::vector<Music> asteroid_music;
   Music current_music;
 
-  static constexpr int width               = 480;
-  static constexpr int height              = 270;
+  static constexpr int width  = 480;
+  static constexpr int height = 270;
   static Config config;
-  float music_volume { 0.7f };
+  float music_volume{ 0.7f };
   static uint64_t frame;
 
   void init();
@@ -155,6 +156,7 @@ public:
   void draw() noexcept;
 
   std::unique_ptr<GUI> gui;
+  Input input;
 
   size_t crystals{ 0 };
   size_t score{ 0 };

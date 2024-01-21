@@ -16,7 +16,7 @@
 #include "render_pass.hpp"
 #include "utils.hpp"
 
-const constexpr int AUDIO_BUFFER_SIZE = (4096 * 12);
+const constexpr int AUDIO_BUFFER_SIZE   = (4096 * 12);
 const constexpr size_t MAX_UPDATE_STEPS = 5;
 
 const constexpr int window_width  = Game::width * 2;
@@ -44,17 +44,30 @@ void update_draw_frame()
   render_destination.width  = Game::width * scale;
   render_destination.height = Game::height * scale;
 
+  static float dt      = DELTA_TIME;
   const float interval = DELTA_TIME;
-  const float dt       = GetFrameTime();
+  const float fps      = 1.0f / dt;
 
   static float accumulator = 0.0f;
   accumulator += dt;
+    
+  game.input.update();
 
+  bool updated = false;
   for (size_t steps = 0; accumulator >= interval && steps < MAX_UPDATE_STEPS; ++steps)
   {
+#if defined(EMSCRIPTEN)
+    EndDrawing();
+    game.input.update();
+#endif
+    PollInputEvents();
+    game.input.update();
+
     accumulator -= interval;
 
     game.update();
+
+    updated = true;
 
     if (--steps == 0)
       break;
@@ -62,18 +75,46 @@ void update_draw_frame()
 
   BeginDrawing();
   {
-    game_render_pass->render();
-    ui_render_pass->render();
+    if (updated)
+    {
+      game_render_pass->render();
+      ui_render_pass->render();
+    }
 
     ClearBackground(BLACK);
     game_render_pass->draw(render_destination);
     ui_render_pass->draw(render_destination);
 
 #if defined(DEBUG)
-    DrawText(TextFormat("FPS: %i", GetFPS()), 40, 20, 10, GOLD);
+    game.input.debug_draw();
+
+    DrawText(TextFormat("FPS: %4.0f", fps), 40, 20, 10, GOLD);
+    DrawText(TextFormat(" DT: %8.8f", dt), 40, 30, 10, GOLD);
 #endif
   }
   EndDrawing();
+  SwapScreenBuffer();
+
+  static float previous_time = 0.0f;
+  const float current_time   = GetTime();
+  dt                         = current_time - previous_time;
+  previous_time              = current_time;
+
+  if (accumulator < interval)
+  {
+    const float wait_time = (1.0f / 60.0f) - dt;
+    if (wait_time > 0.0f)
+      WaitTime(wait_time);
+  }
+
+  if (updated)
+    game.input.reset();
+
+  // NOTE: On Web platform keyboard input is only available after drawing
+#if defined(EMSCRIPTEN)
+  PollInputEvents();
+  game.input.update();
+#endif
 }
 
 int main(void)
@@ -84,7 +125,7 @@ int main(void)
 
   SetAudioStreamBufferSizeDefault(AUDIO_BUFFER_SIZE);
   InitAudioDevice();
-  SetTargetFPS(60);
+  SetTargetFPS(10);
 
 #if defined(DEBUG)
   SetTraceLogLevel(LOG_TRACE);
@@ -105,13 +146,13 @@ int main(void)
   ui_render_pass->render_func = [&game]() { game.gui->draw(); };
 
 #if defined(EMSCRIPTEN)
-  emscripten_set_main_loop(update_draw_frame, 0, 1);
+  emscripten_set_main_loop(update_draw_frame, 60, 1);
 #else
   while (!WindowShouldClose())
   {
     update_draw_frame();
 
-    if (IsKeyPressed(KEY_ESCAPE))
+    if (IsKeyDown(KEY_ESCAPE))
       CloseWindow();
   }
 #endif

@@ -260,7 +260,7 @@ void Game::update()
       gui->messages.pop_front();
   }
 
-  if (IsKeyPressed(KEY_M))
+  if (input.mute_pressed())
   {
     static bool music_enabled          = true;
     static float previous_music_volume = music_volume;

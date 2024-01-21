@@ -35,14 +35,14 @@
 #define SUPPORT_MODULE_RSHAPES          1
 #define SUPPORT_MODULE_RTEXTURES        1
 #define SUPPORT_MODULE_RTEXT            1       // WARNING: It requires SUPPORT_MODULE_RTEXTURES to load sprite font textures
-#define SUPPORT_MODULE_RMODELS          1
+#define SUPPORT_MODULE_RMODELS          0
 #define SUPPORT_MODULE_RAUDIO           1
 
 //------------------------------------------------------------------------------------
 // Module: rcore - Configuration Flags
 //------------------------------------------------------------------------------------
 // Camera module is included (rcamera.h) and multiple predefined cameras are available: free, 1st/3rd person, orbital
-#define SUPPORT_CAMERA_SYSTEM           1
+#define SUPPORT_CAMERA_SYSTEM           0
 // Gestures module is included (rgestures.h) to support gestures detection: tap, hold, swipe, drag
 #define SUPPORT_GESTURES_SYSTEM         1
 // Include pseudo-random numbers generator (rprand.h), based on Xoshiro128** and SplitMix64
@@ -50,7 +50,7 @@
 // Mouse gestures are directly mapped like touches and processed by gestures system
 #define SUPPORT_MOUSE_GESTURES          1
 // Reconfigure standard input to receive key inputs, works with SSH connection.
-#define SUPPORT_SSH_KEYBOARD_RPI        1
+#define SUPPORT_SSH_KEYBOARD_RPI        0
 // Setting a higher resolution can improve the accuracy of time-out intervals in wait functions.
 // However, it can also reduce overall system performance, because the thread scheduler switches tasks more often.
 #define SUPPORT_WINMM_HIGHRES_TIMER     1
@@ -65,11 +65,11 @@
 // Support CompressData() and DecompressData() functions
 #define SUPPORT_COMPRESSION_API         1
 // Support automatic generated events, loading and recording of those events when required
-#define SUPPORT_AUTOMATION_EVENTS       1
+#define SUPPORT_AUTOMATION_EVENTS       0
 // Support custom frame control, only for advance users
 // By default EndDrawing() does this job: draws everything + SwapScreenBuffer() + manage frame timing + PollInputEvents()
 // Enabling this flag allows manual control of the frame processes, use at your own risk
-//#define SUPPORT_CUSTOM_FRAME_CONTROL    1
+#define SUPPORT_CUSTOM_FRAME_CONTROL    1
 
 // rcore: Configuration values
 //------------------------------------------------------------------------------------
@@ -109,7 +109,7 @@
 #define RL_MAX_SHADER_LOCATIONS               32      // Maximum number of shader locations supported
 
 #define RL_CULL_DISTANCE_NEAR               0.01      // Default projection matrix near cull distance
-#define RL_CULL_DISTANCE_FAR              1000.0      // Default projection matrix far cull distance
+#define RL_CULL_DISTANCE_FAR               100.0      // Default projection matrix far cull distance
 
 // Default shader vertex attribute names to set location points
 // NOTE: When a new shader is loaded, the following locations are tried to be set for convenience
@@ -152,9 +152,9 @@
 //#define SUPPORT_FILEFORMAT_TGA      1
 //#define SUPPORT_FILEFORMAT_JPG      1
 #define SUPPORT_FILEFORMAT_GIF      1
-#define SUPPORT_FILEFORMAT_QOI      1
+//#define SUPPORT_FILEFORMAT_QOI      1
 //#define SUPPORT_FILEFORMAT_PSD      1
-#define SUPPORT_FILEFORMAT_DDS      1
+//#define SUPPORT_FILEFORMAT_DDS      1
 //#define SUPPORT_FILEFORMAT_HDR      1
 //#define SUPPORT_FILEFORMAT_PIC          1
 //#define SUPPORT_FILEFORMAT_KTX      1
@@ -164,12 +164,12 @@
 //#define SUPPORT_FILEFORMAT_SVG      1
 
 // Support image export functionality (.png, .bmp, .tga, .jpg, .qoi)
-#define SUPPORT_IMAGE_EXPORT            1
+//#define SUPPORT_IMAGE_EXPORT            1
 // Support procedural image generation functionality (gradient, spot, perlin-noise, cellular)
-#define SUPPORT_IMAGE_GENERATION        1
+//#define SUPPORT_IMAGE_GENERATION        1
 // Support multiple image editing functions to scale, adjust colors, flip, draw on images, crop...
 // If not defined, still some functions are supported: ImageFormat(), ImageCrop(), ImageToPOT()
-#define SUPPORT_IMAGE_MANIPULATION      1
+//#define SUPPORT_IMAGE_MANIPULATION      1
 
 
 //------------------------------------------------------------------------------------
@@ -249,6 +249,6 @@
 
 // utils: Configuration values
 //------------------------------------------------------------------------------------
-#define MAX_TRACELOG_MSG_LENGTH       256       // Max length of one trace-log message
+#define MAX_TRACELOG_MSG_LENGTH       512       // Max length of one trace-log message
 
 #endif // CONFIG_H

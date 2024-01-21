@@ -201,13 +201,13 @@ void PlayerShip::handle_input()
   if (game.get_state() != GameState::PLAYING_ASTEROIDS)
     return;
 
-  if (IsKeyDown(KEY_LEFT))
+  if (game.input.left_held())
     sprite.rotation -= 1.0f * rotation_speed;
 
-  if (IsKeyDown(KEY_RIGHT))
+  if (game.input.right_held())
     sprite.rotation += 1.0f * rotation_speed;
 
-  const bool is_accelerating = IsKeyDown(KEY_UP);
+  const bool is_accelerating = game.input.up_held();
 
   if (is_accelerating)
   {
@@ -258,17 +258,16 @@ void PlayerShip::handle_input()
     sprite.set_tag("idle");
   }
 
-  if (IsKeyDown(KEY_DOWN))
+  if (game.input.down_held())
   {
-    velocity.x += cos(sprite.rotation * DEG2RAD + M_PI / 2.0f) * acceleration_speed * 0.005f;
-    velocity.y += sin(sprite.rotation * DEG2RAD + M_PI / 2.0f) * acceleration_speed * 0.005f;
+    velocity.x += cos(sprite.rotation * DEG2RAD + M_PI / 2.0f) * acceleration_speed * 0.007f;
+    velocity.y += sin(sprite.rotation * DEG2RAD + M_PI / 2.0f) * acceleration_speed * 0.007f;
   }
 
-  const bool action_key = IsKeyDown(KEY_SPACE);
-  if (action_key && can_shoot())
+  if (game.input.action_held() && can_shoot())
     shoot();
 
-  if (action_key && can_interact() && interactable)
+  if (game.input.action_pressed() && can_interact() && interactable)
   {
     sound_shoot.stop();
     sound_engine.stop();

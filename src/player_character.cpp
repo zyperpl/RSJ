@@ -39,23 +39,25 @@ void PlayerCharacter::draw() const noexcept
 
 void PlayerCharacter::handle_input()
 {
-  if (IsKeyDown(KEY_LEFT))
+  const Game &game = Game::get();
+
+  if (game.input.left_held())
     velocity.x = -PLAYER_SPEED * 1.6f;
-  else if (IsKeyDown(KEY_RIGHT))
+  else if (game.input.right_held())
     velocity.x = PLAYER_SPEED * 1.6f;
   else
     velocity.x = 0.0f;
 
-  if (IsKeyDown(KEY_UP))
+  if (game.input.up_held())
     velocity.y = -PLAYER_SPEED;
-  else if (IsKeyDown(KEY_DOWN))
+  else if (game.input.down_held())
     velocity.y = PLAYER_SPEED;
   else
     velocity.y = 0.0f;
 
   velocity = Vector2Scale(Vector2Normalize(velocity), PLAYER_SPEED);
 
-  if (IsKeyPressed(KEY_SPACE) && can_interact())
+  if (game.input.action_pressed() && can_interact())
   {
     TraceLog(LOG_TRACE, "Interacting with %p", (void *)interactable);
     interactable->interact();

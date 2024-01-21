@@ -515,7 +515,14 @@ void GUI::draw_selectable_items(
   float drawn_count                = 0.0f;
   static float selected_index_draw = 0.0f;
   const float selected_index_value = selected_index.has_value() ? selected_index.value() : 0.0f;
-  selected_index_draw              = Lerp(selected_index_draw, selected_index_value, 0.1f);
+  //selected_index_draw              = Lerp(selected_index_draw, selected_index_value, 0.1f);
+  // Lerp with time
+  static double previous_time = GetTime();
+  const double current_time   = GetTime();
+  const float dt              = static_cast<float>(current_time - previous_time);
+  previous_time               = current_time;
+  selected_index_draw = Lerp(selected_index_draw, selected_index_value, 0.1f * dt * 60.0f);
+
 
   for (size_t i = 0; i < items.size(); i++)
   {
@@ -707,7 +714,12 @@ void GUI::handle_selecting_index(std::optional<size_t> &index, size_t max_index)
   if (!index)
     return;
 
-  if (IsKeyPressed(KEY_DOWN))
+  if (max_index <= 1)
+    return;
+
+  const Game &game = Game::get();
+
+  if (game.input.menu_down_pressed())
   {
     sound_select.play();
     index.value()++;
@@ -715,7 +727,7 @@ void GUI::handle_selecting_index(std::optional<size_t> &index, size_t max_index)
       index = 0;
   }
 
-  if (IsKeyPressed(KEY_UP))
+  if (game.input.menu_up_pressed())
   {
     sound_select.play();
     if (index == 0)
@@ -730,7 +742,8 @@ void GUI::handle_accepting_index(std::optional<size_t> &index, std::function<voi
   if (!index)
     return;
 
-  if (IsKeyPressed(KEY_SPACE) || IsKeyPressedRepeat(KEY_SPACE))
+  const Game &game = Game::get();
+  if (game.input.menu_action_pressed())
   {
     sound_accept.play();
     func(index.value());
