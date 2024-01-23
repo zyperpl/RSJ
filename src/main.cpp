@@ -17,7 +17,7 @@
 #include "utils.hpp"
 
 const constexpr int AUDIO_BUFFER_SIZE   = (4096 * 12);
-const constexpr size_t MAX_UPDATE_STEPS = 5;
+const constexpr size_t MAX_UPDATE_STEPS = 3;
 
 const constexpr int window_width  = Game::width * 2;
 const constexpr int window_height = Game::height * 2;
@@ -44,25 +44,17 @@ void update_draw_frame()
   render_destination.width  = Game::width * scale;
   render_destination.height = Game::height * scale;
 
-  static float dt      = DELTA_TIME;
+  const float dt       = GetFrameTime();
   const float interval = DELTA_TIME;
   const float fps      = 1.0f / dt;
 
   static float accumulator = 0.0f;
   accumulator += dt;
-    
-  game.input.update();
 
+  game.input.gather(); // only sets the input state, does not unset it
   bool updated = false;
   for (size_t steps = 0; accumulator >= interval && steps < MAX_UPDATE_STEPS; ++steps)
   {
-#if defined(EMSCRIPTEN)
-    EndDrawing();
-    game.input.update();
-#endif
-    PollInputEvents();
-    game.input.update();
-
     accumulator -= interval;
 
     game.update();
@@ -71,6 +63,8 @@ void update_draw_frame()
 
     if (--steps == 0)
       break;
+
+    game.input.update();
   }
 
   BeginDrawing();
@@ -93,28 +87,19 @@ void update_draw_frame()
 #endif
   }
   EndDrawing();
-  SwapScreenBuffer();
 
-  static float previous_time = 0.0f;
+  static float previous_time = GetTime();
   const float current_time   = GetTime();
-  dt                         = current_time - previous_time;
+  const float elapsed_time   = current_time - previous_time;
   previous_time              = current_time;
 
-  if (accumulator < interval)
+  const float target_time = 1.0f / 60.0f;
+  if (elapsed_time < target_time)
   {
-    const float wait_time = (1.0f / 60.0f) - dt;
+    const float wait_time = (target_time - elapsed_time);
     if (wait_time > 0.0f)
       WaitTime(wait_time);
   }
-
-  if (updated)
-    game.input.reset();
-
-  // NOTE: On Web platform keyboard input is only available after drawing
-#if defined(EMSCRIPTEN)
-  PollInputEvents();
-  game.input.update();
-#endif
 }
 
 int main(void)
@@ -125,7 +110,7 @@ int main(void)
 
   SetAudioStreamBufferSizeDefault(AUDIO_BUFFER_SIZE);
   InitAudioDevice();
-  SetTargetFPS(10);
+  SetTargetFPS(60);
 
 #if defined(DEBUG)
   SetTraceLogLevel(LOG_TRACE);
@@ -146,7 +131,7 @@ int main(void)
   ui_render_pass->render_func = [&game]() { game.gui->draw(); };
 
 #if defined(EMSCRIPTEN)
-  emscripten_set_main_loop(update_draw_frame, 60, 1);
+  emscripten_set_main_loop(update_draw_frame, 0, 1);
 #else
   while (!WindowShouldClose())
   {

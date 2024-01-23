@@ -28,11 +28,16 @@ class Input
 {
 public:
   void update();
-  void reset();
+  void gather();
+
+  [[deprecated("Use `update` and `gather`")]] void reset();
 
 #undef INPUT_ACTION
 #define INPUT_ACTION(name)                                                                \
-  [[nodiscard]] bool name##_held() const { return name##_state >= KEY_STATE_PRESSED; }    \
+  [[nodiscard]] bool name##_held() const                                                  \
+  {                                                                                       \
+    return name##_state >= KEY_STATE_PRESSED && name##_state < KEY_STATE_RELEASED;        \
+  }                                                                                       \
   [[nodiscard]] bool name##_pressed() const { return name##_state == KEY_STATE_PRESSED; } \
   [[nodiscard]] bool name##_released() const { return name##_state == KEY_STATE_RELEASED; }
 
@@ -57,8 +62,8 @@ public:
     };
 #undef INPUT_ACTION
 #define INPUT_ACTION(name)                                                                                      \
-  DrawText(TextFormat("%10s:%10s", #name, strings.at(name##_state).data()), 0, y, 20, colors.at(name##_state)); \
-  y += 24;
+  DrawText(TextFormat("%10s:%10s", #name, strings.at(name##_state).data()), 0, y, 10, colors.at(name##_state)); \
+  y += 12;
 
     INPUT_ACTION_LIST
   }
