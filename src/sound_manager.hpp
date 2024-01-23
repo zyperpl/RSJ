@@ -41,7 +41,10 @@ public:
         return;
 
       if (volume)
-        SetSoundVolume(ray_sound, *volume);
+      {
+        const float normalized_volume = *volume * SoundManager::volume;
+        SetSoundVolume(ray_sound, normalized_volume);
+      }
       else
         SetSoundVolume(ray_sound, SoundManager::volume);
 
@@ -58,8 +61,9 @@ public:
 
     void set_volume(float new_volume)
     {
-      volume = new_volume;
-      SetSoundVolume(ray_sound, new_volume);
+      volume                        = new_volume;
+      const float normalized_volume = *volume * SoundManager::volume;
+      SetSoundVolume(ray_sound, normalized_volume);
     }
 
     bool is_playing() const { return IsSoundPlaying(ray_sound); }
